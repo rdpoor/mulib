@@ -32,8 +32,6 @@
 // =============================================================================
 // Local types and definitions
 
-#define CSI "\e["
-
 // =============================================================================
 // Local storage
 
@@ -47,6 +45,9 @@ static const uint8_t s_fg_colormap[] = { DEFINE_ANSI_TERM_COLORS };
 #undef ANSI_TERM_COLOR
 #define ANSI_TERM_COLOR(MU_ANSI_TERM__name, _fg, _bg) _bg,
 static const uint8_t s_bg_colormap[] = { DEFINE_ANSI_TERM_COLORS };
+
+static int term_cols = 80;
+static int term_rows = 24;
 
 // =============================================================================
 // Local (forward) declarations
@@ -85,41 +86,41 @@ void mu_ansi_term_set_cursor_visible(bool isVisible) {
  * @brief Move cursor to 0, 0
  */
 void mu_ansi_term_home(void) {
-  puts(CSI "H");
+  puts(MU_ANSI_TERM_ESC "H");
 }
 
 /**
  * @brief Erase screen and scrollback
  */
 void mu_ansi_term_clear_buffer(void) {
-  puts(CSI "3J");
+  puts(MU_ANSI_TERM_ESC "3J");
 }
 /**
  * @brief Erase screen
  */
 void mu_ansi_term_clear_screen(void) {
-  puts(CSI "2J");
+  puts(MU_ANSI_TERM_ESC "2J");
 }
 
 /**
  * @brief Erase screen from current cursor position
  */
 void mu_ansi_term_clear_to_end_of_screen(void) {
-  puts(CSI "J");
+  puts(MU_ANSI_TERM_ESC "J");
 }
 
 /**
  * @brief Erase current line
  */
 void mu_ansi_term_clear_line(void) {
-  puts(CSI "2K");
+  puts(MU_ANSI_TERM_ESC "2K");
 }
 
 /**
  * @brief Erase line from current cursor position
  */
 void mu_ansi_term_clear_to_end_of_line(void) {
-  puts(CSI "K");
+  puts(MU_ANSI_TERM_ESC "K");
 }
 
 /**
@@ -127,29 +128,34 @@ void mu_ansi_term_clear_to_end_of_line(void) {
  *
  * Note: assumes row and col are 0 based, but converts to 1 based for ANSI spec.
  */
+
+// TODO:  This is broken
+
 void mu_ansi_term_set_cursor_position(uint8_t row, uint8_t col) {
   // optimize.
   if (row == 0) {
     if (col == 0) {
-      puts(CSI "H");
+      puts(MU_ANSI_TERM_ESC "H");
     } else {
-      printf(CSI ";%dH", col+1);
+      printf(MU_ANSI_TERM_ESC ";%dH", col+1);
     }
   } else {
     if (col == 0) {
-      printf(CSI "%dH", row+1);
+      printf(MU_ANSI_TERM_ESC "%dH", row+1);
     } else {
-      printf(CSI "%d;%dH", row+1, col+1);
+      printf(MU_ANSI_TERM_ESC "%d;%dH", row+1, col+1);
     }
   }
 }
+
+// TODO:  This is broken
 
 bool mu_ansi_term_get_cursor_position(uint8_t *row, uint8_t *col) {
   char ch;
   uint8_t temp_row;
   uint8_t temp_col;
 
-  puts(CSI "6n");   // device status reports.  responds with ESC[<row>;<col>R
+  puts(MU_ANSI_TERM_ESC "6n");   // device status reports.  responds with ESC[<row>;<col>R
   ch = getchar();
   if (ch != '\e') {
     ungetc(ch, 0);
@@ -176,13 +182,39 @@ bool mu_ansi_term_get_cursor_position(uint8_t *row, uint8_t *col) {
   return true;
 }
 
+
+int mu_ansi_term_get_ncols() {
+  return term_cols;
+}
+
+int mu_ansi_term_get_nrows() {
+  return term_rows;
+}
+
+void mu_ansi_term_set_ncols(int n) {
+  term_cols = n;
+}
+
+void mu_ansi_term_set_nrows(int n) {
+  term_rows = n;
+}
+
+int mu_ansi_term_ncols() {
+  return term_cols;
+}
+
+int mu_ansi_term_nrows() {
+  return term_rows;
+}
+
+
 /**
  * @brief Set foreground and background color
  */
 void mu_ansi_term_set_colors(mu_ansi_term_color_t fg, mu_ansi_term_color_t bg) {
   s_fg_color = fg;
   s_bg_color = bg;
-  printf(CSI "%d;%dm", map_fg_color(fg), map_bg_color(bg));
+  printf(MU_ANSI_TERM_ESC "%d;%dm", map_fg_color(fg), map_bg_color(bg));
 }
 
 /**
@@ -192,6 +224,8 @@ void mu_ansi_term_get_colors(mu_ansi_term_color_t *fg, mu_ansi_term_color_t *bg)
   *fg = s_fg_color;
   *bg = s_bg_color;
 }
+
+
 
 // =============================================================================
 // Local (static) code

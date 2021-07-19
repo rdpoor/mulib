@@ -68,6 +68,7 @@ extern "C" {
 #define ANSI_TERM_COLOR(_name, _foreground, _background) _name,
 typedef enum {
   DEFINE_ANSI_TERM_COLORS
+  MU_ANSI_COLOR_COUNT
 } mu_ansi_term_color_t;
 
 #define MU_ANSI_TERM_ESC "\33["
@@ -127,17 +128,38 @@ void mu_ansi_term_set_cursor_position(uint8_t row, uint8_t col);
  */
 bool mu_ansi_term_get_cursor_position(uint8_t *row, uint8_t *col);
 
+
 /**
- * @brief Set foreground and background color
+ * @brief Get character width of the output tty (defaults to 80)
  */
-void mu_ansi_term_set_colors(mu_ansi_term_color_t fg, mu_ansi_term_color_t bg);
+int mu_ansi_term_get_ncols();
 
+/**
+ * @brief Get character height of the output tty (defaults to 24)
+ */
+int mu_ansi_term_get_nrows();
 
+/**
+ * @brief Store character width of the output tty (presumably based on a system query) -- note this doesn't change the actual tty
+ * On POSIX, mu_platform.c uses sys.ioctl to query this value and then stores the value here.   
+ */
+void mu_ansi_term_set_ncols(int n);
+
+/**
+ * @brief Store character height of the output tty (presumably based on a system query) -- note this doesn't change the actual tty
+ * On POSIX, mu_platform.c uses sys.ioctl to query this value and then stores the value here
+ */
+void mu_ansi_term_set_nrows(int n);
 
 /**
  * @brief Get foreground and background color
  */
 void mu_ansi_term_get_colors(mu_ansi_term_color_t *fg, mu_ansi_term_color_t *bg);
+
+/**
+ * @brief Set foreground and background color
+ */
+void mu_ansi_term_set_colors(mu_ansi_term_color_t fg, mu_ansi_term_color_t bg);
 
 /**
  * @brief Standard ansi term reset

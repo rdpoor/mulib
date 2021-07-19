@@ -56,12 +56,12 @@ void mu_signal_init(void) {
   #include <signal.h>
   #include <stdio.h>
   #include <stdlib.h>
-  static void handle_signint(int s) {
+  static void handle_sigint(int s) {
     exit(0);
   }
   static void signal_handling_init(void) {
     if(signal(SIGINT, SIG_IGN) != SIG_IGN) 
-      signal(SIGINT, handle_signint);
+      signal(SIGINT, handle_sigint);
   }
 #else
   static void signal_handling_init() {}
