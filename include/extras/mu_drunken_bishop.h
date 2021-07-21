@@ -44,7 +44,7 @@ extern "C" {
  * @brief Print human-facing ascii art to the console derived from an arbitrary string
  *
  */
-void print_random_art_from_string(char *seed_string, int column_width);
+void mu_print_random_art_from_string(char *seed_string, int column_width);
 
 
 #ifdef __cplusplus

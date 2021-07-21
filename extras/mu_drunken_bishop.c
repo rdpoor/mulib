@@ -68,7 +68,7 @@ static char field[MAX_FLDSIZE_X][MAX_FLDSIZE_Y];
 // Public code
 
 
-void print_random_art_from_string(char *seed_string, int column_width)
+void mu_print_random_art_from_string(char *seed_string, int column_width)
 {
   // make sure both dimensions are odd and fit within our static storage
   int fldsize_x = min(MAX_FLDSIZE_X, ((column_width >> 1) * 2) + 1);

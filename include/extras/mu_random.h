@@ -77,7 +77,7 @@ void mu_random_reset();
  * @param str A null-terminated string pointer
  * @return an unsigned long hash integer.
  */
-uint64_t hash_from_string(unsigned char *str);
+uint64_t mu_hash_from_string(unsigned char *str);
 
 #ifdef __cplusplus
 }

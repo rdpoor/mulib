@@ -77,7 +77,7 @@ void mu_random_reset() {
 }
 
 
-uint64_t hash_from_string(unsigned char *str)
+uint64_t mu_hash_from_string(unsigned char *str)
 {
     uint64_t hash = 5381;
     int c;
