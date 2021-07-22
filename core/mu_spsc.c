@@ -59,6 +59,10 @@ mu_spsc_err_t mu_spsc_reset(mu_spsc_t *q) {
   return MU_SPSC_ERR_NONE;
 }
 
+uint16_t mu_spsc_capacity(mu_spsc_t *q) {
+  return q->mask;
+}
+
 /**
  * @brief To be called by Producer only: update tail only after setting item.
  */
@@ -84,6 +88,7 @@ mu_spsc_err_t mu_spsc_get(mu_spsc_t *q, mu_spsc_item_t *item) {
 
   if (q->head == q->tail) {
     err = MU_SPSC_ERR_EMPTY;
+    *item = NULL;
   } else {
     *item = q->store[q->head];
     q->head = (q->head + 1) & q->mask;
