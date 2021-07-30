@@ -26,6 +26,7 @@
 // Includes
 
 #include "mu_drunken_bishop.h"
+#include "mu_utils.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -41,19 +42,7 @@
 #define MAX_FLDSIZE_X (MAX_FLDBASE * 2 + 1)
 #define MAX_FLDSIZE_Y (MAX_FLDBASE + 1)
 
-#define max(a,b)             \
-({                           \
-    __typeof__ (a) _a = (a); \
-    __typeof__ (b) _b = (b); \
-    _a > _b ? _a : _b;       \
-})
 
-#define min(a,b)             \
-({                           \
-    __typeof__ (a) _a = (a); \
-    __typeof__ (b) _b = (b); \
-    _a < _b ? _a : _b;       \
-})
 
 
 // =============================================================================

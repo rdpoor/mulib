@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2021 Klatu Networks, Inc
+ * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,67 +22,36 @@
  * SOFTWARE.
  */
 
-
-/**
- * Random number generator using a permuted congruential generator (PCG)
- * https://en.wikipedia.org/wiki/Permuted_congruential_generator
- */
-
-
 // =============================================================================
 // Includes
 
-#include "mu_random.h"
 #include "mu_utils.h"
+
+#include <mulib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // =============================================================================
 // Local types and definitions
-#define INITIAL_RANDOM_STATE (0x4d595df4d0f33173)
+
+// =============================================================================
+// Local storage
 
 // =============================================================================
 // Local (forward) declarations
 
-static uint32_t rotr32(uint32_t x, unsigned r);
-
-// =============================================================================
-// Local storage
-static uint64_t       state      = INITIAL_RANDOM_STATE;
-static uint64_t const multiplier = 6364136223846793005u;
-static uint64_t const increment  = 1442695040888963407u;
-
-
 // =============================================================================
 // Public code
 
-uint32_t mu_random(void) {
-  uint64_t x = state;
-  unsigned count = (unsigned)(x >> 59);   // 59 = 64 - 5
-  state = x * multiplier + increment;
-  x ^= x >> 18;               // 18 = (64 - (32 - 5))/2
-  return rotr32((uint32_t)(x >> 27), count);  // 27 = 32 - 5
-}
 
-
-uint32_t mu_random_range(uint32_t min, uint32_t max) {
-  return min + (mu_random() % (max - min));
-}
-
-void mu_random_seed(uint32_t seed) {
-  state = seed + increment;
-  (void)mu_random();
-}
-
-void mu_random_reset() {
-  state = INITIAL_RANDOM_STATE;
+uint64_t mu_hash_from_string(unsigned char *str)
+{
+    uint64_t hash = 5381;
+    int c;
+    while ((c = *str++) > 0)
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    return hash;
 }
 
 // =============================================================================
-// Local (static) code
-
-static uint32_t rotr32(uint32_t x, unsigned r)
-{
-  return x >> r | x << (-r & 31);
-}
-
-
+// Private code
