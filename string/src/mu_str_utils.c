@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,45 +22,37 @@
  * SOFTWARE.
  */
 
-#ifndef __MU_UTILS_H_
-#define __MU_UTILS_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // =============================================================================
 // includes
 
-#include <mulib.h>
-#include <stdint.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 // =============================================================================
-// types and definitions
-
-#define max(a,b)             \
-({                           \
-    __typeof__ (a) _a = (a); \
-    __typeof__ (b) _b = (b); \
-    _a > _b ? _a : _b;       \
-})
-
-#define min(a,b)             \
-({                           \
-    __typeof__ (a) _a = (a); \
-    __typeof__ (b) _b = (b); \
-    _a < _b ? _a : _b;       \
-})
+// local types and definitions
 
 // =============================================================================
-// declarations
+// local (forward) declarations
 
+// =============================================================================
+// local storage
 
-uint64_t mu_hash_from_string(unsigned char *str);
+// =============================================================================
+// public code
 
-#ifdef __cplusplus
+// TODO: See https://github.com/abrandoned/murmur2/blob/master/MurmurHash2.c
+uint64_t mu_hash_from_cstr(unsigned char *str) {
+  uint64_t hash = 5381;
+  int c;
+  while ((c = *str++) > 0) {
+    hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+  }
+  return hash;
 }
-#endif
 
-#endif /* #ifndef __MU_UTILS_H_ */
+// =============================================================================
+// local (static) code

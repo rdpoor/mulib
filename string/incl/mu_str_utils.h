@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +22,37 @@
  * SOFTWARE.
  */
 
+#ifndef _MU_STR_UTILS_H_
+#define _MU_STR_UTILS_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // =============================================================================
 // Includes
 
-#include "mu_utils.h"
-
-#include <mulib.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 // =============================================================================
-// Local types and definitions
+// Types and definitions
 
 // =============================================================================
-// Local storage
+// Declarations
 
-// =============================================================================
-// Local (forward) declarations
+/**
+ * Create a 64 bit hash from the given null-terminated string.
+ */
+uint64_t mu_hash_from_cstr(unsigned char *str);
 
-// =============================================================================
-// Public code
+// TBD:
+// mu_str_cmp -- compare two strings
+// mu_str_equals -- mu_str_cmp() == 0
+// mu_str_eq ? -- do two mu_str object point to the same bytes?
+// mu_str_find -- find first occurance of a substring within a mu_str
 
-
-uint64_t mu_hash_from_string(unsigned char *str)
-{
-    uint64_t hash = 5381;
-    int c;
-    while ((c = *str++) > 0)
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-    return hash;
+#ifdef __cplusplus
 }
+#endif
 
-// =============================================================================
-// Private code
+#endif /* #ifndef _MU_STR_UTILS_H_ */
