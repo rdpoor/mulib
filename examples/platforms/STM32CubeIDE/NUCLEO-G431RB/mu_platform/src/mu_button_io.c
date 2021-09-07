@@ -59,7 +59,7 @@ void mu_button_io_on_button_press(unsigned char button_id) {
   }
 }
 
-// void mu_button_io_on_button_change(void) {
+// void mu_button_io_on_change(void) {
 //   if (s_button_io_cb) {
 //     s_button_io_cb(MU_BUTTON_0, USER_BUTTON_get_level());
 //   }

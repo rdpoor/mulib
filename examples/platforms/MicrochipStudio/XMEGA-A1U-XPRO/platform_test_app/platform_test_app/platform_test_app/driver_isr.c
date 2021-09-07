@@ -38,7 +38,7 @@
 
 extern void mu_rtc_on_compare_interrupt(void);
 extern void mu_rtc_on_overflow_interrupt(void);
-extern void mu_button_io_on_button_change(void);
+extern void mu_button_io_on_change(void);
 
 ISR(RTC_COMP_vect)
 {
@@ -55,7 +55,7 @@ ISR(RTC_OVF_vect)
 ISR(PORTQ_INT0_vect)
 {
 	/* Insert your PORTQ interrupt handling code here */
-	mu_button_io_on_button_change();
+	mu_button_io_on_change();
 	/* Clear interrupt flags */
 	PORTQ_INTFLAGS = PORT_INT0IF_bm;
 }

@@ -87,7 +87,7 @@ bool mu_button_io_get_button(uint8_t button_id);
 // provide a declaration in the .h file and instead use an extern declaration
 // in the driver_isr.c file instead.
 
-// void mu_button_io_on_button_change(void);
+// void mu_button_io_on_change(void);
 
 #ifdef __cplusplus
 }
