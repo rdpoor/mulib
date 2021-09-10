@@ -33,7 +33,6 @@
 // Includes
 
 #include "mu_random.h"
-#include "mu_utils.h"
 #include <stdint.h>
 
 // =============================================================================
@@ -84,5 +83,3 @@ static uint32_t rotr32(uint32_t x, unsigned r)
 {
   return x >> r | x << (-r & 31);
 }
-
-

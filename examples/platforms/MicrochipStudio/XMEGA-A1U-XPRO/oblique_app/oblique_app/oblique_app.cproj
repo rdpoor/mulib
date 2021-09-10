@@ -52,10 +52,10 @@
         </TopLevelComponents>
         <AcmeActionInfos>
           <AcmeProjectActionInfo Action="File" Source="main.c" IsConfig="false" Hash="k0AH7j+BrmdFhBPzCCMptA" />
-          <AcmeProjectActionInfo Action="File" Source="src/driver_init.c" IsConfig="false" Hash="NHwNzhvF5B0wTJJ3y8zTtQ" />
-          <AcmeProjectActionInfo Action="File" Source="include/driver_init.h" IsConfig="false" Hash="nxouHnk/Wg+E4xHC3u7ZKA" />
+          <AcmeProjectActionInfo Action="File" Source="src/driver_init.c" IsConfig="false" Hash="/wUWP3boMpTvZQOKg65jbQ" />
+          <AcmeProjectActionInfo Action="File" Source="include/driver_init.h" IsConfig="false" Hash="yiICVCkG0feQNNesdoADLw" />
           <AcmeProjectActionInfo Action="File" Source="include/atmel_start_pins.h" IsConfig="false" Hash="u3vvI9RpBXbSriVAEnS18g" />
-          <AcmeProjectActionInfo Action="File" Source="driver_isr.c" IsConfig="false" Hash="A5zXKx+f8PyxET4/w0+0mg" />
+          <AcmeProjectActionInfo Action="File" Source="driver_isr.c" IsConfig="false" Hash="WpRdy5TfRiIBLNhL72y2Qw" />
           <AcmeProjectActionInfo Action="File" Source="examples/include/usart_basic_example.h" IsConfig="false" Hash="jqzG72KywS875Xh6BBr/EA" />
           <AcmeProjectActionInfo Action="File" Source="examples/src/usart_basic_example.c" IsConfig="false" Hash="8EWqyc6nUHi+MQFT49+DRw" />
           <AcmeProjectActionInfo Action="File" Source="include/ccp.h" IsConfig="false" Hash="5tZzJbuv1SnHXckp4Dkw+w" />
@@ -64,17 +64,17 @@
           <AcmeProjectActionInfo Action="File" Source="include/pmic.h" IsConfig="false" Hash="CzDAol4iLhfQjzhk8oi7uw" />
           <AcmeProjectActionInfo Action="File" Source="include/port.h" IsConfig="false" Hash="4Issr8giszvrQ6vniNGeFw" />
           <AcmeProjectActionInfo Action="File" Source="include/protected_io.h" IsConfig="false" Hash="kBH1k8wuaJhV5U4694Cbvg" />
+          <AcmeProjectActionInfo Action="File" Source="include/rtc.h" IsConfig="false" Hash="p5dX25b5xnQHNzfxtf12RQ" />
           <AcmeProjectActionInfo Action="File" Source="include/sleep.h" IsConfig="false" Hash="BlnWjNXEymjJmodiXU5aLw" />
           <AcmeProjectActionInfo Action="File" Source="include/system.h" IsConfig="false" Hash="qLSexeE5KAB53OWZSyq/7g" />
-          <AcmeProjectActionInfo Action="File" Source="include/tc.h" IsConfig="false" Hash="LIYbSYXz/obGu5iw48eXpA" />
-          <AcmeProjectActionInfo Action="File" Source="include/usart_basic.h" IsConfig="false" Hash="NVkR9o4uICFteIbwabn/KA" />
-          <AcmeProjectActionInfo Action="File" Source="src/clk.c" IsConfig="false" Hash="W4XmA+Lu82DUrPnqjYEEAQ" />
+          <AcmeProjectActionInfo Action="File" Source="include/usart_basic.h" IsConfig="false" Hash="bBq9+mewAtqCvWAB2AbRjQ" />
+          <AcmeProjectActionInfo Action="File" Source="src/clk.c" IsConfig="false" Hash="Fbe/jUKXITNTClnf4WzXXw" />
           <AcmeProjectActionInfo Action="File" Source="src/osc.c" IsConfig="false" Hash="KL/u9gSQABUXblEp9vB3Ew" />
           <AcmeProjectActionInfo Action="File" Source="src/pmic.c" IsConfig="false" Hash="tTvd72Y1jHSXtrJJoihG4w" />
           <AcmeProjectActionInfo Action="File" Source="src/protected_io.S" IsConfig="false" Hash="sgFkmFP7h1y8L07bVZahaQ" />
+          <AcmeProjectActionInfo Action="File" Source="src/rtc.c" IsConfig="false" Hash="i6Dv4FJDho4iOcTrOnhGYg" />
           <AcmeProjectActionInfo Action="File" Source="src/sleep.c" IsConfig="false" Hash="ultK+TVuEicymfXx8Cv9bw" />
-          <AcmeProjectActionInfo Action="File" Source="src/tc.c" IsConfig="false" Hash="4S2MUlw5pg6K70t6ZxS63w" />
-          <AcmeProjectActionInfo Action="File" Source="src/usart_basic.c" IsConfig="false" Hash="OYikpvrgdZUZzVvVFOkrnA" />
+          <AcmeProjectActionInfo Action="File" Source="src/usart_basic.c" IsConfig="false" Hash="NmUjWkTZcB+ndYa4PBwEBw" />
           <AcmeProjectActionInfo Action="File" Source="utils/assembler.h" IsConfig="false" Hash="jaaWqpCXnRJMciuXpjSfgQ" />
           <AcmeProjectActionInfo Action="File" Source="utils/assembler/gas.h" IsConfig="false" Hash="wV+34zXWOOJ7jfwQibBgLQ" />
           <AcmeProjectActionInfo Action="File" Source="utils/assembler/iar.h" IsConfig="false" Hash="re7qP3QC0FK72z2UZ4UoFg" />
@@ -160,56 +160,59 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
       <AvrGcc>
-        <avrgcc.common.Device>-mmcu=atxmega128a1u -B "%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega128a1u"</avrgcc.common.Device>
-        <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
-        <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
-        <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
-        <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
-        <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
-        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
-        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
-        <avrgcc.compiler.symbols.DefSymbols>
-          <ListValues>
-            <Value>DEBUG</Value>
-          </ListValues>
-        </avrgcc.compiler.symbols.DefSymbols>
-        <avrgcc.compiler.directories.IncludePaths>
-          <ListValues>
-            <Value>../examples/include</Value>
-            <Value>../include</Value>
-            <Value>../utils</Value>
-            <Value>../utils/assembler</Value>
-            <Value>../</Value>
-            <Value>../../../../../../mulib</Value>
-            <Value>../../../mu_platform</Value>
-            <Value>../../../../../shared/oblique_eg</Value>
-            <Value>../Config</Value>
-            <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
-          </ListValues>
-        </avrgcc.compiler.directories.IncludePaths>
-        <avrgcc.compiler.optimization.level>Optimize debugging experience (-Og)</avrgcc.compiler.optimization.level>
-        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
-        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
-        <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
-        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
-        <avrgcc.linker.libraries.Libraries>
-          <ListValues>
-            <Value>libm</Value>
-          </ListValues>
-        </avrgcc.linker.libraries.Libraries>
-        <avrgcc.assembler.general.IncludePaths>
-          <ListValues>
-            <Value>../Config</Value>
-            <Value>../examples/include</Value>
-            <Value>../include</Value>
-            <Value>../utils</Value>
-            <Value>../utils/assembler</Value>
-            <Value>../</Value>
-            <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
-          </ListValues>
-        </avrgcc.assembler.general.IncludePaths>
-        <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
-      </AvrGcc>
+  <avrgcc.common.Device>-mmcu=atxmega128a1u -B "%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega128a1u"</avrgcc.common.Device>
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+  <avrgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>DEBUG</Value>
+    </ListValues>
+  </avrgcc.compiler.symbols.DefSymbols>
+  <avrgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../examples/include</Value>
+      <Value>../include</Value>
+      <Value>../utils</Value>
+      <Value>../utils/assembler</Value>
+      <Value>../</Value>
+      <Value>../Config</Value>
+      <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
+      <Value>../../../../../../sources/oblique_eg/incl</Value>
+      <Value>../../../mu_platform/incl</Value>
+      <Value>../../../../../../../mulib/collections/incl</Value>
+      <Value>../../../../../../../mulib/sched/incl</Value>
+      <Value>../../../../../../../mulib/term/incl</Value>
+      <Value>../../../../../../../mulib/utils/incl</Value>
+    </ListValues>
+  </avrgcc.compiler.directories.IncludePaths>
+  <avrgcc.compiler.optimization.level>Optimize debugging experience (-Og)</avrgcc.compiler.optimization.level>
+  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
+  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>libm</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
+  <avrgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>../Config</Value>
+      <Value>../examples/include</Value>
+      <Value>../include</Value>
+      <Value>../utils</Value>
+      <Value>../utils/assembler</Value>
+      <Value>../</Value>
+      <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
+    </ListValues>
+  </avrgcc.assembler.general.IncludePaths>
+  <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
+</AvrGcc>
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
@@ -225,257 +228,163 @@
     <Folder Include="modules\clk\doc\" />
     <Folder Include="modules\pmic\" />
     <Folder Include="modules\pmic\doc\" />
+    <Folder Include="modules\rtc\" />
+    <Folder Include="modules\rtc\doc\" />
     <Folder Include="modules\sleep\" />
     <Folder Include="modules\sleep\doc\" />
-    <Folder Include="modules\timer\" />
-    <Folder Include="modules\timer\doc\" />
     <Folder Include="modules\usart\" />
     <Folder Include="modules\usart\doc\" />
-    <Folder Include="mulib\extras" />
-    <Folder Include="mulib\core" />
+    <Folder Include="mulib\collections" />
+    <Folder Include="mulib\term\" />
+    <Folder Include="mulib\utils" />
+    <Folder Include="mulib\sched" />
     <Folder Include="mu_platform" />
-    <Folder Include="mulib" />
     <Folder Include="oblique_eg" />
+    <Folder Include="mulib" />
     <Folder Include="src\" />
     <Folder Include="utils\" />
     <Folder Include="utils\assembler\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_array.c">
+    <Compile Include="..\..\..\..\..\..\mulib\collections\incl\mu_dlist.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_array.c</Link>
+      <Link>mulib\collections\mu_dlist.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_array.h">
+    <Compile Include="..\..\..\..\..\..\mulib\collections\incl\mu_list.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_array.h</Link>
+      <Link>mulib\collections\mu_list.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_bvec.c">
+    <Compile Include="..\..\..\..\..\..\mulib\collections\src\mu_dlist.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_bvec.c</Link>
+      <Link>mulib\collections\mu_dlist.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_bvec.h">
+    <Compile Include="..\..\..\..\..\..\mulib\collections\src\mu_list.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_bvec.h</Link>
+      <Link>mulib\collections\mu_list.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_cirq.c">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_sched.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_cirq.c</Link>
+      <Link>mulib\sched\mu_sched.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_cirq.h">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_spsc.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_cirq.h</Link>
+      <Link>mulib\sched\mu_spsc.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_dlist.c">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_task.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_dlist.c</Link>
+      <Link>mulib\sched\mu_task.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_dlist.h">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_thunk.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_dlist.h</Link>
+      <Link>mulib\sched\mu_thunk.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_fsm.c">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_timer.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_fsm.c</Link>
+      <Link>mulib\sched\mu_timer.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_fsm.h">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_sched.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_fsm.h</Link>
+      <Link>mulib\sched\mu_sched.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_list.c">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_spsc.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_list.c</Link>
+      <Link>mulib\sched\mu_spsc.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_list.h">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_task.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_list.h</Link>
+      <Link>mulib\sched\mu_task.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_log.c">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_thunk.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_log.c</Link>
+      <Link>mulib\sched\mu_thunk.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_log.h">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_timer.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_log.h</Link>
+      <Link>mulib\sched\mu_timer.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_pstore.c">
+    <Compile Include="..\..\..\..\..\..\mulib\term\incl\mu_ansi_term.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_pstore.c</Link>
+      <Link>mulib\term\mu_ansi_term.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_pstore.h">
+    <Compile Include="..\..\..\..\..\..\mulib\term\src\mu_ansi_term.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_pstore.h</Link>
+      <Link>mulib\term\mu_ansi_term.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_queue.c">
+    <Compile Include="..\..\..\..\..\..\mulib\utils\incl\mu_random.h">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_queue.c</Link>
+      <Link>mulib\utils\mu_random.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_queue.h">
+    <Compile Include="..\..\..\..\..\..\mulib\utils\src\mu_random.c">
       <SubType>compile</SubType>
-      <Link>mulib\core\mu_queue.h</Link>
+      <Link>mulib\utils\mu_random.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_sched.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_sched.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_sched.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_sched.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_spsc.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_spsc.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_spsc.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_spsc.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_str.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_str.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_str.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_str.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_strbuf.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_strbuf.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_strbuf.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_strbuf.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_task.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_task.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_task.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_task.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_thunk.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_thunk.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_thunk.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_thunk.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_timer.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_timer.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_timer.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_timer.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_vect.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_vect.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_vect.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_vect.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_version.c">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_version.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\core\mu_version.h">
-      <SubType>compile</SubType>
-      <Link>mulib\core\mu_version.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\extras\mu_ansi_term.c">
-      <SubType>compile</SubType>
-      <Link>mulib\extras\mu_ansi_term.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\extras\mu_ansi_term.h">
-      <SubType>compile</SubType>
-      <Link>mulib\extras\mu_ansi_term.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\extras\mu_random.c">
-      <SubType>compile</SubType>
-      <Link>mulib\extras\mu_random.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\extras\mu_random.h">
-      <SubType>compile</SubType>
-      <Link>mulib\extras\mu_random.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\extras\mu_rfc_1123.c">
-      <SubType>compile</SubType>
-      <Link>mulib\extras\mu_rfc_1123.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\extras\mu_rfc_1123.h">
-      <SubType>compile</SubType>
-      <Link>mulib\extras\mu_rfc_1123.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\mulib.c">
-      <SubType>compile</SubType>
-      <Link>mulib\mulib.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\..\mulib\mulib.h">
-      <SubType>compile</SubType>
-      <Link>mulib\mulib.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\shared\oblique_eg\oblique.c">
-      <SubType>compile</SubType>
-      <Link>oblique_eg\oblique.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\shared\oblique_eg\oblique.h">
+    <Compile Include="..\..\..\..\..\sources\oblique_eg\incl\oblique.h">
       <SubType>compile</SubType>
       <Link>oblique_eg\oblique.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\shared\oblique_eg\strategies.c">
-      <SubType>compile</SubType>
-      <Link>oblique_eg\strategies.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\shared\oblique_eg\strategies.h">
+    <Compile Include="..\..\..\..\..\sources\oblique_eg\incl\strategies.h">
       <SubType>compile</SubType>
       <Link>oblique_eg\strategies.h</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_button_io.c">
+    <Compile Include="..\..\..\..\..\sources\oblique_eg\src\oblique.c">
       <SubType>compile</SubType>
-      <Link>mu_platform\mu_button_io.c</Link>
+      <Link>oblique_eg\oblique.c</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_button_io.h">
+    <Compile Include="..\..\..\..\..\sources\oblique_eg\src\strategies.c">
+      <SubType>compile</SubType>
+      <Link>oblique_eg\strategies.c</Link>
+    </Compile>
+    <Compile Include="..\..\mu_platform\incl\mu_button_io.h">
       <SubType>compile</SubType>
       <Link>mu_platform\mu_button_io.h</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_config.h">
+    <Compile Include="..\..\mu_platform\incl\mu_config.h">
       <SubType>compile</SubType>
       <Link>mu_platform\mu_config.h</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_led_io.c">
+    <Compile Include="..\..\mu_platform\incl\mu_kbd_io.h">
       <SubType>compile</SubType>
-      <Link>mu_platform\mu_led_io.c</Link>
+      <Link>mu_platform\mu_kbd_io.h</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_led_io.h">
+    <Compile Include="..\..\mu_platform\incl\mu_led_io.h">
       <SubType>compile</SubType>
       <Link>mu_platform\mu_led_io.h</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_platform.c">
-      <SubType>compile</SubType>
-      <Link>mu_platform\mu_platform.c</Link>
-    </Compile>
-    <Compile Include="..\..\mu_platform\mu_platform.h">
+    <Compile Include="..\..\mu_platform\incl\mu_platform.h">
       <SubType>compile</SubType>
       <Link>mu_platform\mu_platform.h</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_rtc.c">
-      <SubType>compile</SubType>
-      <Link>mu_platform\mu_rtc.c</Link>
-    </Compile>
-    <Compile Include="..\..\mu_platform\mu_rtc.h">
+    <Compile Include="..\..\mu_platform\incl\mu_rtc.h">
       <SubType>compile</SubType>
       <Link>mu_platform\mu_rtc.h</Link>
     </Compile>
-    <Compile Include="..\..\mu_platform\mu_time.c">
-      <SubType>compile</SubType>
-      <Link>mu_platform\mu_time.c</Link>
-    </Compile>
-    <Compile Include="..\..\mu_platform\mu_time.h">
+    <Compile Include="..\..\mu_platform\incl\mu_time.h">
       <SubType>compile</SubType>
       <Link>mu_platform\mu_time.h</Link>
+    </Compile>
+    <Compile Include="..\..\mu_platform\src\mu_button_io.c">
+      <SubType>compile</SubType>
+      <Link>mu_platform\mu_button_io.c</Link>
+    </Compile>
+    <Compile Include="..\..\mu_platform\src\mu_kbd_io.c">
+      <SubType>compile</SubType>
+      <Link>mu_platform\mu_kbd_io.c</Link>
+    </Compile>
+    <Compile Include="..\..\mu_platform\src\mu_led_io.c">
+      <SubType>compile</SubType>
+      <Link>mu_platform\mu_led_io.c</Link>
+    </Compile>
+    <Compile Include="..\..\mu_platform\src\mu_platform.c">
+      <SubType>compile</SubType>
+      <Link>mu_platform\mu_platform.c</Link>
+    </Compile>
+    <Compile Include="..\..\mu_platform\src\mu_rtc.c">
+      <SubType>compile</SubType>
+      <Link>mu_platform\mu_rtc.c</Link>
+    </Compile>
+    <Compile Include="..\..\mu_platform\src\mu_time.c">
+      <SubType>compile</SubType>
+      <Link>mu_platform\mu_time.c</Link>
     </Compile>
     <Compile Include="atmel_start.c">
       <SubType>compile</SubType>
@@ -522,13 +431,13 @@
     <Compile Include="include\protected_io.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="include\rtc.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="include\sleep.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\system.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="include\tc.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\usart_basic.h">
@@ -552,10 +461,10 @@
     <Compile Include="src\protected_io.S">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\sleep.c">
+    <Compile Include="src\rtc.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\tc.c">
+    <Compile Include="src\sleep.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\usart_basic.c">
@@ -605,13 +514,13 @@
     <None Include="doxygen\pmic.dox">
       <SubType>compile</SubType>
     </None>
+    <None Include="doxygen\rtc.dox">
+      <SubType>compile</SubType>
+    </None>
     <None Include="doxygen\sleep.dox">
       <SubType>compile</SubType>
     </None>
     <None Include="doxygen\system.dox">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="doxygen\timer.dox">
       <SubType>compile</SubType>
     </None>
     <None Include="doxygen\usart.dox">
@@ -629,10 +538,10 @@
     <None Include="modules\pmic\doc\pmic.rst">
       <SubType>compile</SubType>
     </None>
-    <None Include="modules\sleep\doc\sleep.rst">
+    <None Include="modules\rtc\doc\rtc.rst">
       <SubType>compile</SubType>
     </None>
-    <None Include="modules\timer\doc\tc.rst">
+    <None Include="modules\sleep\doc\sleep.rst">
       <SubType>compile</SubType>
     </None>
     <None Include="modules\usart\doc\usart_basic.rst">
