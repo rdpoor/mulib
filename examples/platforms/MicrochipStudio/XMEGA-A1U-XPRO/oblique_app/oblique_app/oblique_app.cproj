@@ -182,7 +182,7 @@
       <Value>../</Value>
       <Value>../Config</Value>
       <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
-      <Value>../../../../../../sources/oblique_eg/incl</Value>
+      <Value>../../../../../../shared/oblique_eg/incl</Value>
       <Value>../../../mu_platform/incl</Value>
       <Value>../../../../../../../mulib/collections/incl</Value>
       <Value>../../../../../../../mulib/sched/incl</Value>
@@ -318,19 +318,19 @@
       <SubType>compile</SubType>
       <Link>mulib\utils\mu_random.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\oblique_eg\incl\oblique.h">
+    <Compile Include="..\..\..\..\..\shared\oblique_eg\incl\oblique.h">
       <SubType>compile</SubType>
       <Link>oblique_eg\oblique.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\oblique_eg\incl\strategies.h">
+    <Compile Include="..\..\..\..\..\shared\oblique_eg\incl\strategies.h">
       <SubType>compile</SubType>
       <Link>oblique_eg\strategies.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\oblique_eg\src\oblique.c">
+    <Compile Include="..\..\..\..\..\shared\oblique_eg\src\oblique.c">
       <SubType>compile</SubType>
       <Link>oblique_eg\oblique.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\oblique_eg\src\strategies.c">
+    <Compile Include="..\..\..\..\..\shared\oblique_eg\src\strategies.c">
       <SubType>compile</SubType>
       <Link>oblique_eg\strategies.c</Link>
     </Compile>

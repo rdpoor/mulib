@@ -39,7 +39,7 @@
  *
  * \acme_license_stop
  *
- * Project: join_wto_eg
+ * Project: parse_http_app
  * Target:  ATxmega128A1U 
  *
  **/

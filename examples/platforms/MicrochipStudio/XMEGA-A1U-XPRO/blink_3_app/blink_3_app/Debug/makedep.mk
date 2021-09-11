@@ -16,11 +16,11 @@
 
 ..\..\..\..\..\..\mulib\sched\src\mu_timer.c
 
-..\..\..\..\..\sources\blink_3_eg\src\blink_3.c
+..\..\..\..\..\shared\blink_3_eg\src\blink_3.c
 
-..\..\..\..\..\sources\blink_3_eg\src\morse_char.c
+..\..\..\..\..\shared\blink_3_eg\src\morse_char.c
 
-..\..\..\..\..\sources\blink_3_eg\src\morse_str.c
+..\..\..\..\..\shared\blink_3_eg\src\morse_str.c
 
 ..\..\mu_platform\src\mu_button_io.c
 

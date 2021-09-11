@@ -40,7 +40,13 @@
 // Includes
 
 #include "parse_http.h"
-#include "mulib.h"
+
+#include <mu_platform.h>
+
+#include <mu_array.h>
+#include <mu_str.h>
+#include <mu_strbuf.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>

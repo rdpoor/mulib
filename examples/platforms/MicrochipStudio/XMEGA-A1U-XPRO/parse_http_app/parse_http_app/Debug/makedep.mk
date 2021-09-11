@@ -2,27 +2,15 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
-..\..\..\..\..\..\mulib\collections\src\mu_dlist.c
+..\..\..\..\..\..\mulib\collections\src\mu_array.c
 
-..\..\..\..\..\..\mulib\collections\src\mu_list.c
+..\..\..\..\..\..\mulib\string\src\mu_str.c
 
-..\..\..\..\..\..\mulib\sched\src\mu_sched.c
+..\..\..\..\..\..\mulib\string\src\mu_strbuf.c
 
-..\..\..\..\..\..\mulib\sched\src\mu_spsc.c
+..\..\..\..\..\..\mulib\string\src\mu_str_utils.c
 
-..\..\..\..\..\..\mulib\sched\src\mu_task.c
-
-..\..\..\..\..\..\mulib\sched\src\mu_thunk.c
-
-..\..\..\..\..\..\mulib\sched\src\mu_timer.c
-
-..\..\..\..\..\..\mulib\term\src\mu_ansi_term.c
-
-..\..\..\..\..\..\mulib\utils\src\mu_random.c
-
-..\..\..\..\..\shared\oblique_eg\src\oblique.c
-
-..\..\..\..\..\shared\oblique_eg\src\strategies.c
+..\..\..\..\..\shared\parse_http_eg\src\parse_http.c
 
 ..\..\mu_platform\src\mu_button_io.c
 

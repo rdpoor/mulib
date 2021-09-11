@@ -2,7 +2,7 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
-..\..\..\..\..\sources\platform_test_eg\src\platform_test.c
+..\..\..\..\..\shared\platform_test_eg\src\platform_test.c
 
 ..\..\mu_platform\src\mu_button_io.c
 

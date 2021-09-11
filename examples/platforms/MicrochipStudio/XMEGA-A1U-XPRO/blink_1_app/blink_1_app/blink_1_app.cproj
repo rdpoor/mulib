@@ -182,7 +182,7 @@
       <Value>../</Value>
       <Value>../Config</Value>
       <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
-      <Value>../../../../../../sources/blink_1_eg/incl</Value>
+      <Value>../../../../../../shared/blink_1_eg/incl</Value>
       <Value>../../../mu_platform/incl</Value>
       <Value>../../../../../../../mulib/collections/incl</Value>
       <Value>../../../../../../../mulib/sched/incl</Value>
@@ -299,11 +299,11 @@
       <SubType>compile</SubType>
       <Link>mulib\sched\mu_timer.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\blink_1_eg\incl\blink_1.h">
+    <Compile Include="..\..\..\..\..\shared\blink_1_eg\incl\blink_1.h">
       <SubType>compile</SubType>
       <Link>blink_1_eg\blink_1.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\blink_1_eg\src\blink_1.c">
+    <Compile Include="..\..\..\..\..\shared\blink_1_eg\src\blink_1.c">
       <SubType>compile</SubType>
       <Link>blink_1_eg\blink_1.c</Link>
     </Compile>

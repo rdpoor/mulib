@@ -182,7 +182,7 @@
       <Value>../</Value>
       <Value>../Config</Value>
       <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
-      <Value>../../../../../../sources/platform_test_eg/incl</Value>
+      <Value>../../../../../../shared/platform_test_eg/incl</Value>
       <Value>../../../mu_platform/incl</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
@@ -237,11 +237,11 @@
     <Folder Include="utils\assembler\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\..\..\..\sources\platform_test_eg\incl\platform_test.h">
+    <Compile Include="..\..\..\..\..\shared\platform_test_eg\incl\platform_test.h">
       <SubType>compile</SubType>
       <Link>platform_test_eg\platform_test.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\platform_test_eg\src\platform_test.c">
+    <Compile Include="..\..\..\..\..\shared\platform_test_eg\src\platform_test.c">
       <SubType>compile</SubType>
       <Link>platform_test_eg\platform_test.c</Link>
     </Compile>

@@ -1,5 +1,5 @@
 format_version: '2'
-name: join_wto_eg
+name: parse_http_app
 versions:
   api: '1.0'
   backend: 1.8.543

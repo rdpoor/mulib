@@ -1,6 +1,5 @@
 #include <atmel_start.h>
-#include "join_wto_eg/join_wto_eg.h"
-#include <stddef.h>
+#include "parse_http.h"
 
 int main(void)
 {
@@ -8,8 +7,8 @@ int main(void)
 	atmel_start_init();
 
 	/* Replace with your application code */
-	join_wto_eg_init();
+	parse_http_init();
 	while (1) {
-		join_wto_eg_step();
+		parse_http_step();
 	}
 }

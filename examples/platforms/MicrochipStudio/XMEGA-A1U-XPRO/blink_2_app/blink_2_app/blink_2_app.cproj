@@ -182,7 +182,7 @@
             <Value>../</Value>
             <Value>../Config</Value>
             <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
-            <Value>../../../../../../sources/blink_2_eg/incl</Value>
+            <Value>../../../../../../shared/blink_2_eg/incl</Value>
             <Value>../../../mu_platform/incl</Value>
             <Value>../../../../../../../mulib/collections/incl</Value>
             <Value>../../../../../../../mulib/sched/incl</Value>
@@ -299,19 +299,19 @@
       <SubType>compile</SubType>
       <Link>mulib\sched\mu_timer.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\blink_2_eg\incl\blink_2.h">
+    <Compile Include="..\..\..\..\..\shared\blink_2_eg\incl\blink_2.h">
       <SubType>compile</SubType>
       <Link>blink_2_eg\blink_2.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\blink_2_eg\incl\morse_char.h">
+    <Compile Include="..\..\..\..\..\shared\blink_2_eg\incl\morse_char.h">
       <SubType>compile</SubType>
       <Link>blink_2_eg\morse_char.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\blink_2_eg\src\blink_2.c">
+    <Compile Include="..\..\..\..\..\shared\blink_2_eg\src\blink_2.c">
       <SubType>compile</SubType>
       <Link>blink_2_eg\blink_2.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\sources\blink_2_eg\src\morse_char.c">
+    <Compile Include="..\..\..\..\..\shared\blink_2_eg\src\morse_char.c">
       <SubType>compile</SubType>
       <Link>blink_2_eg\morse_char.c</Link>
     </Compile>

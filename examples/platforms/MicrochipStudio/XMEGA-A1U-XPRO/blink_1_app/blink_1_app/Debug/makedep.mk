@@ -16,7 +16,7 @@
 
 ..\..\..\..\..\..\mulib\sched\src\mu_timer.c
 
-..\..\..\..\..\sources\blink_1_eg\src\blink_1.c
+..\..\..\..\..\shared\blink_1_eg\src\blink_1.c
 
 ..\..\mu_platform\src\mu_button_io.c
 

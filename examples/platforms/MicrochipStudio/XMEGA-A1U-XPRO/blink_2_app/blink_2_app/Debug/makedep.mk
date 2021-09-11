@@ -16,9 +16,9 @@
 
 ..\..\..\..\..\..\mulib\sched\src\mu_timer.c
 
-..\..\..\..\..\sources\blink_2_eg\src\blink_2.c
+..\..\..\..\..\shared\blink_2_eg\src\blink_2.c
 
-..\..\..\..\..\sources\blink_2_eg\src\morse_char.c
+..\..\..\..\..\shared\blink_2_eg\src\morse_char.c
 
 ..\..\mu_platform\src\mu_button_io.c
 
