@@ -13,13 +13,13 @@
 #include "ansi_nico_font.h"
 #include "fb.h"
 
+#include <mu_sched.h>
+#include <mu_task.h>
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "mulib.h"
-
 
 // =============================================================================
 // Local types and definitions
