@@ -28,7 +28,12 @@
 #include "animator.h"
 
 #include "tower.h"
-#include <mulib.h>
+
+#include <mu_platform.h>
+
+#include <mu_sched.h>
+#include <mu_task.h>
+
 #include <stdint.h>
 #include <stdbool.h>
 

@@ -27,7 +27,11 @@
 
 #include "joiner.h"
 
-#include <mulib.h>
+#include <mu_platform.h>
+
+#include <mu_sched.h>
+#include <mu_task.h>
+
 #include <stdio.h>
 
 // =============================================================================
@@ -46,6 +50,7 @@ static void task_fn(void *ctx, void *arg);
 
 mu_task_t *joiner_init(joiner_ctx_t *ctx, mu_task_t *on_completion) {
   // initialize the mu_task to associate task_fn with the joiner_ctx
+  // When this task completes, call the on_completion task.
   mu_task_init(&ctx->task, task_fn, ctx, "Joiner");
   ctx->on_completion = on_completion;
   ctx->pending_count = 0;

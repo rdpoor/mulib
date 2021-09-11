@@ -27,7 +27,11 @@
 
 #include "joiner_wto.h"
 
-#include <mulib.h>
+#include <mu_platform.h>
+
+#include <mu_sched.h>
+#include <mu_task.h>
+
 #include <stdio.h>
 
 // =============================================================================
@@ -79,7 +83,7 @@ static void task_fn(void *ctx, void *arg) {
     self->pending_count -= 1;
     if (self->pending_count == 0) {
       mu_sched_remove_task(&self->timeout_task);  // cancel timeout task
-      endgame(self, arg, "completed");
+      endgame(self, arg, "COMPLETED");
     }
   }
 }
@@ -90,7 +94,7 @@ static void timeout_task_fn(void *ctx, void *arg) {
   (void)arg;  // unused
 
   self->pending_count = 0;
-  endgame(self, arg, "timed out");
+  endgame(self, arg, "EXPIRED");
 }
 
 static void endgame(joiner_wto_ctx_t *self, void *arg, const char *cause) {
@@ -99,6 +103,6 @@ static void endgame(joiner_wto_ctx_t *self, void *arg, const char *cause) {
 
   mu_led_io_set(MU_LED_0, false);  // turn off LED upon completion
   printf("Joiner %s at %ld\n", cause, now);
+  // Notify the next task that joiner completed
   mu_sched_task_now(self->on_completion);
-
 }

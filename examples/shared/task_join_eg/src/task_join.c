@@ -30,7 +30,12 @@
 #include "joiner.h"
 #include "sleeper.h"
 
-#include <mulib.h>
+#include <mu_platform.h>
+
+#include <mu_sched.h>
+#include <mu_task.h>
+#include <mu_random.h>
+
 #include <stdio.h>
 #include <stddef.h>
 
@@ -68,10 +73,10 @@ static joiner_ctx_t s_joiner;
 // Public code
 
 void task_join_init(void) {
-  mulib_init();
+  mu_platform_init();
+  printf("\r\ntask_join_eg v%s\n", VERSION);
 
-  printf("\r\ntask_join_eg v%s, mulib v%s\n", VERSION, MU_VERSION);
-
+  mu_sched_init();
   mu_task_init(&s_ctx.task, task_fn, &s_ctx, "Task Join");
   mu_sched_task_now(&s_ctx.task);
 }
@@ -98,11 +103,11 @@ static void task_fn(void *ctx, void *arg) {
   // sleeper tasks have completed, the joiner task will call its on_completion
   // task (which is this task), and the process will repeatt.
   printf("-----\n");
-  at = mu_time_offset(now, mu_time_ms_to_duration(mu_mu_random_range(MIN_MS, MAX_MS)));
+  at = mu_time_offset(now, mu_time_ms_to_duration(mu_random_range(MIN_MS, MAX_MS)));
   start_sleeper(&s_sleeper_a, "Sleeper A", at);
-  at = mu_time_offset(now, mu_time_ms_to_duration(mu_mu_random_range(MIN_MS, MAX_MS)));
+  at = mu_time_offset(now, mu_time_ms_to_duration(mu_random_range(MIN_MS, MAX_MS)));
   start_sleeper(&s_sleeper_b, "Sleeper B", at);
-  at = mu_time_offset(now, mu_time_ms_to_duration(mu_mu_random_range(MIN_MS, MAX_MS)));
+  at = mu_time_offset(now, mu_time_ms_to_duration(mu_random_range(MIN_MS, MAX_MS)));
   start_sleeper(&s_sleeper_c, "Sleeper C", at);
 }
 

@@ -1,13 +1,14 @@
-#include <atmel_start.h>
 #include "tower.h"
+#include <atmel_start.h>
+#include <stdio.h>
 
 int main(void)
 {
 	/* Initializes MCU, drivers and middleware */
 	atmel_start_init();
+	tower_init();
 
 	/* Replace with your application code */
-	tower_init();
 	while (1) {
 		tower_step();
 	}

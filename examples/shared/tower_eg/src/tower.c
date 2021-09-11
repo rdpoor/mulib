@@ -31,10 +31,11 @@
 #include "fb.h"
 #include "pole.h"
 
-// here we include mu modules a la carte -- this means we need to call  mu_time_init() and mu_sched_init() which we do in our own tower_init()
-#include "mu_rtc.h"
-#include "mu_ansi_term.h"
-#include "mu_platform.h"
+#include <mu_platform.h>
+
+#include <mu_ansi_term.h>
+#include <mu_sched.h>
+#include <mu_task.h>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -108,7 +109,7 @@ static void reset(void);
 // Public code
 
 void tower_init(void) {
-  mu_time_init();
+  mu_platform_init();
   mu_sched_init();
 
   mu_ansi_term_set_cursor_visible(false);

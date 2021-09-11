@@ -41,12 +41,11 @@
 #include <port.h>
 #include <atmel_start_pins.h>
 
-#include <tc.h>
-
 #include <osc.h>
 #include <ccp.h>
 
 #include <clk.h>
+#include <rtc.h>
 #include <pmic.h>
 #include <ccp.h>
 

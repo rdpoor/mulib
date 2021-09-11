@@ -27,7 +27,10 @@
 
 #include "sleeper.h"
 
-#include <mulib.h>
+#include <mu_platform.h>
+
+#include <mu_task.h>
+
 #include <stdio.h>
 #include <stddef.h>
 

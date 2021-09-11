@@ -30,7 +30,12 @@
 #include "joiner_wto.h"
 #include "sleeper.h"
 
-#include <mulib.h>
+#include <mu_platform.h>
+
+#include <mu_sched.h>
+#include <mu_task.h>
+#include <mu_random.h>
+
 #include <stdio.h>
 #include <stddef.h>
 
@@ -70,12 +75,12 @@ static joiner_wto_ctx_t s_joiner_wto;
 // Public code
 
 void task_join_wto_init(void) {
-  mulib_init();
-
-  printf("\r\ntask_join_wto_eg v%s, mulib v%s\n", VERSION, MU_VERSION);
-
+  mu_platform_init();
+  printf("\r\ntask_join_wto_eg v%s\n", VERSION);
 
   s_task_join_wto_ctx.sleepers_are_iniitalied = false;
+
+  mu_sched_init();
   mu_task_init(&s_task_join_wto_ctx.task, task_fn, &s_task_join_wto_ctx, "Join Wto Eg");
   mu_sched_task_now(&s_task_join_wto_ctx.task);
 }
@@ -99,6 +104,14 @@ static void task_fn(void *ctx, void *arg) {
     // more of the sleeper tasks are still in the schedule queue.  Be sure to
     // remove them from the scheduler, since calling mu_task_init() on a
     // scheduled task will destroy the scheduler queue.
+    //
+    // IMPLEMENTATION NOTE: This restriction is a direct consequence of using
+    // link fields in the mu_task object for the scheduler.  This has more than
+    // a bit of code smell to it.  The argument for this approach is that every
+    // task can be scheduled without running out of resources.  The alternative
+    // would be for the scheduler to maintain an array of mu_task objects, which
+    // would require that you know how many tasks will be scheduled at compile
+    // time.
     mu_sched_remove_task(sleeper_task(&s_sleeper_a));
     mu_sched_remove_task(sleeper_task(&s_sleeper_b));
     mu_sched_remove_task(sleeper_task(&s_sleeper_c));

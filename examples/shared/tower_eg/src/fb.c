@@ -27,7 +27,8 @@
 
 #include "fb.h"
 
-#include <mulib.h>
+#include <mu_ansi_term.h>
+
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
