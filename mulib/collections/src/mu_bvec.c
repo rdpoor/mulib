@@ -70,66 +70,66 @@ uint8_t mu_bvec_byte_mask(size_t bit_index) {
 }
 
 // Low-level operations that assume you have byte_index and byte_mask
-void mu_bvec_set_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store) {
+void mu_bvec_set_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask) {
   store[byte_index] |= byte_mask;
 }
 
-void mu_bvec_clear_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store) {
+void mu_bvec_clear_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask) {
   store[byte_index] &= ~byte_mask;
 }
 
-void mu_bvec_invert_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store) {
+void mu_bvec_invert_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask) {
   store[byte_index] ^= byte_mask;
 }
 
-void mu_bvec_write_(size_t byte_index,
+void mu_bvec_write_(mu_bvec_t *store,
+                    size_t byte_index,
                     uint8_t byte_mask,
-                    mu_bvec_t *store,
                     bool value) {
   if (value) {
-    mu_bvec_set_(byte_index, byte_mask, store);
+    mu_bvec_set_(store, byte_index, byte_mask);
   } else {
-    mu_bvec_clear_(byte_index, byte_mask, store);
+    mu_bvec_clear_(store, byte_index, byte_mask);
   }
 }
 
-bool mu_bvec_read_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store) {
+bool mu_bvec_read_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask) {
   return (store[byte_index] & byte_mask) != 0;
 }
 
 // Same, but take bit index instead
-void mu_bvec_set(size_t bit_index, mu_bvec_t *store) {
+void mu_bvec_set(mu_bvec_t *store, size_t bit_index) {
   mu_bvec_set_(
-      mu_bvec_byte_index(bit_index), mu_bvec_byte_mask(bit_index), store);
+      mu_bvec_byte_index(store, bit_index), mu_bvec_byte_mask(bit_index));
 }
 
-void mu_bvec_clear(size_t bit_index, mu_bvec_t *store) {
+void mu_bvec_clear(mu_bvec_t *store, size_t bit_index) {
   mu_bvec_clear_(
-      mu_bvec_byte_index(bit_index), mu_bvec_byte_mask(bit_index), store);
+      mu_bvec_byte_index(store, bit_index), mu_bvec_byte_mask(bit_index));
 }
 
-void mu_bvec_invert(size_t bit_index, mu_bvec_t *store) {
+void mu_bvec_invert(mu_bvec_t *store, size_t bit_index) {
   mu_bvec_invert_(
-      mu_bvec_byte_index(bit_index), mu_bvec_byte_mask(bit_index), store);
+      mu_bvec_byte_index(store, bit_index), mu_bvec_byte_mask(bit_index));
 }
 
-void mu_bvec_write(size_t bit_index, mu_bvec_t *store, bool value) {
+void mu_bvec_write(mu_bvec_t *store, size_t bit_index, bool value) {
   size_t byte_index = mu_bvec_byte_index(bit_index);
   uint8_t byte_mask = mu_bvec_byte_mask(bit_index);
   if (value) {
-    mu_bvec_set_(byte_index, byte_mask, store);
+    mu_bvec_set_(store, byte_index, byte_mask);
   } else {
-    mu_bvec_clear_(byte_index, byte_mask, store);
+    mu_bvec_clear_(store, byte_index, byte_mask);
   }
 }
 
-bool mu_bvec_read(size_t bit_index, mu_bvec_t *store) {
+bool mu_bvec_read(mu_bvec_t *store, size_t bit_index) {
   return mu_bvec_read_(
-      mu_bvec_byte_index(bit_index), mu_bvec_byte_mask(bit_index), store);
+      mu_bvec_byte_index(store, bit_index), mu_bvec_byte_mask(bit_index));
 }
 
 // Queries for bit vectors
-bool mu_bvec_is_all_ones(size_t bit_count, mu_bvec_t *store) {
+bool mu_bvec_is_all_ones(mu_bvec_t *store, size_t bit_count) {
   size_t byte_index;
   size_t bits_remain;
   for (byte_index = 0, bits_remain = bit_count; bits_remain >= 8;
@@ -147,7 +147,7 @@ bool mu_bvec_is_all_ones(size_t bit_count, mu_bvec_t *store) {
   }
 }
 
-bool mu_bvec_is_all_zeros(size_t bit_count, mu_bvec_t *store) {
+bool mu_bvec_is_all_zeros(mu_bvec_t *store, size_t bit_count) {
   size_t byte_index;
   size_t bits_remain;
   for (byte_index = 0, bits_remain = bit_count; bits_remain >= 8;
@@ -165,7 +165,7 @@ bool mu_bvec_is_all_zeros(size_t bit_count, mu_bvec_t *store) {
   }
 }
 
-size_t mu_bvec_count_ones(size_t bit_count, mu_bvec_t *store) {
+size_t mu_bvec_count_ones(mu_bvec_t *store, size_t bit_count) {
   size_t count = 0;
   size_t byte_index;
   size_t bits_remain;
@@ -181,12 +181,12 @@ size_t mu_bvec_count_ones(size_t bit_count, mu_bvec_t *store) {
   return count;
 }
 
-size_t mu_bvec_count_zeros(size_t bit_count, mu_bvec_t *store) {
-  return bit_count - mu_bvec_count_ones(bit_count, store);
+size_t mu_bvec_count_zeros(mu_bvec_t *store, size_t bit_count) {
+  return bit_count - mu_bvec_count_ones(store, bit_count);
 }
 
 // Returns SIZE_MAX if not found
-size_t mu_bvec_find_first_one(size_t bit_count, mu_bvec_t *store) {
+size_t mu_bvec_find_first_one(mu_bvec_t *store, size_t bit_count) {
   size_t position = 0;
   size_t byte_index;
   size_t bits_remain;
@@ -213,7 +213,7 @@ size_t mu_bvec_find_first_one(size_t bit_count, mu_bvec_t *store) {
   return SIZE_MAX;
 }
 
-size_t mu_bvec_find_first_zero(size_t bit_count, mu_bvec_t *store) {
+size_t mu_bvec_find_first_zero(mu_bvec_t *store, size_t bit_count) {
   size_t position = 0;
   size_t byte_index;
   size_t bits_remain;
@@ -241,21 +241,21 @@ size_t mu_bvec_find_first_zero(size_t bit_count, mu_bvec_t *store) {
 }
 
 // modify all bits in a bit vector
-void mu_bvec_set_all(size_t bit_count, mu_bvec_t *store) {
+void mu_bvec_set_all(mu_bvec_t *store, size_t bit_count) {
   size_t byte_count = mu_bvec_byte_index(bit_count);
   size_t remainder = bit_count & 0x07;
   memset(store, 0xff, byte_count);
   store[byte_count] |= s_byte_rmasks[remainder];
 }
 
-void mu_bvec_clear_all(size_t bit_count, mu_bvec_t *store) {
+void mu_bvec_clear_all(mu_bvec_t *store, size_t bit_count) {
   size_t byte_count = mu_bvec_byte_index(bit_count);
   size_t remainder = bit_count & 0x07;
   memset(store, 0, byte_count);
   store[byte_count] &= ~s_byte_rmasks[remainder];
 }
 
-void mu_bvec_invert_all(size_t bit_count, mu_bvec_t *store) {
+void mu_bvec_invert_all(mu_bvec_t *store, size_t bit_count) {
   size_t byte_index;
   size_t bits_remain;
   for (byte_index = 0, bits_remain = bit_count; bits_remain >= 8;
@@ -269,11 +269,11 @@ void mu_bvec_invert_all(size_t bit_count, mu_bvec_t *store) {
   }
 }
 
-void mu_bvec_write_all(size_t bit_count, mu_bvec_t *store, bool value) {
+void mu_bvec_write_all(mu_bvec_t *store, size_t bit_count, bool value) {
   if (value) {
-    mu_bvec_set_all(bit_count, store);
+    mu_bvec_set_all(store, bit_count);
   } else {
-    mu_bvec_clear_all(bit_count, store);
+    mu_bvec_clear_all(store, bit_count);
   }
 }
 

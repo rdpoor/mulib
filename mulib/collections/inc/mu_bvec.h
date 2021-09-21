@@ -60,40 +60,40 @@ size_t mu_bvec_byte_index(size_t bit_index);
 uint8_t mu_bvec_byte_mask(size_t bit_index);
 
 // Low-level operations that assume you have byte_index and byte_mask
-void mu_bvec_set_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store);
-void mu_bvec_clear_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store);
-void mu_bvec_invert_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store);
-void mu_bvec_write_(size_t byte_index,
+void mu_bvec_set_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask);
+void mu_bvec_clear_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask);
+void mu_bvec_invert_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask);
+void mu_bvec_write_(mu_bvec_t *store,
+                    size_t byte_index,
                     uint8_t byte_mask,
-                    mu_bvec_t *store,
                     bool value);
-bool mu_bvec_read_(size_t byte_index, uint8_t byte_mask, mu_bvec_t *store);
+bool mu_bvec_read_(mu_bvec_t *store, size_t byte_index, uint8_t byte_mask);
 
 // Same, but take bit index instead
-void mu_bvec_set(size_t bit_index, mu_bvec_t *store);
-void mu_bvec_clear(size_t bit_index, mu_bvec_t *store);
-void mu_bvec_invert(size_t bit_index, mu_bvec_t *store);
-void mu_bvec_write(size_t bit_index, mu_bvec_t *store, bool value);
-bool mu_bvec_read(size_t bit_index, mu_bvec_t *store);
+void mu_bvec_set(mu_bvec_t *store, size_t bit_index);
+void mu_bvec_clear(mu_bvec_t *store, size_t bit_index);
+void mu_bvec_invert(mu_bvec_t *store, size_t bit_index);
+void mu_bvec_write(mu_bvec_t *store, size_t bit_index, bool value);
+bool mu_bvec_read(mu_bvec_t *store, size_t bit_index);
 
 // Queries for bit vectors
-bool mu_bvec_is_all_ones(size_t bit_count, mu_bvec_t *store);
-bool mu_bvec_is_all_zeros(size_t bit_count, mu_bvec_t *store);
+bool mu_bvec_is_all_ones(mu_bvec_t *store, size_t bit_count);
+bool mu_bvec_is_all_zeros(mu_bvec_t *store, size_t bit_count);
 
-size_t mu_bvec_count_ones(size_t bit_count, mu_bvec_t *store);
-size_t mu_bvec_count_zeros(size_t bit_count, mu_bvec_t *store);
+size_t mu_bvec_count_ones(mu_bvec_t *store, size_t bit_count);
+size_t mu_bvec_count_zeros(mu_bvec_t *store, size_t bit_count);
 
 // Returns SIZE_MAX if not found
-size_t mu_bvec_find_first_one(size_t bit_count, mu_bvec_t *store);
-size_t mu_bvec_find_first_zero(size_t bit_count, mu_bvec_t *store);
-// size_t mu_bvec_find_last_one(size_t bit_count, mu_bvec_t *store);
-// size_t mu_bvec_find_last_zero(size_t bit_count, mu_bvec_t *store);
+size_t mu_bvec_find_first_one(mu_bvec_t *store, size_t bit_count);
+size_t mu_bvec_find_first_zero(mu_bvec_t *store, size_t bit_count);
+// size_t mu_bvec_find_last_one(mu_bvec_t *store, size_t bit_count);
+// size_t mu_bvec_find_last_zero(mu_bvec_t *store, size_t bit_count);
 
 // modify all bits in a bit vector
-void mu_bvec_set_all(size_t bit_count, mu_bvec_t *store);
-void mu_bvec_clear_all(size_t bit_count, mu_bvec_t *store);
-void mu_bvec_invert_all(size_t bit_count, mu_bvec_t *store);
-void mu_bvec_write_all(size_t bit_count, mu_bvec_t *store, bool value);
+void mu_bvec_set_all(mu_bvec_t *store, size_t bit_count);
+void mu_bvec_clear_all(mu_bvec_t *store, size_t bit_count);
+void mu_bvec_invert_all(mu_bvec_t *store, size_t bit_count);
+void mu_bvec_write_all(mu_bvec_t *store, size_t bit_count, bool value);
 
 // Consider
 // rotate and shift operations
