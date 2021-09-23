@@ -277,6 +277,34 @@ void mu_bvec_write_all(mu_bvec_t *store, size_t bit_count, bool value) {
   }
 }
 
+bool mu_bvec_did_set(mu_bvec_t *store, size_t bit_index) {
+  size_t index = mu_bvec_byte_index(bit_index);
+  uint8_t mask = mu_bvec_byte_mask(bit_index);
+
+  if (!mu_bvec_read_(store, index, mask)) {
+    // Bit was clear: set it and return true.
+    mu_bvec_set_(store, index, mask);
+    return true;
+  } else {
+    // Bit was already set: return false
+    return false;
+  }
+}
+
+bool mu_bvec_did_clear(mu_bvec_t *store, size_t bit_index) {
+  size_t index = mu_bvec_byte_index(bit_index);
+  uint8_t mask = mu_bvec_byte_mask(bit_index);
+
+  if (mu_bvec_read_(store, index, mask)) {
+    // Bit was set: clear it and return true;
+    mu_bvec_clear_(store, index, mask);
+    return true;
+  } else {
+    // Bit was already cleared: return false
+    return false;
+  }
+}
+
 // =============================================================================
 // local (static) code
 

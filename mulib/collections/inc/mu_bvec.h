@@ -95,6 +95,12 @@ void mu_bvec_clear_all(mu_bvec_t *store, size_t bit_count);
 void mu_bvec_invert_all(mu_bvec_t *store, size_t bit_count);
 void mu_bvec_write_all(mu_bvec_t *store, size_t bit_count, bool value);
 
+// If bit_index is already set, return false.  Else set it and return true.
+bool mu_bvec_did_set(mu_bvec_t *store, size_t bit_index);
+
+// If bit_index is already cleared, return false.  Else clear it and return true.
+bool mu_bvec_did_clear(mu_bvec_t *store, size_t bit_index);
+
 // Consider
 // rotate and shift operations
 // operations on sub-ranges
