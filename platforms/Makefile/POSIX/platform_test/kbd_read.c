@@ -14,6 +14,8 @@ pthread_t thread_id;
 void *reader_thread(void* vargp);
 
 void start_kbd_reader_thread(void) {
+  printf("start_kbd_reader_thread\n");
+  exit();
   mu_kbd_enter_noncanonical_mode(); // so we dont wait for line feeds,  and we dont echo
   pthread_create(&thread_id, NULL, reader_thread, NULL);
   atexit(mu_kbd_exit_noncanonical_mode); // restores terminal attributes

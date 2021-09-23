@@ -25,6 +25,7 @@
 // =============================================================================
 // Includes
 
+
 #include "mu_kbd_io.h"
 #include "mu_ansi_term.h"
 
@@ -33,11 +34,18 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include <pthread.h>
+
+#define HAS_MU_KBD 1
+
 #ifdef HAS_MU_KBD
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #endif
+
+       #include <termios.h>
+       #include <unistd.h>
 
 // =============================================================================
 // Local types and definitions
@@ -53,6 +61,7 @@ static bool _has_saved_attributes = false;
 static bool _tty_is_in_non_canonical_mode = false;
 static int mu_kbd_cols = 80;
 static int mu_kbd_rows = 24;
+pthread_t thread_id;
 
 // =============================================================================
 // Local (forward) declarations
@@ -60,6 +69,9 @@ static int mu_kbd_rows = 24;
 static void mu_kbd_get_terminal_attributes(struct termios *terminal_attributes);
 static void mu_kbd_set_terminal_attributes(struct termios *terminal_attributes);
 static void read_ttysize();
+
+void start_kbd_reader_thread(void);
+void *reader_thread(void* vargp);
 
 #ifdef HAS_SIGNAL 
 static void handle_sigwinch();
@@ -73,14 +85,12 @@ void mu_kbd_io_init(void) {
   #ifdef HAS_SIGNAL
     signal(SIGWINCH, handle_sigwinch);
   #endif
+  start_kbd_reader_thread();
+
 }
 
 void mu_kbd_io_set_callback(mu_kbd_io_callback_t cb) {
   s_kbd_io_cb = cb;
-}
-
-void fire_kbd_io_callback(char ch) {
-  s_kbd_io_cb(ch);
 }
 
 int mu_kbd_ncols() {
@@ -150,7 +160,6 @@ static void mu_kbd_set_terminal_attributes(struct termios *terminal_attributes) 
 }
 
 static void mu_kbd_get_terminal_attributes(struct termios *terminal_attributes) {
-  printf("mu_kbd_get_terminal_attributes\n");
   tcgetattr(STDIN_FILENO, terminal_attributes);      
 }
 
@@ -181,4 +190,24 @@ static void read_ttysize() {
  //   s_kbd_io_cb(data);
 //  }
 //}
+
+// here we simulate the single-threaded tty interrupt system by spawning a posix thread
+// to monitor the keyboard, and fire the callback
+
+void start_kbd_reader_thread(void) {
+  printf("start_kbd_reader_thread\n");
+  mu_kbd_enter_noncanonical_mode(); // so we dont wait for line feeds,  and we dont echo
+  pthread_create(&thread_id, NULL, reader_thread, NULL);
+  atexit(mu_kbd_exit_noncanonical_mode); // restores terminal attributes
+}
+
+void *reader_thread(void* vargp)
+{
+    while(1) {
+      char ch = mu_kbd_get_key_press(); // assuming we are in noncanonical mode this won't hang
+      if(ch) 
+        s_kbd_io_cb(ch);
+    }
+}
+
 

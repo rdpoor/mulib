@@ -6,7 +6,7 @@
 
 .PHONY: all clean mulib_core_objects mulib_extras_objects mu_platform_objects oblique_eg_objects
 
-APP_NAME = blinky_1
+APP_NAME = platform_test
 
 TOP_MULIB_DIR = ../../../..
 MODULES_DIR = $(TOP_MULIB_DIR)/mulib
@@ -47,8 +47,6 @@ SOURCES_MU_UTILS := $(wildcard $(SRC_MULIB_UTILS_DIR)/*.c)
 
 SOURCES_MU_PLATFORM := $(wildcard $(SRC_MU_PLATFORM_DIR)/*.c)
 SOURCES_APP := $(wildcard $(SRC_APP_DIR)/*.c)
-
-
 
 BUILD_DIR := build
 BUILD_MULIB_DIR := $(BUILD_DIR)/mulib
@@ -95,6 +93,7 @@ clean:
 #	$(info    AAAAA into dir: is $(@D))
 #	@mkdir -p $(BUILD_MULIB_DIR)/$(@)
 #	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
+
 
 $(BUILD_MULIB_DIR)/collections/%.o : $(SRC_MULIB_COLLECTIONS_DIR)/%.c $(INC_MULIB_COLLECTIONS_DIR)/*.h
 	$(info    Build into dir: is $(@D))

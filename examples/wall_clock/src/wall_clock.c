@@ -13,8 +13,15 @@
 #include "ansi_nico_font.h"
 #include "fb.h"
 
+#include <mu_time.h>
 #include <mu_sched.h>
+#include <mu_rtc.h>
 #include <mu_task.h>
+#include <mu_kbd_io.h>
+#include <mu_button_io.h>
+#include <mu_led_io.h>
+#include <mu_ansi_term.h>
+
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -59,10 +66,16 @@ static char s_display_buf[TERM_WIDTH * TERM_HEIGHT];
 // Public code
 
 void wall_clock_init(void) {
-  // a l carte means we are responsible for calling these inits
-  mu_time_init();
-  mu_sched_init();
+  mu_button_io_init();
+  mu_led_io_init();
+  mu_rtc_init();
   mu_ansi_term_init();
+  mu_kbd_io_init();
+  //mu_signal_init();
+
+  // mu_time_init();
+  // mu_sched_init();
+  // mu_ansi_term_init();
   mu_ansi_term_set_cursor_visible(false);
   mu_ansi_term_clear_screen();
   fb_init(TERM_WIDTH, TERM_HEIGHT, s_backing_buf, s_display_buf);

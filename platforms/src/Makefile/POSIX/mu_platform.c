@@ -31,7 +31,8 @@
 #include "mu_rtc.h"
 #include "mu_ansi_term.h"
 #include "mu_kbd_io.h"
-#include "mu_signal.h"
+
+//#include "mu_signal.h"
 
 // =============================================================================
 // Private types and definitions
@@ -52,7 +53,7 @@ void mu_platform_init(void) {
   mu_rtc_init();
   mu_ansi_term_init();
   mu_kbd_io_init();
-  mu_signal_init();
+  //mu_signal_init();
 }
 
 // =============================================================================

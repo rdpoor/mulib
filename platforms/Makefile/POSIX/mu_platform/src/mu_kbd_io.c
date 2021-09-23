@@ -150,7 +150,6 @@ static void mu_kbd_set_terminal_attributes(struct termios *terminal_attributes) 
 }
 
 static void mu_kbd_get_terminal_attributes(struct termios *terminal_attributes) {
-  printf("mu_kbd_get_terminal_attributes\n");
   tcgetattr(STDIN_FILENO, terminal_attributes);      
 }
 
