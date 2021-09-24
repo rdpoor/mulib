@@ -55,7 +55,7 @@ void mu_led_io_init(void) {
 
 //static uint8_t _cursor_x, _cursor_y;
 
-// Draw a virtual LED at 0,0 on the screen.  Assumes an ANSI compiant terminal.
+// Draw a virtual LED at 0,0 on the screen.  Calls ansi functions which may be harmless nops on platforms without ansi_term ttys
 void mu_led_io_set(uint8_t led_id, bool on) {
   (void)led_id;
 

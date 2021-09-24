@@ -36,12 +36,6 @@ extern "C" {
 // types and definitions
 
 
-//#define HAS_MU_KBD (1)
-
-// #ifdef HAS_MU_KBD
-//   #include <termios.h>
-// #endif
-
 // Signature of the keyboard callback function
 typedef void (*mu_kbd_io_callback_t)(unsigned char ch);
 

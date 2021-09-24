@@ -12,7 +12,7 @@ TOP_MULIB_DIR = ../../../..
 MODULES_DIR = $(TOP_MULIB_DIR)/mulib
 
 #i would love to get this to work
-MODULES_USED = collections log sched string term utils
+#MODULES_USED = collections log sched string term utils
 
 SRC_MULIB_COLLECTIONS_DIR = $(MODULES_DIR)/collections/src
 SRC_MULIB_LOG_DIR = $(MODULES_DIR)/log/src

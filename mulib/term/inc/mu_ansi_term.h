@@ -26,6 +26,9 @@
  * @file mu_ansi_term.h
  *
  * Support for the more common ANSI terminal escape sequences.
+ * Platform-specific settings in mu_cconfig.h (notably MU_HAS_ANSI_TERM) and platform-specific code in mu_kdb_io.c will determine what functionality is actually available.
+ * You can call any of these functions from your application code, but on platforms without ansi_termn support they will be NOPs.
+ * 
  */
 
 #ifndef _MU_ANSI_TERM_H_
@@ -40,10 +43,13 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdint.h>
-
+#include <mu_config.h>
 
 // =============================================================================
 // types and definitions
+// MU_HAS_ANSI_TERM wil have been defined (or not!) in mu_config.h
+
+
 
 #define DEFINE_ANSI_TERM_COLORS                                                \
   ANSI_TERM_COLOR(MU_ANSI_TERM_BLACK, 30, 40)                                  \

@@ -36,16 +36,15 @@
 
 #include <pthread.h>
 
-#define HAS_MU_KBD 1
+/**
+ * Uncomment if your platform supports ANSI_TERM
+ */
+#define MU_KBD_HAS_ANSI_TERM 1 // COULD go into mu_config.h instead...
 
-#ifdef HAS_MU_KBD
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#endif
-
-       #include <termios.h>
-       #include <unistd.h>
+#include <termios.h>
 
 // =============================================================================
 // Local types and definitions
@@ -54,6 +53,9 @@
 
 // =============================================================================
 // Local storage
+
+bool _mu_kbd_has_ansi_term = MU_KBD_HAS_ANSI_TERM;
+
 
 static mu_kbd_io_callback_t s_kbd_io_cb = 0;
 static struct termios saved_attributes;

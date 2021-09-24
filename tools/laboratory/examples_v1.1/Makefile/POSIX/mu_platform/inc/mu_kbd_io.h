@@ -35,14 +35,6 @@ extern "C" {
 // =============================================================================
 // types and definitions
 
-#define HAS_MU_KBD
-
-//#define HAS_MU_KBD (1)
-
-#ifdef HAS_MU_KBD
-  #include <termios.h>
-#endif
-
 // Signature of the keyboard callback function
 typedef void (*mu_kbd_io_callback_t)(unsigned char ch);
 
@@ -100,7 +92,7 @@ int mu_kbd_get_key_press(void);
 
 /**
  * @brief Returns the number of columns (aka the width in characters) of the output terminal.  On systems with SIGWINCH,
- * this value is updated whenever the user adjusts the size of the terminal window.
+ * this value is updated whenever the user adjusts the size of the terminal window.   For basic tty system this defaults to 80
  */
 int mu_kbd_ncols();
 /**

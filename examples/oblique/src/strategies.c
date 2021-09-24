@@ -267,8 +267,9 @@ void strategies_choose_and_print() {
   const char *s = s_strategies[index];
   int screen_width = 80;
 
-#ifdef HAS_MU_KBD
-  screen_width = mu_kbd_ncols();
+#ifdef MU_HAS_ANSI_TERM
+  screen_width = mu_ansi_term_get_ncols();
+  printf("screen_width %d\n",screen_width);
 #endif
 
   // decode string (super secret cryptology!)

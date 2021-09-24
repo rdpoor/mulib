@@ -33,7 +33,7 @@ static mu_rtc_alarm_cb_t s_rtc_alarm_cb = 0;
 //static uint16_t s_match_count_hi;
 static mu_time_t s_match_count = 0;
 
-static pthread_t thread_id = 0;
+static pthread_t alarm_thread_id = 0;
 
 void *reader_thread(void* vargp);
 
@@ -47,6 +47,8 @@ void *reader_thread(void* vargp);
  */
 void mu_rtc_init(void) {
   s_rtc_ticks = 0;
+      printf("mu_rtc_init alarm_thread_id %ld\n",(long)alarm_thread_id);
+
 }
 
 /**
@@ -96,7 +98,7 @@ void mu_rtc_set_alarm_cb(mu_rtc_alarm_cb_t cb) {
   //   printf("Warning -- no s_match_count for alarm\n");
   //   return;
   // }
-  start_alarm_thead();
+ // start_alarm_thead();
 }
 
 
@@ -105,12 +107,12 @@ void mu_rtc_set_alarm_cb(mu_rtc_alarm_cb_t cb) {
 
 //assumes both s_rtc_alarm_cb and s_match_count have been set
 void start_alarm_thead() {
-  if(thread_id) {
-    printf("Warning -- thread_id non 0 -- there is already an alarm running\n");
+  if(alarm_thread_id != 0) {
+    printf("Warning -- alarm_thread_id non 0 -- there is already an alarm running %ld\n",(long)alarm_thread_id);
     // cancel and reset?
     return;
   }
-  pthread_create(&thread_id, NULL, alarm_thread, NULL);
+  pthread_create(&alarm_thread_id, NULL, alarm_thread, NULL);
 }
 
 void *alarm_thread(void* vargp)
@@ -118,7 +120,7 @@ void *alarm_thread(void* vargp)
     while(1) {
       if(mu_rtc_now() >= s_match_count) break;
     }
-    thread_id = 0;
+    alarm_thread_id = 0;
     s_rtc_alarm_cb();
     return NULL;
 }

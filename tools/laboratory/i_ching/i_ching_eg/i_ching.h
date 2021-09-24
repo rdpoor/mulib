@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021 Klatu Networks, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,43 +22,30 @@
  * SOFTWARE.
  */
 
-
-#ifndef _MU_KBD_IO_H_
-#define _MU_KBD_IO_H_
+#ifndef _I_CHING_H_
+#define _I_CHING_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // =============================================================================
-// includes
-
-  #include <stdbool.h>
-
-// =============================================================================
-// types and definitions
-
-// Signature of the keyboard callback function
-typedef void (*mu_kbd_io_callback_t)(unsigned char ch);
+// Includes
+#include <stdbool.h>
 
 // =============================================================================
-// declarations
+// Types and definitions
 
-extern bool _mu_kbd_has_ansi_term;
+// =============================================================================
+// Declarations
 
-/**
- * @brief Initialize the keyboard input module.
- */
-void mu_kbd_io_init(void);
 
-/**
- * @brief Install a callback to be triggered (at interrupt level) when a
- * character is received from the keyboard.
- */
-void mu_kbd_io_set_callback(mu_kbd_io_callback_t cb);
+void i_ching_init();
+
+void i_ching_step();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* #ifndef _MU_KBD_IO_H_ */
+#endif /* #ifndef _I_CHING_H_ */

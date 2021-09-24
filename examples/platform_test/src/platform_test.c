@@ -10,6 +10,7 @@
 
 #include "platform_test.h"
 #include "mu_platform.h"
+#include "mu_ansi_term.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -19,7 +20,7 @@
 // =============================================================================
 // Local types and definitions
 
-#define VERSION "1.1"
+#define VERSION "1.2"
 #define DEMO_INTERVAL_SECS (5)
 
 // =============================================================================
@@ -67,6 +68,7 @@ void platform_test_init(void) {
   mu_platform_init();
   mu_button_io_set_callback(button_cb);
   mu_kbd_io_set_callback(kbd_cb);
+  mu_ansi_term_clear_screen();
 
   printf("\n\rmu_platform test v%s.\n", VERSION);
   s_button_changed_state = false;
@@ -92,9 +94,10 @@ void platform_test_init(void) {
   }
   s_rtc_count_matched = false;
 
-  mu_led_io_set(MU_LED_0, true);
+  mu_ansi_term_clear_screen();
 
-  printf("Press button or any key...\n");
+  printf("\nPress button or any key...\n");
+  mu_led_io_set(MU_LED_0, true);
 }
 
 void platform_test_step(void) {
