@@ -55,7 +55,7 @@
 // =============================================================================
 // Local storage
 
-static mu_kbd_io_callback_t s_kbd_io_cb;
+static mu_kbd_io_callback_t s_kbd_io_cb = 0;
 static struct termios saved_attributes;
 static bool _has_saved_attributes = false;
 static bool _tty_is_in_non_canonical_mode = false;
@@ -86,7 +86,6 @@ void mu_kbd_io_init(void) {
     signal(SIGWINCH, handle_sigwinch);
   #endif
   start_kbd_reader_thread();
-
 }
 
 void mu_kbd_io_set_callback(mu_kbd_io_callback_t cb) {
@@ -195,7 +194,6 @@ static void read_ttysize() {
 // to monitor the keyboard, and fire the callback
 
 void start_kbd_reader_thread(void) {
-  printf("start_kbd_reader_thread\n");
   mu_kbd_enter_noncanonical_mode(); // so we dont wait for line feeds,  and we dont echo
   pthread_create(&thread_id, NULL, reader_thread, NULL);
   atexit(mu_kbd_exit_noncanonical_mode); // restores terminal attributes
@@ -205,7 +203,7 @@ void *reader_thread(void* vargp)
 {
     while(1) {
       char ch = mu_kbd_get_key_press(); // assuming we are in noncanonical mode this won't hang
-      if(ch) 
+      if(ch && s_kbd_io_cb) 
         s_kbd_io_cb(ch);
     }
 }

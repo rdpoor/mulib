@@ -47,7 +47,7 @@
 // =============================================================================
 // Local types and definitions
 
-#define VERSION "1.1"
+#define VERSION "1.2"
 
 // The min and max wait times before offering a new strategy
 // on average once every 1/2 hour...
