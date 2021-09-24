@@ -265,12 +265,7 @@ void strategies_choose_and_print() {
   static char buf[MAX_STRATEGY_LEN];
   int index = mu_random_range(0, N_STRATEGIES);
   const char *s = s_strategies[index];
-  int screen_width = 80;
-
-#ifdef MU_HAS_ANSI_TERM
-  screen_width = mu_ansi_term_get_ncols();
-  printf("screen_width %d\n",screen_width);
-#endif
+  int screen_width = mu_ansi_term_get_ncols();
 
   // decode string (super secret cryptology!)
   int j = 0;

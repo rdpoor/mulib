@@ -47,9 +47,8 @@ extern "C" {
 
 // =============================================================================
 // types and definitions
-// MU_HAS_ANSI_TERM wil have been defined (or not!) in mu_config.h
 
-
+#define HAS_ANSI_TERM (1) 
 
 #define DEFINE_ANSI_TERM_COLORS                                                \
   ANSI_TERM_COLOR(MU_ANSI_TERM_BLACK, 30, 40)                                  \

@@ -27,7 +27,7 @@
 
 
 #include "mu_kbd_io.h"
-#include "mu_ansi_term.h"
+#include "mu_ansi_term.h" // POSIX tty depends on ANSI term to mimic interrupt-driven keypress behavior
 
 #include <stdio.h>
 #include <stdint.h>
@@ -36,14 +36,6 @@
 
 #include <pthread.h>
 
-/**
- * Uncomment if your platform supports ANSI_TERM
- */
-#define MU_KBD_HAS_ANSI_TERM 1 // COULD go into mu_config.h instead...
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
 #include <termios.h>
 
 // =============================================================================
@@ -54,55 +46,85 @@
 // =============================================================================
 // Local storage
 
-bool _mu_kbd_has_ansi_term = MU_KBD_HAS_ANSI_TERM;
-
 
 static mu_kbd_io_callback_t s_kbd_io_cb = 0;
 static struct termios saved_attributes;
 static bool _has_saved_attributes = false;
 static bool _tty_is_in_non_canonical_mode = false;
-static int mu_kbd_cols = 80;
-static int mu_kbd_rows = 24;
 pthread_t thread_id;
 
 // =============================================================================
 // Local (forward) declarations
 
-static void mu_kbd_get_terminal_attributes(struct termios *terminal_attributes);
-static void mu_kbd_set_terminal_attributes(struct termios *terminal_attributes);
-static void read_ttysize();
-
-void start_kbd_reader_thread(void);
-void *reader_thread(void* vargp);
-
-#ifdef HAS_SIGNAL 
-static void handle_sigwinch();
-#endif
+static void get_terminal_attributes(struct termios *terminal_attributes);
+static void set_terminal_attributes(struct termios *terminal_attributes);
+static void enter_noncanonical_mode();
+static void exit_noncanonical_mode();
+static int get_key_press(void);
+static void start_kbd_reader_thread(void);
+static void *reader_thread(void* vargp);
 
 // =============================================================================
 // Public code
 
 void mu_kbd_io_init(void) {
-  read_ttysize();
-  #ifdef HAS_SIGNAL
-    signal(SIGWINCH, handle_sigwinch);
-  #endif
-  start_kbd_reader_thread();
+  start_kbd_reader_thread(); // We use a POSIX thread to simulate keyboard interrupts, allowing us to fire the mu_kbd_io callback per keypress
 }
 
 void mu_kbd_io_set_callback(mu_kbd_io_callback_t cb) {
   s_kbd_io_cb = cb;
 }
 
-int mu_kbd_ncols() {
-  return mu_kbd_cols;
+// =============================================================================
+// Local (static) code
+
+// These POSIX-dependent functions let us read keyboard input one character at a time, instead of waiting for linefeeds
+
+static void set_terminal_attributes(struct termios *terminal_attributes) {
+  tcsetattr(STDIN_FILENO, TCSANOW, terminal_attributes);
 }
 
-int mu_kbd_nrows() {
-  return mu_kbd_rows;
+static void get_terminal_attributes(struct termios *terminal_attributes) {
+  tcgetattr(STDIN_FILENO, terminal_attributes);      
 }
 
-int mu_kbd_get_key_press(void) {
+void enter_noncanonical_mode() {
+  static struct termios info;
+  bool canonical = false, echo_input = false, wait_for_newlines = false; 
+  if(_tty_is_in_non_canonical_mode) return;
+  get_terminal_attributes(&saved_attributes); // so we can restore later
+  _has_saved_attributes = true;
+  _tty_is_in_non_canonical_mode = true;
+  tcgetattr(STDIN_FILENO, &info);          
+  info.c_lflag &= ((ICANON && canonical) | (ECHO && echo_input)); 
+  info.c_cc[VMIN] = wait_for_newlines ? 1 : 0;
+  info.c_cc[VTIME] = 0;         /* no timeout */
+  set_terminal_attributes(&info);
+ }
+
+void exit_noncanonical_mode() {
+  if(!_tty_is_in_non_canonical_mode) return;
+  _tty_is_in_non_canonical_mode = false;
+  if(_has_saved_attributes) {
+    set_terminal_attributes(&saved_attributes);
+  } else { 
+    // no saved attributed so resetting hard
+    static struct termios info;
+    bool canonical = true, echo_input = true;
+    bool wait_for_newlines = true; 
+    tcgetattr(STDIN_FILENO, &info);          
+    info.c_lflag |= ((ICANON && canonical) | (ECHO && echo_input));
+    info.c_cc[VMIN] = wait_for_newlines ? 1 : 0;
+    info.c_cc[VTIME] = 0;         /* no timeout */
+    set_terminal_attributes(&info);
+  }
+  mu_ansi_term_reset();
+}
+
+// here we simulate the single-threaded tty interrupt system by spawning a posix thread
+// to monitor the keyboard, and fire the callback
+
+int get_key_press(void) {
     int ch;
     ch = getchar();
     if (ch < 0) {
@@ -115,96 +137,16 @@ int mu_kbd_get_key_press(void) {
     return ch;
 }
 
-void mu_kbd_enter_noncanonical_mode() {
-  static struct termios info;
-  bool canonical = false, echo_input = false, wait_for_newlines = false; 
-  if(_tty_is_in_non_canonical_mode) return;
-  mu_kbd_get_terminal_attributes(&saved_attributes); // so we can restore later
-  _has_saved_attributes = true;
-  _tty_is_in_non_canonical_mode = true;
-  tcgetattr(STDIN_FILENO, &info);          
-  info.c_lflag &= ((ICANON && canonical) | (ECHO && echo_input)); 
-  info.c_cc[VMIN] = wait_for_newlines ? 1 : 0;
-  info.c_cc[VTIME] = 0;         /* no timeout */
-  mu_kbd_set_terminal_attributes(&info);
- }
-
-void mu_kbd_exit_noncanonical_mode() {
-  if(!_tty_is_in_non_canonical_mode) return;
-  _tty_is_in_non_canonical_mode = false;
-  if(_has_saved_attributes) {
-    mu_kbd_set_terminal_attributes(&saved_attributes);
-  } else {
-    //printf("mu_kbd_exit_noncanonical_mode has no saved attributed so resetting hard...\n");
-    static struct termios info;
-    bool canonical = true, echo_input = true;
-    bool wait_for_newlines = true; 
-    tcgetattr(STDIN_FILENO, &info);          
-    info.c_lflag |= ((ICANON && canonical) | (ECHO && echo_input));
-    info.c_cc[VMIN] = wait_for_newlines ? 1 : 0;
-    info.c_cc[VTIME] = 0;         /* no timeout */
-    mu_kbd_set_terminal_attributes(&info);
-  }
-  mu_ansi_term_reset();
-}
-
-// =============================================================================
-// Local (static) code
-#ifdef HAS_SIGNAL 
-static void handle_sigwinch() {
-   read_ttysize();
-}
-#endif
-
-static void mu_kbd_set_terminal_attributes(struct termios *terminal_attributes) {
-  tcsetattr(STDIN_FILENO, TCSANOW, terminal_attributes);
-}
-
-static void mu_kbd_get_terminal_attributes(struct termios *terminal_attributes) {
-  tcgetattr(STDIN_FILENO, terminal_attributes);      
-}
-
-static void read_ttysize() {
-  #ifdef TIOCGSIZE
-      struct ttysize ts;
-      ioctl(STDIN_FILENO, TIOCGSIZE, &ts);
-      mu_kbd_cols = ts.ts_cols;
-      mu_kbd_rows = ts.ts_lines;
-  #elif defined(TIOCGWINSZ)
-      struct winsize ts;
-      ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
-      mu_kbd_cols = ts.ws_col;
-      mu_kbd_rows = ts.ws_row;
-  #endif /* TIOCGSIZE */
-  //printf("Terminal is %dx%d\n", mu_kbd_cols, mu_kbd_rows);
-}
-
-
-//static void handle_rx_isr(void) {
-  // Arrive here at interrupt level when a character is received on the kbd.
-  // TODO: verify that reading USARTE0.DATA leaves the data available
-
-  //uint8_t data = USARTE0.DATA;
-  //USART_0_default_rx_isr_cb();   // call the default handler...
-  // If there is a user callback, call it...
- // if (s_kbd_io_cb) {
- //   s_kbd_io_cb(data);
-//  }
-//}
-
-// here we simulate the single-threaded tty interrupt system by spawning a posix thread
-// to monitor the keyboard, and fire the callback
-
 void start_kbd_reader_thread(void) {
-  mu_kbd_enter_noncanonical_mode(); // so we dont wait for line feeds,  and we dont echo
+  enter_noncanonical_mode(); // so we dont wait for line feeds,  and we dont echo
   pthread_create(&thread_id, NULL, reader_thread, NULL);
-  atexit(mu_kbd_exit_noncanonical_mode); // restores terminal attributes
+  atexit(exit_noncanonical_mode); // restores terminal attributes
 }
 
 void *reader_thread(void* vargp)
 {
     while(1) {
-      char ch = mu_kbd_get_key_press(); // assuming we are in noncanonical mode this won't hang
+      char ch = get_key_press(); // assuming we are in noncanonical mode this won't hang
       if(ch && s_kbd_io_cb) 
         s_kbd_io_cb(ch);
     }

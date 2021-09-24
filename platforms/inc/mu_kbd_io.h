@@ -44,8 +44,6 @@ typedef void (*mu_kbd_io_callback_t)(unsigned char ch);
 // =============================================================================
 // declarations
 
-extern bool _mu_kbd_has_ansi_term;
-
 /**
  * @brief Initialize the keyboard input module.
  */
