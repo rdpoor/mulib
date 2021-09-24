@@ -53,3 +53,11 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# example build dirs and binaries
+build/
+examples/blinky_1/IDEs/Makefile/blinky_1
+examples/oblique/IDEs/Makefile/oblique
+examples/platform_test/IDEs/Makefile/platform_test
+examples/wall_clock/IDEs/Makefile/wall_clock
+tools/laboratory/i_ching/i_ching_app/i_ching

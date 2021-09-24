@@ -32,12 +32,13 @@ extern "C" {
 // =============================================================================
 // includes
 
-#include <mulib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
 // =============================================================================
 // types and definitions
+
+#define MU_FLOAT float
 
 typedef struct {
   char *pd;

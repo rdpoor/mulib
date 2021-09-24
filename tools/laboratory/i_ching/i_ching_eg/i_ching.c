@@ -33,15 +33,19 @@
 #include "hexagrams.h"
 #include "i_ching.h"
 
+#include <mu_platform.h>
+#include <mu_ansi_term.h>
+#include <mu_sched.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <mulib.h>
+#include <string.h>
 
 // =============================================================================
 // Local types and definitions
 
 
-#define VERSION "1.01"
+#define VERSION "1.02"
 
 // =============================================================================
 // Local (forward) declarations
@@ -69,7 +73,10 @@ static char user_lines[7];
  * @brief Walk the user through the process of contemplating their question and casting "coins" in the traditional way
  */
 void i_ching_init() {
-  mulib_init();
+  mu_platform_init();
+  mu_sched_init();
+  mu_ansi_term_init();
+
   mu_button_io_set_callback(button_cb);
   mu_kbd_io_set_callback(kbd_cb);
   mu_ansi_term_clear_screen();
@@ -91,11 +98,11 @@ void i_ching_init() {
     printf("\n%s",&user_lines[5 - i]);
   }
   present_reading_for_lines(user_lines);
+  printf("ctrl-c to exit\n");
 }
 
 void i_ching_step() {
   mu_sched_step();
-  exit(0); // nothing to do here -- the party happened in i_ching_init
 }
 
 

@@ -28,7 +28,10 @@
 #include "hexagrams.h"
 
     
-#include <mulib.h>
+#include <mu_platform.h>
+#include <mu_ansi_term.h>
+
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
