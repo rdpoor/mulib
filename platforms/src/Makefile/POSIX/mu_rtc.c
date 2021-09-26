@@ -47,8 +47,6 @@ void *reader_thread(void* vargp);
  */
 void mu_rtc_init(void) {
   s_rtc_ticks = 0;
-      printf("mu_rtc_init alarm_thread_id %ld\n",(long)alarm_thread_id);
-
 }
 
 /**

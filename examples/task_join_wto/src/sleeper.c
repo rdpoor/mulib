@@ -25,14 +25,14 @@
 // =============================================================================
 // Includes
 
-#include "joiner_wto.h"
+#include "sleeper.h"
 
 #include <mu_platform.h>
 
-#include <mu_sched.h>
 #include <mu_task.h>
 
 #include <stdio.h>
+#include <stddef.h>
 
 // =============================================================================
 // Local types and definitions
@@ -42,67 +42,51 @@
 
 static void task_fn(void *ctx, void *arg);
 
-static void timeout_task_fn(void *ctx, void *arg);
-
-static void endgame(joiner_wto_ctx_t *self, void *arg, const char *cause);
-
 // =============================================================================
 // Local storage
 
 // =============================================================================
 // Public code
 
-mu_task_t *joiner_wto_init(joiner_wto_ctx_t *ctx, mu_task_t *on_completion) {
-  // initialize the mu_task to associate task_fn with the joiner_wto_ctx
-  mu_task_init(&ctx->task, task_fn, ctx, "Joiner");
+mu_task_t *sleeper_init(sleeper_ctx_t *ctx,
+                        const char *name,
+                        mu_task_t *on_completion) {
+  // initialize the mu_task to associate task_fn with the sleeper_ctx
+  mu_task_init(&ctx->task, task_fn, ctx, name);
+  ctx->name = name;
   ctx->on_completion = on_completion;
-  ctx->pending_count = 0;
 
   return &ctx->task;
 }
 
-mu_task_t *joiner_wto_add_task(joiner_wto_ctx_t *ctx) {
-  ctx->pending_count += 1;
-  return &ctx->task;
-}
+mu_task_t *sleeper_task(sleeper_ctx_t *ctx) { return &ctx->task; }
 
-void joiner_wto_set_timeout_at(joiner_wto_ctx_t *ctx, mu_time_t at) {
-	// set up the timeout task to call timeout_task_fn at the given time.
-	mu_task_init(&ctx->timeout_task, timeout_task_fn, ctx, "Joiner Timeout");
-	mu_sched_task_at(&ctx->timeout_task, at);
-}
+const char *sleeper_name(sleeper_ctx_t *ctx) { return ctx->name; }
 
 // =============================================================================
 // Local (private) code
 
 static void task_fn(void *ctx, void *arg) {
-  joiner_wto_ctx_t *self = (joiner_wto_ctx_t *)ctx;
+  // Recast the void * argument to a morse_char_task_ctx_t * argument.
+  sleeper_ctx_t *self = (sleeper_ctx_t *)ctx;
   (void)arg;  // unused
 
-  if (self->pending_count > 0) {
-    self->pending_count -= 1;
-    if (self->pending_count == 0) {
-      mu_sched_remove_task(&self->timeout_task);  // cancel timeout task
-      endgame(self, arg, "COMPLETED");
-    }
+  mu_led_io_set(MU_LED_0, true);  // turn on LED when any sleeper wakes
+  printf("%s waking at %u tics\n", self->name, mu_rtc_now());
+  if (self->on_completion != NULL) {
+    // Subtle bug: It two Sleepers wake up at the same time (or nearly at the
+    // same time), the first call to mu_sched_task_now(joiner) will schedule a
+    // call the the Joiner.  But before the Joiner task runs, the second call
+    // to mu_sched_task_now(joiner) will remove it from the schedule, so misses
+    // a call, its reference count never get to zero and the process hangs.
+    //
+    // So don't do this:
+    //
+    // mu_sched_task_now(self->on_completion);
+    //
+    // The fix is to circumvent the scheduler, and have the Sleeper task invoke
+    // the Joiner task directly, like this:
+    mu_task_call(self->on_completion, NULL);
   }
-}
 
-// Arrive here when the timeout task triggers.
-static void timeout_task_fn(void *ctx, void *arg) {
-  joiner_wto_ctx_t *self = (joiner_wto_ctx_t *)ctx;
-  (void)arg;  // unused
-
-  self->pending_count = 0;
-  endgame(self, arg, "EXPIRED");
-}
-
-static void endgame(joiner_wto_ctx_t *self, void *arg, const char *cause) {
-  (void)arg;
-  mu_time_t now = mu_rtc_now();
-
-  mu_led_io_set(MU_LED_0, false);  // turn off LED upon completion
-  printf("Joiner %s at %ld\n", cause, now);
-  // Notify the next task that joiner completed
-  mu_sched_task_now(self->on_completion);
 }

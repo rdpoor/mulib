@@ -115,6 +115,6 @@ static void start_sleeper(sleeper_ctx_t *sleeper,
                           const char *name,
                           mu_time_t wake_at) {
   mu_task_t *task = sleeper_init(sleeper, name, joiner_add_task(&s_joiner));
-  printf("%s sleeping until %ld tics\n", name, wake_at);
+  printf("%s sleeping until %u tics\n", name, wake_at);
   mu_sched_task_at(task, wake_at);
 }

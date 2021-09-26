@@ -138,13 +138,13 @@ static void task_fn(void *ctx, void *arg) {
   // sleeper tasks have completed.
   at = mu_time_offset(now, mu_time_ms_to_duration(TIMEOUT_MS));
   joiner_wto_set_timeout_at(&s_joiner_wto, at);
-  printf("Joiner set to time out at %ld\n", at);
+  printf("Joiner set to time out at %u\n", at);
 }
 
 static void start_sleeper(sleeper_ctx_t *sleeper,
                           const char *name,
                           mu_time_t wake_at) {
   mu_task_t *task = sleeper_init(sleeper, name, joiner_wto_add_task(&s_joiner_wto));
-  printf("%s sleeping until %ld tics\n", name, wake_at);
+  printf("%s sleeping until %u tics\n", name, wake_at);
   mu_sched_task_at(task, wake_at);
 }

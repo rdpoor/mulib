@@ -13,8 +13,8 @@
 #include "ansi_nico_font.h"
 #include "fb.h"
 
-#include <mu_time.h>
 #include <mu_sched.h>
+#include <mu_time.h>
 #include <mu_rtc.h>
 #include <mu_task.h>
 #include <mu_kbd_io.h>
@@ -27,6 +27,14 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define HAS_POSIX_TIME (1)
+
+#ifdef HAS_POSIX_TIME
+  #include <time.h>
+#endif
+
 
 // =============================================================================
 // Local types and definitions
@@ -45,6 +53,8 @@ typedef struct {
 // =============================================================================
 // Local (forward) declarations
 
+static void ask_user_for_time();
+
 static void clock_poll_fn(void *ctx, void *arg);
 
 static char *local_time_string(void);
@@ -59,26 +69,38 @@ static clock_poll_ctx_t clock_poll_ctx;
 
 static char _local_time_string[16];
 
+static long user_provided_clock_offset = 0;
+
 static char s_backing_buf[TERM_WIDTH * TERM_HEIGHT];
 static char s_display_buf[TERM_WIDTH * TERM_HEIGHT];
+
+
 
 // =============================================================================
 // Public code
 
 void wall_clock_init(void) {
+
+// testing 
+  ask_user_for_time();
+
   mu_button_io_init();
-  mu_led_io_init();
-  mu_rtc_init();
+  //mu_led_io_init();
+  mu_sched_init();
   mu_ansi_term_init();
   mu_kbd_io_init();
-  //mu_signal_init();
 
-  // mu_time_init();
-  // mu_sched_init();
-  // mu_ansi_term_init();
+  
+
+
+  // #ifndef HAS_POSIX_TIME
+  //     ask_user_for_time();
+  // #endif
+  
   mu_ansi_term_set_cursor_visible(false);
   mu_ansi_term_clear_screen();
   fb_init(TERM_WIDTH, TERM_HEIGHT, s_backing_buf, s_display_buf);
+
   begin_polling_clock();
 }
 
@@ -90,13 +112,36 @@ void wall_clock_step(void) {
 // =============================================================================
 // Local (private) code
 
+static void ask_user_for_time() {    
+  mu_ansi_term_reset();
+    char *user_string = NULL;
+    size_t linecap = 0;
+    while(1) {
+      int characters = getline(&user_string,&linecap,stdin);
+      if(characters > 0) {
+        printf("got %d\n",characters);
+        if(characters != 9) {
+          printf("Please use HH:MM:SS\n");
+        } else {
+          user_provided_clock_offset = mu_rtc_now();
+          int hour, min, sec;
+          sscanf(user_string , "%d:%d:%d" , &hour,&min,&sec);
+          printf("got %d %d %d\n",hour,min,sec);
+        }
+       break;
+      }
+    }
+    user_provided_clock_offset = 100000;
+}
+
 // non-POSIX systems will need to use mu_rtc_now() / 1000 instead of time(&now)
 static char *local_time_string() {
   struct tm  ts;
   time_t now;
 
   time(&now);
-  //now = mu_rtc_now() / 1000;
+  now = mu_rtc_now() / 1000;
+  printf("now now %ld\n", now);
 
   ts = *localtime(&now);  // Fill in the tm structure
   strftime(_local_time_string, sizeof(_local_time_string), "%I:%M:%S", &ts); // %H for 24H

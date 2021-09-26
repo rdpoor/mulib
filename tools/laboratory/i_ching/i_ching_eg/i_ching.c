@@ -163,7 +163,7 @@ static char get_user_coin_toss() {
       printf("      ");
       mu_ansi_term_home();
     }
-    coin_value = (wait_duration >> 4) % 2; // reduce the clock resolution a bit to shift the stochasticism to a more human scale
+    coin_value = (wait_duration >> 4) % 2; // reduce the clock resolution a tad to shift the stochasticism to a more human scale
     putchar(coin_value ? 'X' : 'O');
     putchar(' ');
     answer += coin_value ? 3 : 2;
@@ -232,25 +232,4 @@ static void print_hexagram_info(int number) { // note that this is 1-indexed for
   printf("\n\n%s\n",hex->im);
   printf("\n%s\n\n",hex->i_cm);
 }
-
-/*
-static void display_intro() {
-    int n_hex = 0;
-    char test_user_lines[12][7]; // memset
-    for(int i = 0; i < 64; i++) {
-    char *li = test_user_lines[n_hex];
-    if(i & 1) li[0] = '9';
-    if(i & 2) li[1] = '9';
-    if(i & 4) li[2] = '9';
-    if(i & 8) li[3] = '9';
-    if(i & 16) li[4] = '9';
-    if(i & 32) li[5] = '9';
-    if(++n_hex > 8) {
-      draw_multiple_user_lines(test_user_lines, 10, 8, 6);
-      printf("\n\n");
-      n_hex = 0;
-    }
-  }
-}
-*/
 

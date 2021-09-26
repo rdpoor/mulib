@@ -76,7 +76,7 @@ static void task_fn(void *ctx, void *arg) {
 
   if (self->pending_count == 0) {
     mu_led_io_set(MU_LED_0, false);  // turn off LED when all sleepers complete
-  	printf("All tasks have joined at %ld tics.\n\n", mu_rtc_now());
+  	printf("All tasks have joined at %uld tics.\n\n", mu_rtc_now());
     // all joined tasks have completed -- invoke the on_completion task
     if (self->on_completion != NULL) {
       mu_sched_task_now(self->on_completion);
