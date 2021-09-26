@@ -138,6 +138,8 @@ int get_key_press(void) {
 }
 
 void start_kbd_reader_thread(void) {
+  if(!s_kbd_io_cb)
+    printf("warning: start_kbd_reader_thread without callback set.  will swallow keypresses.\n");
   enter_noncanonical_mode(); // so we dont wait for line feeds,  and we dont echo
   pthread_create(&thread_id, NULL, reader_thread, NULL);
   atexit(exit_noncanonical_mode); // restores terminal attributes

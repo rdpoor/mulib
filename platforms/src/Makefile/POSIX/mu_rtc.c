@@ -13,8 +13,6 @@
 // =============================================================================
 // local types and definitions
 
-#define NANOSECS_PER_S  (1000000000)
-#define NANOSECS_PER_MS (1000000)
 
 // =============================================================================
 // local (forward) declarations
@@ -35,6 +33,8 @@ static mu_time_t s_match_count = 0;
 
 static pthread_t alarm_thread_id = 0;
 
+static struct timespec boot_time;
+
 void *reader_thread(void* vargp);
 
 
@@ -47,6 +47,7 @@ void *reader_thread(void* vargp);
  */
 void mu_rtc_init(void) {
   s_rtc_ticks = 0;
+  clock_gettime(CLOCK_REALTIME, &boot_time);
 }
 
 /**
@@ -55,7 +56,7 @@ void mu_rtc_init(void) {
 mu_time_t mu_rtc_now(void) {
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
-  return (now.tv_sec * NANOSECS_PER_S + now.tv_nsec) / NANOSECS_PER_MS;
+  return ((now.tv_sec - boot_time.tv_sec) * NANOSECS_PER_S + (now.tv_nsec - boot_time.tv_nsec)) / NANOSECS_PER_MS;
 }
 
 void mu_rtc_busy_wait(mu_duration_t ticks) {
