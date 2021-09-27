@@ -57,7 +57,13 @@ dkms.conf
 # example build dirs and binaries
 build/
 examples/blinky_1/IDEs/Makefile/blinky_1
+examples/blinky_2/IDEs/Makefile/blinky_2
+examples/blinky_3/IDEs/Makefile/blinky_3
 examples/oblique/IDEs/Makefile/oblique
+examples/parse_http/IDEs/Makefile/parse_http
 examples/platform_test/IDEs/Makefile/platform_test
+examples/task_join/IDEs/Makefile/task_join
+examples/task_join_wto/IDEs/Makefile/task_join_wto
+examples/tower/IDEs/Makefile/tower
 examples/wall_clock/IDEs/Makefile/wall_clock
 tools/laboratory/i_ching/i_ching_app/i_ching
