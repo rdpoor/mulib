@@ -73,7 +73,6 @@ run: all
 
 clean:
 	rm -rf $(BUILD_DIR)
-	rm main.o
 
 .c.o:
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@

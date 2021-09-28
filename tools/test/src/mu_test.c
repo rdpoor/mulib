@@ -34,7 +34,7 @@
 // =============================================================================
 // types and definitions
 
-#define OUTPUT_BUFFER_SIZE 80
+//#define OUTPUT_BUFFER_SIZE 80
 
 // =============================================================================
 // private declarations
@@ -57,9 +57,9 @@ int mu_task_test();
 int mu_time_test();
 int mu_timer_test();
 int mu_vect_test();
-int mu_ansi_term_test();
-int mu_random_test();
-int mu_drunken_bishop_test();
+//int mu_ansi_term_test();
+//int mu_random_test();
+//int mu_drunken_bishop_test();
 
 // =============================================================================
 // local storage
