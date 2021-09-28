@@ -79,7 +79,9 @@ static volatile bool something_pressed = false;
 /**
  * @brief Seed the random number generator, then start a chain of tasks to print
  * strategies.  For the seed, we increment an int in a while loop, interrupted
- * by either a button press or a mu_kbd_io key press
+ * by either a button press or a mu_kbd_io key press.   This involves the user 
+ * in the production of entropy, in a manner similar to randomly choosing a card
+ * from a deck, which was the original interface for Eno's system.
  */
 void oblique_init() {
   uint32_t seed = 0;
@@ -91,6 +93,7 @@ void oblique_init() {
   mu_button_io_set_callback(button_cb);
   mu_kbd_io_set_callback(kbd_cb);
   mu_ansi_term_clear_screen();
+  mu_ansi_term_set_cursor_visible(false);
   printf("oblique_app v%s: Press user button or any key to start...\n",
          VERSION);
   something_pressed = false;

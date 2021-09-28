@@ -99,7 +99,7 @@ void wall_clock_step(void) {
 // =============================================================================
 // Local (private) code
 
-static void establish_clock_offset() { 
+static void establish_clock_offset() {
   #ifndef HAS_POSIX_TIME
     mu_ansi_term_clear_screen();   
     printf("Enter the current time (HH:MM:SS):\n");
