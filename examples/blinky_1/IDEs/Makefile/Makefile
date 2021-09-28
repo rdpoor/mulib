@@ -4,7 +4,7 @@
 # `make run` will build and run the example.
 # `make clean` will clean all
 
-.PHONY: all clean mulib_core_objects mulib_extras_objects mu_platform_objects oblique_eg_objects
+.PHONY: all clean objects_mu_collections objects_mu_log objects_mu_sched objects_mu_string objects_mu_term objects_mu_utils 
 
 APP_NAME = blinky_1
 
@@ -60,15 +60,20 @@ OBJECTS_MU_PLATFORM ?= $(patsubst $(SRC_MU_PLATFORM_DIR)/%.c, $(BUILD_MU_PLATFOR
 OBJECTS_APP ?= $(patsubst $(SRC_APP_DIR)/%.c, $(BUILD_APP_DIR)/%.o, $(SOURCES_APP))
 
 CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED
+#CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -D_DEBUG
+
 
 IFLAGS = -I $(INC_MULIB_COLLECTIONS_DIR) -I $(INC_MULIB_LOG_DIR) -I $(INC_MULIB_SCHED_DIR) -I $(INC_MULIB_STRING_DIR) -I $(INC_MULIB_TERM_DIR) -I $(INC_MULIB_UTILS_DIR) -I $(INC_MU_PLATFORM_DIR) -I $(INC_APP_DIR) 
 
 #$(info    OBJECTS_MU_PLATFORM is $(OBJECTS_MU_PLATFORM))
+$(info ) 
+$(info ) 
 
 all: $(OBJECTS_MU_COLLECTIONS) $(OBJECTS_MU_LOG) $(OBJECTS_MU_SCHED) $(OBJECTS_MU_STRING) $(OBJECTS_MU_TERM) $(OBJECTS_MU_UTILS) $(OBJECTS_MU_PLATFORM) $(OBJECTS_APP) main.o
 	$(CC) $(CFLAGS) $(IFLAGS) $(OBJECTS_MU_COLLECTIONS) $(OBJECTS_MU_LOG) $(OBJECTS_MU_SCHED) $(OBJECTS_MU_STRING) $(OBJECTS_MU_TERM) $(OBJECTS_MU_UTILS) $(OBJECTS_MU_PLATFORM) $(OBJECTS_APP)  main.o -o $(APP_NAME)
 
 run: all
+	clear
 	./$(APP_NAME)
 
 clean:
