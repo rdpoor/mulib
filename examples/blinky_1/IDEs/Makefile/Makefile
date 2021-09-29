@@ -4,15 +4,20 @@
 # `make run` will build and run the example.
 # `make clean` will clean all
 
-.PHONY: all clean objects_mu_collections objects_mu_log objects_mu_sched objects_mu_string objects_mu_term objects_mu_utils 
-
 APP_NAME = blinky_1
 
-TOP_MULIB_DIR = ../../../..
-MODULES_DIR = $(TOP_MULIB_DIR)/mulib
+CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED
+#CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -D_DEBUG
 
-#i would love to get this to work
-#MODULES_USED = collections log sched string term utils
+TOP_MULIB_DIR = ../../../..
+
+INC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/inc
+SRC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/src/Makefile/POSIX
+
+INC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/inc
+SRC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/src
+
+MODULES_DIR = $(TOP_MULIB_DIR)/mulib
 
 SRC_MULIB_COLLECTIONS_DIR = $(MODULES_DIR)/collections/src
 SRC_MULIB_LOG_DIR = $(MODULES_DIR)/log/src
@@ -27,12 +32,6 @@ INC_MULIB_SCHED_DIR = $(MODULES_DIR)/sched/inc
 INC_MULIB_STRING_DIR = $(MODULES_DIR)/string/inc
 INC_MULIB_TERM_DIR = $(MODULES_DIR)/term/inc
 INC_MULIB_UTILS_DIR = $(MODULES_DIR)/utils/inc
-
-INC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/inc
-SRC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/src/Makefile/POSIX
-
-INC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/inc
-SRC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/src
 
 SOURCES_MU_COLLECTIONS := $(wildcard $(SRC_MULIB_COLLECTIONS_DIR)/*.c)
 SOURCES_MU_LOG := $(wildcard $(SRC_MULIB_LOG_DIR)/*.c)
@@ -59,15 +58,13 @@ OBJECTS_MU_UTILS ?= $(patsubst $(SRC_MULIB_UTILS_DIR)/%.c, $(BUILD_MULIB_DIR)/ut
 OBJECTS_MU_PLATFORM ?= $(patsubst $(SRC_MU_PLATFORM_DIR)/%.c, $(BUILD_MU_PLATFORM_DIR)/%.o, $(SOURCES_MU_PLATFORM))
 OBJECTS_APP ?= $(patsubst $(SRC_APP_DIR)/%.c, $(BUILD_APP_DIR)/%.o, $(SOURCES_APP))
 
-CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED
-#CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -D_DEBUG
-
-
 IFLAGS = -I $(INC_MULIB_COLLECTIONS_DIR) -I $(INC_MULIB_LOG_DIR) -I $(INC_MULIB_SCHED_DIR) -I $(INC_MULIB_STRING_DIR) -I $(INC_MULIB_TERM_DIR) -I $(INC_MULIB_UTILS_DIR) -I $(INC_MU_PLATFORM_DIR) -I $(INC_APP_DIR) 
 
 #$(info    OBJECTS_MU_PLATFORM is $(OBJECTS_MU_PLATFORM))
 $(info ) 
 $(info ) 
+
+.PHONY: all clean
 
 all: $(OBJECTS_MU_COLLECTIONS) $(OBJECTS_MU_LOG) $(OBJECTS_MU_SCHED) $(OBJECTS_MU_STRING) $(OBJECTS_MU_TERM) $(OBJECTS_MU_UTILS) $(OBJECTS_MU_PLATFORM) $(OBJECTS_APP) main.o
 	$(CC) $(CFLAGS) $(IFLAGS) $(OBJECTS_MU_COLLECTIONS) $(OBJECTS_MU_LOG) $(OBJECTS_MU_SCHED) $(OBJECTS_MU_STRING) $(OBJECTS_MU_TERM) $(OBJECTS_MU_UTILS) $(OBJECTS_MU_PLATFORM) $(OBJECTS_APP)  main.o -o $(APP_NAME)

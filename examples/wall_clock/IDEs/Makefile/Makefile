@@ -4,16 +4,20 @@
 # `make run` will build and run the example.
 # `make clean` will clean all
 
-.PHONY: all clean mulib_core_objects mulib_extras_objects mu_platform_objects oblique_eg_objects
-
 APP_NAME = wall_clock
 
+CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED
+#CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -D_DEBUG
+
 TOP_MULIB_DIR = ../../../..
+
+INC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/inc
+SRC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/src/Makefile/POSIX
+
+INC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/inc
+SRC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/src
+
 MODULES_DIR = $(TOP_MULIB_DIR)/mulib
-
-#i would love to get this to work
-MODULES_USED = collections log sched string term utils
-
 
 SRC_MULIB_COLLECTIONS_DIR = $(MODULES_DIR)/collections/src
 SRC_MULIB_LOG_DIR = $(MODULES_DIR)/log/src
@@ -29,21 +33,12 @@ INC_MULIB_STRING_DIR = $(MODULES_DIR)/string/inc
 INC_MULIB_TERM_DIR = $(MODULES_DIR)/term/inc
 INC_MULIB_UTILS_DIR = $(MODULES_DIR)/utils/inc
 
-
-INC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/inc
-SRC_MU_PLATFORM_DIR = $(TOP_MULIB_DIR)/platforms/src/Makefile/POSIX
-
-INC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/inc
-SRC_APP_DIR = $(TOP_MULIB_DIR)/examples/$(APP_NAME)/src
-
-
 SOURCES_MU_COLLECTIONS := $(wildcard $(SRC_MULIB_COLLECTIONS_DIR)/*.c)
 SOURCES_MU_LOG := $(wildcard $(SRC_MULIB_LOG_DIR)/*.c)
 SOURCES_MU_SCHED := $(wildcard $(SRC_MULIB_SCHED_DIR)/*.c)
 SOURCES_MU_STRING := $(wildcard $(SRC_MULIB_STRING_DIR)/*.c)
 SOURCES_MU_TERM := $(wildcard $(SRC_MULIB_TERM_DIR)/*.c)
 SOURCES_MU_UTILS := $(wildcard $(SRC_MULIB_UTILS_DIR)/*.c)
-
 
 SOURCES_MU_PLATFORM := $(wildcard $(SRC_MU_PLATFORM_DIR)/*.c)
 SOURCES_APP := $(wildcard $(SRC_APP_DIR)/*.c)
@@ -60,26 +55,22 @@ OBJECTS_MU_STRING ?= $(patsubst $(SRC_MULIB_STRING_DIR)/%.c, $(BUILD_MULIB_DIR)/
 OBJECTS_MU_TERM ?= $(patsubst $(SRC_MULIB_TERM_DIR)/%.c, $(BUILD_MULIB_DIR)/term/%.o, $(SOURCES_MU_TERM))
 OBJECTS_MU_UTILS ?= $(patsubst $(SRC_MULIB_UTILS_DIR)/%.c, $(BUILD_MULIB_DIR)/utils/%.o, $(SOURCES_MU_UTILS))
 
-
 OBJECTS_MU_PLATFORM ?= $(patsubst $(SRC_MU_PLATFORM_DIR)/%.c, $(BUILD_MU_PLATFORM_DIR)/%.o, $(SOURCES_MU_PLATFORM))
 OBJECTS_APP ?= $(patsubst $(SRC_APP_DIR)/%.c, $(BUILD_APP_DIR)/%.o, $(SOURCES_APP))
 
-CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED
-
-# wait we dont need all modeuls included here, need IFLAGS per module
-
 IFLAGS = -I $(INC_MULIB_COLLECTIONS_DIR) -I $(INC_MULIB_LOG_DIR) -I $(INC_MULIB_SCHED_DIR) -I $(INC_MULIB_STRING_DIR) -I $(INC_MULIB_TERM_DIR) -I $(INC_MULIB_UTILS_DIR) -I $(INC_MU_PLATFORM_DIR) -I $(INC_APP_DIR) 
 
-$(info    BUILD_MU_PLATFORM_DIR is $(BUILD_MU_PLATFORM_DIR))
-$(info    SOURCES_MU_PLATFORM is $(SOURCES_MU_PLATFORM))
-$(info    SRC_MU_PLATFORM_DIR is $(SRC_MU_PLATFORM_DIR))
-$(info    OBJECTS_MU_PLATFORM is $(OBJECTS_MU_PLATFORM))
+#$(info    OBJECTS_MU_PLATFORM is $(OBJECTS_MU_PLATFORM))
+$(info ) 
+$(info ) 
 
+.PHONY: all clean
 
 all: $(OBJECTS_MU_COLLECTIONS) $(OBJECTS_MU_LOG) $(OBJECTS_MU_SCHED) $(OBJECTS_MU_STRING) $(OBJECTS_MU_TERM) $(OBJECTS_MU_UTILS) $(OBJECTS_MU_PLATFORM) $(OBJECTS_APP) main.o
 	$(CC) $(CFLAGS) $(IFLAGS) $(OBJECTS_MU_COLLECTIONS) $(OBJECTS_MU_LOG) $(OBJECTS_MU_SCHED) $(OBJECTS_MU_STRING) $(OBJECTS_MU_TERM) $(OBJECTS_MU_UTILS) $(OBJECTS_MU_PLATFORM) $(OBJECTS_APP)  main.o -o $(APP_NAME)
 
 run: all
+	clear
 	./$(APP_NAME)
 
 clean:
@@ -89,39 +80,28 @@ clean:
 .c.o:
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
 
-#$(MODULES_USED): $(MODULES_DIR)/$(@)/src/%.c $(MODULES_DIR)/$(@)/inc/%.h
-#	$(info    AAAAA into dir: is $(@D))
-#	@mkdir -p $(BUILD_MULIB_DIR)/$(@)
-#	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
-
 
 $(BUILD_MULIB_DIR)/collections/%.o : $(SRC_MULIB_COLLECTIONS_DIR)/%.c $(INC_MULIB_COLLECTIONS_DIR)/*.h
-	$(info    Build into dir: is $(@D))
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
 
 $(BUILD_MULIB_DIR)/log/%.o : $(SRC_MULIB_LOG_DIR)/%.c $(INC_MULIB_LOG_DIR)/*.h
-	$(info    Build into dir: is $(@D))
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
 
 $(BUILD_MULIB_DIR)/sched/%.o : $(SRC_MULIB_SCHED_DIR)/%.c $(INC_MULIB_SCHED_DIR)/*.h
-	$(info    Build into dir: is $(@D))
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
 
 $(BUILD_MULIB_DIR)/string/%.o : $(SRC_MULIB_STRING_DIR)/%.c $(INC_MULIB_STRING_DIR)/*.h
-	$(info    Build into dir: is $(@D))
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
 
 $(BUILD_MULIB_DIR)/term/%.o : $(SRC_MULIB_TERM_DIR)/%.c $(INC_MULIB_TERM_DIR)/*.h
-	$(info    Build into dir: is $(@D))
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
 
 $(BUILD_MULIB_DIR)/utils/%.o : $(SRC_MULIB_UTILS_DIR)/%.c $(INC_MULIB_UTILS_DIR)/*.h
-	$(info    Build into dir: is $(@D))
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
 

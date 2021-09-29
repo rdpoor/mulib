@@ -11,9 +11,6 @@ APP_NAME = mu_test
 TOP_MULIB_DIR = ../..
 MODULES_DIR = $(TOP_MULIB_DIR)/mulib
 
-#i would love to get this to work
-#MODULES_USED = collections log sched string term utils
-
 SRC_MULIB_COLLECTIONS_DIR = $(MODULES_DIR)/collections/src
 SRC_MULIB_LOG_DIR = $(MODULES_DIR)/log/src
 SRC_MULIB_SCHED_DIR = $(MODULES_DIR)/sched/src
@@ -76,7 +73,6 @@ clean:
 
 .c.o:
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@
-
 
 $(BUILD_MULIB_DIR)/collections/%.o : $(SRC_MULIB_COLLECTIONS_DIR)/%.c $(INC_MULIB_COLLECTIONS_DIR)/*.h
 	@mkdir -p $(@D)
