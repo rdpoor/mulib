@@ -10,6 +10,6 @@ int main(void)
 {
     task_join_wto_init(); // this will hang until a key press ir button press appens
    while(1) {
-       task_join_wto_init();
+       task_join_wto_step();
   }
 }
