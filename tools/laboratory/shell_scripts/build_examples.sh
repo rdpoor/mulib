@@ -4,11 +4,14 @@ export EXAMPLES_PATH="../../../examples"
 
 cd $EXAMPLES_PATH
 
-for EXAMPLE_NAME in blinky_1 blinky_2 blinky_3 oblique parse_http platform_test task_join task_join_wto tower wall_clock
+for EXAMPLE_NAME in $(ls)
 do
-  echo $EXAMPLE_NAME
+  tput smso; echo $EXAMPLE_NAME, world; tput rmso
   cd $EXAMPLE_NAME/IDEs/Makefile
   make clean; make
   cd ../../..
 done
 
+
+#tput smso; echo hello, world; tput rmso
+#tput blink; echo hello, world; tput sgr0

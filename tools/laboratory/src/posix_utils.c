@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,34 +23,69 @@
  */
 
 // =============================================================================
-// includes
+// Includes
 
-#include "mu_test_utils.h"
-#include "mu_time.h"
-#include <unistd.h>
+#include "template.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include <stdio.h>
-// =============================================================================
-// private types and definitions
+#include "mu_drunken_bishop.h"
+#include "mu_ansi_term.h"
 
 // =============================================================================
-// private declarations
+// Private types and definitions
+
+#define OUTPUT_BUFFER_SIZE 80
 
 // =============================================================================
-// local storage
+// Private (static) storage
 
 // =============================================================================
-// public code
+// Private (forward) declarations
 
-void mu_time_test() {
-  // mu_time_t t1;
-  // mu_time_t t2;
+static int read_output_from_shell_command(char *command, char *output_buffer);
 
-  // mu_duration_t dt1;
-  // mu_duration_ms_t dm1;
+// =============================================================================
+// Public code
 
-  
+// =============================================================================
+// Private (static) code
+
+static void art_from_src() {
+
+
+
+   char readbuf[OUTPUT_BUFFER_SIZE];
+
+  output an identicon derived from hashing the source code
+ int err = read_output_from_shell_command("md5sum ../../mulib/core/*.c ../../mulib/extras/*.c | md5sum", readbuf);
+ if(err) {
+    if the shell md5sum failed, we (lamely) use the mu_version string
+    TODO: actually traverse the source tree and do a md5sum thing ourselves.  in extras?
+    sprintf(readbuf, "%s", mu_version());
+ }
+ printf("source fingerprint:\n");
+ mu_print_random_art_from_string(readbuf, 17);
 }
 
-// =============================================================================
-// private code
+
+static int read_output_from_shell_command(char *command, char *output_buffer) {
+  FILE *input;
+  input = popen (command, "r");
+  if (!input)
+    {
+      fprintf (stderr, "incorrect parameters.\n");
+      return -1;
+    }
+  while(fgets(output_buffer, OUTPUT_BUFFER_SIZE, input))
+  
+  if (pclose (input) != 0)
+    {
+      fprintf (stderr, "Could not run shell command or other error.\n");
+      return -1;
+    }
+    return 0;
+}
