@@ -6,8 +6,8 @@
 
 APP_NAME = parse_http
 
-CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED
-#CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -D_DEBUG
+CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -pthread
+#CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -pthread -D_DEBUG
 
 TOP_MULIB_DIR = ../../../..
 
