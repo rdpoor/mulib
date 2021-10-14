@@ -154,6 +154,7 @@ void *reader_thread(void* vargp)
       if(ch && s_kbd_io_cb) 
         s_kbd_io_cb(ch);
     }
+    return NULL;
 }
 
 

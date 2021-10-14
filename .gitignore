@@ -67,3 +67,4 @@ examples/task_join_wto/IDEs/Makefile/task_join_wto
 examples/tower/IDEs/Makefile/tower
 examples/wall_clock/IDEs/Makefile/wall_clock
 tools/laboratory/i_ching/i_ching_app/i_ching
+tools/test/mu_test
