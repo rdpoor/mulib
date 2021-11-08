@@ -168,10 +168,14 @@ static void task_fn(void *ctx, void *arg) {
   // Recast the void * argument to a usb_mon ctx_t * argument.
   ctx_t *self = (ctx_t *)ctx;
   (void)arg;  // unused
-
+  int err;
   //int err = read_output_from_shell_command("system_profiler SPUSBDataType 2>/dev/null", readbuf);
   //int err = read_output_from_shell_command("system_profiler SPUSBDataType -detailLevel mini 2>/dev/null | tr \"\\n\" \",\" | tr -d \"\\t\\n\"", readbuf);
-  int err = read_output_from_shell_command("system_profiler SPUSBDataType -detailLevel mini 2>/dev/null | tr \"\\n\" \"^\" | tr -d \"\\t\"", readbuf);
+
+  if(os_type == OS_TYPE_DARWIN)
+    err = read_output_from_shell_command("system_profiler SPUSBDataType -detailLevel mini 2>/dev/null | tr \"\\n\" \"^\" | tr -d \"\\t\"", readbuf);
+  else 
+    err = read_output_from_shell_command("lsusb", readbuf);
 
   //printf("readbuf \n %s\n-----------------------------",readbuf);
 
