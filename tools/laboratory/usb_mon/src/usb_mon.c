@@ -83,23 +83,20 @@ typedef struct {
 static void task_fn(void *ctx, void *arg);
 static int read_output_from_shell_command(char *command, char *output_buffer);
 static void parse_info();
-//static void skip_eol(mu_str_t *reader);
-//static void skip_whitespace(mu_str_t *reader);
-//static bool extract_next_key(mu_str_t *reader, kv_pair_t *kv_pair, char *key);
 static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev);
 static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev);
-//static void print_current_line(mu_str_t *reader);
-//static void print_line(mu_str_t *line);
-//static void print_reader(mu_str_t *reader, int how_many);
 static void print_string(mu_str_t *reader, int a, int b);
+static void print_dev(usb_dev_t *usb_dev);
 int mu_str_index_reverse(mu_str_t *str, uint8_t byte);
+static void mu_str_trim_char(mu_str_t *str, uint8_t byte);
 
 // =============================================================================
 // Local storage
 
 static ctx_t s_ctx;
 
-static os_type_t os_type; 
+static os_type_t os_type;
+static bool verbose_flag = false;
 
 static char readbuf[OUTPUT_BUFFER_SIZE];
 //static char linebuf[LINE_BUFFER_SIZE];
@@ -110,17 +107,6 @@ static char s_cstr_buf[MAX_CSTR_LENGTH];
 
 static int usb_dev_cnt = 0;
 static usb_dev_t s_usb_devs[MAX_DEVS];
-
-
-// provide storage for a key-value pair
-//static kv_pair_t temp_kv_pair;
-
-
-// static bool on_darwin = false;
-
-// #if (ON_DARWIN)
-// on_darwin = true;
-// #endif
 
 // =============================================================================
 // Public code
@@ -185,6 +171,7 @@ static void task_fn(void *ctx, void *arg) {
   } else {
       self->usb_state_string = readbuf;
       mu_ansi_term_clear_screen();
+      mu_ansi_term_home();
       parse_info();
   }
 
@@ -221,6 +208,15 @@ int mu_str_index_reverse(mu_str_t *str, uint8_t byte) {
   return -1;
 }
 
+static void mu_str_trim_char(mu_str_t *str, uint8_t byte) {
+  for (int i=str->s; i<str->e; i++) {
+    str->s = i;
+    uint8_t b = mu_strbuf_rdata(str->buf)[i];
+    if (b != byte) 
+      return;
+  }
+}
+
 static void print_string(mu_str_t *str, int a, int b) {
   int st = a > 0 ? a : str->s;
   int len = b > 0 ? b : str->e;
@@ -233,63 +229,18 @@ static void print_string(mu_str_t *str, int a, int b) {
   printf("%s",s_cstr_buf);  
 }
 
-
-// static void parse_info1() {
-//   mu_strbuf_t info_string;
-//   mu_str_t reader;
-
-//   //strcpy(readbuf,"Test orf: 123^orf:345^asdlkjasd asdaa^orf:678^asd orf:3333^sdfsdf");
-
-//   // Initialize the mu_strbuf and the reader mu_str objects.
-//   mu_strbuf_init_from_cstr(&info_string, readbuf);
-//   mu_str_init_for_read(&reader, &info_string);
-
-//   int ndev = 0;
-//   bool keepGoing = true;
-//   while(keepGoing) {
-//     // can we rely on things always being in this order?
-//     // might be safer to: 1) get all the Product IDs -- friendly name precedes these. 
-//     // store these indexes, and check BETWEEN them for Manufacturer and other keys
-
-//     keepGoing = extract_next_key(&reader, &temp_kv_pair, "Manufacturer:");
-//     print_string(&temp_kv_pair.key,0,0);
-//     printf(" -> ");
-//     print_string(&temp_kv_pair.value,0,0);
-
-//     if(keepGoing) {
-//       keepGoing = extract_next_key(&reader, &temp_kv_pair, "Location ID:");
-//       printf(", ");
-//       print_string(&temp_kv_pair.key,0,0);
-//       printf(" -> ");
-//       print_string(&temp_kv_pair.value,0,0);
-//     }
-
-//     printf("\n");
-//     ndev++;
-//   }
-// }
-
 static void parse_info() {
   mu_strbuf_t info_string;
   mu_str_t reader;
-
-  //strcpy(readbuf,"Test orf: 123^orf:345^asdlkjasd asdaa^orf:678^asd orf:3333^sdfsdf");
-  //strcpy(readbuf,"Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub^Bus 001 Device 003: ID 05ac:0307 Apple, Inc. Apple Optical USB Mouse^Bus 001 Device 004: ID 05ac:024f Apple, Inc. ^Bus 001 Device 002: ID 05ac:1006 Apple, Inc. Hub in Aluminum Keyboard^Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub");
-
   // Initialize the mu_strbuf and the reader mu_str objects.
   mu_strbuf_init_from_cstr(&info_string, readbuf);
   mu_str_init_for_read(&reader, &info_string);
-
   //print_string(&reader,0,0);
 
   usb_dev_cnt = 0;
   usb_dev_t *usb_dev;
   bool keepGoing = true;
-  // first we find all the product IDs
   while(keepGoing) {
-    // can we rely on things always being in this order?
-    // might be safer to: 1) get all the Product IDs -- friendly name precedes these. 
-    // store these indexes, and check BETWEEN them for Manufacturer and other keys
 
     usb_dev = &s_usb_devs[usb_dev_cnt];
     
@@ -300,22 +251,33 @@ static void parse_info() {
 
     if(!keepGoing) break;
 
-    //print_string(&usb_dev->name,0,0);
-    //printf(" ");
-    print_string(&usb_dev->name,0,0);
-    printf(" ");
-    //print_string(&usb_dev->manufacturer,0,0);
-    //printf(" ");
-    print_string(&usb_dev->product_id,0,0);
-    printf(" ");
-    print_string(&usb_dev->location_id,0,0);
-    printf("\n");
+    print_dev(usb_dev);
 
     usb_dev_cnt++;
-
-    // if(usb_dev_cnt > 26) // TODO solve eof problems...
-    //   break;
   }
+}
+
+static void print_dev(usb_dev_t *usb_dev) {
+
+  if(!verbose_flag) {
+    if(mu_str_find(&usb_dev->name,"Hub") >= 0)
+      return;
+    if(mu_str_find(&usb_dev->name,"USB Host") >= 0)
+      return;
+  }
+
+  mu_ansi_term_set_colors(MU_ANSI_TERM_YELLOW, MU_ANSI_TERM_DEFAULT_COLOR);
+  print_string(&usb_dev->name,0,0);
+  printf(" ");
+  //print_string(&usb_dev->manufacturer,0,0);
+  //printf(" ");
+  mu_ansi_term_set_colors(MU_ANSI_TERM_BRIGHT_GREEN, MU_ANSI_TERM_DEFAULT_COLOR);
+
+  print_string(&usb_dev->product_id,0,0);
+  printf(" ");
+  mu_ansi_term_set_colors(MU_ANSI_TERM_DEFAULT_COLOR, MU_ANSI_TERM_DEFAULT_COLOR);
+  print_string(&usb_dev->location_id,0,0);
+  printf("\n");
 }
 
 static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev) {
@@ -334,7 +296,7 @@ static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev) {
   //printf("prodindex_a %d\n",prodindex_a);
 
   if(prodindex_a < str_cp.s) {
-    printf("prodindex_a fail\n");
+    //printf("prodindex_a fail\n");
     return false;
   }
   // incr .s then find terminal product_id
@@ -368,7 +330,7 @@ static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev) {
   //printf("loc_index %d %d\n",loc_index,separator_index);
 
   if(loc_index < 0) { // TODO -- will never be < 0 because + str_cp.s
-    printf("loc_index fail\n");
+    //printf("loc_index fail\n");
     return false;
   }
 
@@ -409,6 +371,9 @@ static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev) {
   if(separator_index + 10 < usb_dev->name.e)
     usb_dev->name.s = separator_index + 1 + 8; // skip 8 spaces of formatted indentation
 
+  if(!verbose_flag)
+    mu_str_trim_char(&usb_dev->name,' ');
+
    // bump up the .s pointer in the source
   str->s = prodindex_b;
 
@@ -432,7 +397,7 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
   //printf("prodindex_a %d %zu\n",prodindex_a, str_cp.s);
 
   if(prodindex_a < str_cp.s) {
-    printf("prodindex_a fail\n");
+    //printf("prodindex_a fail\n");
     return false;
   }
   // incr .s then find terminal product_id
@@ -522,8 +487,14 @@ format with colors
 
 If name contains HUB, dont print manufacturer, location (#define SHOW_HUBS)
 
+If not show hubs, chop leading spaces
+
+
 monitor deltas
   (make birthdates, keyed by Location ID)
+
+add some args
+  -v (will show hubs, what else?)
 
 Test on systems with no hubs
 

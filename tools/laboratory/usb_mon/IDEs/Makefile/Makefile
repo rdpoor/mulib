@@ -10,18 +10,15 @@ OS_NAME := $(shell uname -s | tr A-Z a-z)
 
 $(info    Building for $(OS_NAME))
 
-
 ifeq ($(OS_NAME),darwin)
 	CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -pthread -DON_DARWIN
 else
 	CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -pthread
 endif
 
-
-#CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -pthread
 #CFLAGS = -Wall -Werror -g -DMU_LOG_ENABLED -pthread -D_DEBUG
 
-# note 5 .. because we are in the lab
+# note 5 .. because we are in the laboratory dir
 TOP_MULIB_DIR = ../../../../..
 
 INC_APP_DIR = ../../inc
