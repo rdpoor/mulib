@@ -175,7 +175,7 @@ static void task_fn(void *ctx, void *arg) {
   if(os_type == OS_TYPE_DARWIN)
     err = read_output_from_shell_command("system_profiler SPUSBDataType -detailLevel mini 2>/dev/null | tr \"\\n\" \"^\" | tr -d \"\\t\"", readbuf);
   else 
-    err = read_output_from_shell_command("lsusb", readbuf);
+    err = read_output_from_shell_command("lsusb | tr \"\\n\" \"^\" | tr -d \"\\t\"", readbuf);
 
   //printf("readbuf \n %s\n-----------------------------",readbuf);
 
