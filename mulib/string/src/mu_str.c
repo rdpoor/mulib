@@ -216,6 +216,38 @@ size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len) {
   return copied;       // # of bytes copied, not including null
 }
 
+
+int mu_str_find(mu_str_t *str, char *substring) {
+  register uint8_t *a, *b;
+  //uint8_t av;
+
+  const uint8_t *string = mu_str_read_ref(str) - str->s; // includes ->s 
+  int st = str->s;
+  int max_len = st + mu_str_read_available(str);
+  b = (uint8_t *)substring;
+  if (*b == 0) 
+    return 0;
+    
+  for (int i = st ; i < max_len; i++) {
+    a = (uint8_t *)string + i;
+    //av = string[i];
+    if (*a != *b) {
+        continue;
+    }
+    while (1) {
+        if (*b == 0) {
+          //printf("av %c ",av);
+          return i - st; // at the end of substring, we must have found it!
+        }
+        if (*a++ != *b++) 
+          break;
+    }
+    b = (uint8_t *)substring; // reset to beginning of substring
+  }
+  //printf("fail! %d %d\n", st, max_len);
+  return -1;
+}
+
 // =============================================================================
 // local (static) code
 

@@ -251,11 +251,21 @@ size_t mu_str_printf(mu_str_t *dst, const char *fmt, ...);
  */
 size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len);
 
+/**
+ * @brief Search for C-style string in a mu_str.
+ *
+ * Note: The search begins at the current start index of the mu_str and leaves it unmolested.
+ *
+ * @param src The mu_str to search
+ * @param cstr A pointer to the C-style string to look for
+ * @return The offset index from str->s at which the cstr begins, -1 if not found, 0 if cstr is empty
+ */
+int mu_str_find(mu_str_t *str, char *substring);
+
 // TBD:
 // mu_str_cmp -- compare two strings
 // mu_str_equals -- mu_str_cmp() == 0
 // mu_str_eq ? -- do two mu_str object point to the same bytes?
-// mu_str_find -- find first occurance of a substring within a mu_str
 
 #ifdef __cplusplus
 }
