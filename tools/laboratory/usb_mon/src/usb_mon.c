@@ -345,8 +345,8 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
   // store product_id
   str_cp.s = prodindex_a + strlen(keystr) + 5;
   usb_dev->product_id.buf = str->buf;
-  usb_dev->product_id.s = str_cp.s + 5;
-  usb_dev->product_id.e = usb_dev->product_id.s + 4;
+  usb_dev->product_id.s = str_cp.s;
+  usb_dev->product_id.e = str_cp.s + 4;
 
   str_cp.s = prodindex_a;
   keystr = "Location ID:";
