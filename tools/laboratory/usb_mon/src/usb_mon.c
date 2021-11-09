@@ -84,7 +84,6 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev);
 static void print_string(mu_str_t *reader, int a, int b);
 static void print_dev(usb_dev_t *usb_dev, bool isNew);
 int mu_str_index_reverse(mu_str_t *str, uint8_t byte);
-int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2);
 static void mu_str_trim_char(mu_str_t *str, uint8_t byte);
 
 // =============================================================================
@@ -184,11 +183,6 @@ int mu_str_index_reverse(mu_str_t *str, uint8_t byte) {
   }
   // not found
   return -1;
-}
-
-int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2) {
-  int len = min(str1->e - str1->s, str2->e - str2->s);
-  return strncmp((char *)&str1->buf->rdata[str1->s], (char *)&str2->buf->rdata[str2->s], len);
 }
 
 static void mu_str_trim_char(mu_str_t *str, uint8_t byte) {

@@ -252,6 +252,28 @@ size_t mu_str_printf(mu_str_t *dst, const char *fmt, ...);
 size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len);
 
 /**
+ * @brief Compare str1 and str2, using the c lib function strncmp()
+ * *
+ *  
+ * Note: If either string is shorter than n, the comparison will cease there
+ * 
+ * @param str1 The first mu_str to compare
+ * @param str2 The second mu_str to compare
+ * @param n The maximum number of characters to compare
+ * @return returning less than, equal to or greater than zero if str1 is lexicographically less than, equal to or greater than str2.
+ */
+int mu_str_strncmp(mu_str_t *str1, mu_str_t *str2, size_t len);
+
+/**
+ * @brief Compare str1 and str2, using the c lib function strncmp(), passing in the length of the shorter of the two strings
+ * *
+ * @param str1 The first mu_str to compare
+ * @param str2 The second mu_str to compare
+ * @return returning less than, equal to or greater than zero if str1 is lexicographically less than, equal to or greater than str2.
+ */
+int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2);
+
+/**
  * @brief Search for C-style string in a mu_str.
  *
  * Note: The search begins at the current start index of the mu_str and leaves it unmolested.
@@ -263,7 +285,6 @@ size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len);
 int mu_str_find(mu_str_t *str, char *substring);
 
 // TBD:
-// mu_str_cmp -- compare two strings
 // mu_str_equals -- mu_str_cmp() == 0
 // mu_str_eq ? -- do two mu_str object point to the same bytes?
 

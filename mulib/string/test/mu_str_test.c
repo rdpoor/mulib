@@ -29,6 +29,7 @@
 #include "mu_str.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
 
 // =============================================================================
@@ -119,6 +120,31 @@ void mu_str_test() {
   reset();
   ASSERT(mu_str_printf(s_wr, "Dec %d=Oct %o", 25, 25) == 13);
   ASSERT(test_str_equals(s_wr, "Dec 25=Oct 31"));
+
+  // tests for mu_str_find
+  reset();
+  ASSERT(mu_str_find(s_ro,"") == 0); // searching for null str should return 0
+  ASSERT(mu_str_find(s_ro,"Disco") == 0);
+  ASSERT(mu_str_find(s_ro,"!") == 8);
+  ASSERT(mu_str_find(s_ro,"I Zimbra") == -1);
+
+  // tests for mu_str_strcmp
+  reset();
+  ASSERT(mu_str_printf(s_wr, "%s", s_cstr_ro) == strlen(s_cstr_ro));
+  ASSERT(mu_str_strcmp(s_ro,s_wr) == 0); 
+  ASSERT(mu_str_strcmp(s_wr,s_ro) == 0); 
+  reset();
+  mu_str_printf(s_wr, "%s", "Rules!");
+  ASSERT(mu_str_strcmp(s_ro,s_wr) < 0);
+  ASSERT(mu_str_strcmp(s_wr,s_ro) > 0);
+  ASSERT(mu_str_strncmp(s_ro,s_wr,2) < 0);
+  ASSERT(mu_str_strncmp(s_wr,s_ro,2) > 0);
+  reset();
+  mu_str_printf(s_wr, "%s", "Dah");
+  ASSERT(mu_str_strcmp(s_ro,s_wr) > 0);
+  ASSERT(mu_str_strncmp(s_ro,s_wr,1) == 0);
+  reset();
+  ASSERT(mu_str_strcmp(s_ro,s_wr) == 0);
 }
 
 // =============================================================================

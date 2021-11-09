@@ -216,35 +216,36 @@ size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len) {
   return copied;       // # of bytes copied, not including null
 }
 
+int mu_str_strncmp(mu_str_t *str1, mu_str_t *str2, size_t len) {
+  return strncmp((char *)&str1->buf->rdata[str1->s], (char *)&str2->buf->rdata[str2->s], len);
+}
+
+int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2) {
+  int l1 = mu_str_read_available(str1);
+  int l2 = mu_str_read_available(str2);
+  return mu_str_strncmp(str1, str2, l1 < l2 ? l1 : l2);
+}
 
 int mu_str_find(mu_str_t *str, char *substring) {
   register uint8_t *a, *b;
-  //uint8_t av;
-
   const uint8_t *string = mu_str_read_ref(str) - str->s; // includes ->s 
   int st = str->s;
-  int max_len = st + mu_str_read_available(str);
-  b = (uint8_t *)substring;
-  if (*b == 0) 
+  int nd = st + mu_str_read_available(str);
+  if (*substring == 0) // mimick the behavior of c lib strstr function, which a ptr to the beginning of the searched string
     return 0;
     
-  for (int i = st ; i < max_len; i++) {
+  for (int i = st ; i < nd; i++) {
     a = (uint8_t *)string + i;
-    //av = string[i];
-    if (*a != *b) {
+    b = (uint8_t *)substring; // reset to beginning of substring
+    if (*a != *b) 
         continue;
-    }
     while (1) {
-        if (*b == 0) {
-          //printf("av %c ",av);
+        if (*b == 0)
           return i - st; // at the end of substring, we must have found it!
-        }
         if (*a++ != *b++) 
           break;
     }
-    b = (uint8_t *)substring; // reset to beginning of substring
   }
-  //printf("fail! %d %d\n", st, max_len);
   return -1;
 }
 
