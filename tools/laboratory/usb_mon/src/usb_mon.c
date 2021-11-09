@@ -44,9 +44,9 @@
 // =============================================================================
 // Local types and definitions
 
-#define VERSION "0.1"
+#define VERSION "0.3"
 
-#define POLL_INTERVAL_MS 5000
+#define POLL_INTERVAL_MS 6000
 
 // Define the context for a usb_mon task.  When task_fn is called, this
 // context is passed in as an argument and gives task_fn all of the
@@ -64,13 +64,10 @@ typedef struct {
   //mu_list_t list;
 } usb_dev_t;
 
-
-
 // copious string storage for info from lsusb or system_profiler -- on a busy osx this can easily exceed 20kb
 // presumably this is running on a dev machine where ram isn't precious
 #define OUTPUT_BUFFER_SIZE (1024 * 32)
 #define MAX_CSTR_LENGTH (1024)
-#define MAX_RECORD_LENGTH (256)
 #define MAX_DEVS 200
 
 #define min(x, y) ((x) > (y) ? (y) : (x))
@@ -85,9 +82,9 @@ static void parse_info();
 static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev);
 static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev);
 static void print_string(mu_str_t *reader, int a, int b);
-static void print_dev(usb_dev_t *usb_dev);
+static void print_dev(usb_dev_t *usb_dev, bool isNew);
 int mu_str_index_reverse(mu_str_t *str, uint8_t byte);
-int mu_str_equals(mu_str_t *str1, mu_str_t *str2);
+int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2);
 static void mu_str_trim_char(mu_str_t *str, uint8_t byte);
 
 // =============================================================================
@@ -102,13 +99,11 @@ extern  bool verbose_flag;
 // buffer to hold output of system query (lsusb or similar)
 static char readbuf[OUTPUT_BUFFER_SIZE] = "";
 static char readbuf_prev[OUTPUT_BUFFER_SIZE] = "";
-// temp buffer for printing c-style strings
+// temp buffer for storing c-style strings
 static char s_cstr_buf[MAX_CSTR_LENGTH];
 
-//static char record_cache[MAX_DEVS][MAX_RECORD_LENGTH] = {{}};
 
-
-static int usb_dev_cnt = 0, which_col = 0;
+static int usb_dev_cnt = 0;
 static usb_dev_t s_usb_devs[MAX_DEVS] = {};
 
 // =============================================================================
@@ -116,20 +111,16 @@ static usb_dev_t s_usb_devs[MAX_DEVS] = {};
 
 void usb_mon_init(void) {
 
-#ifdef ON_DARWIN
-os_type = OS_TYPE_DARWIN;
-#else
-os_type = OS_TYPE_LINUX;
-#endif
-
+  #ifdef ON_DARWIN
+  os_type = OS_TYPE_DARWIN;
+  #else
+  os_type = OS_TYPE_LINUX;
+  #endif
 
   printf("os_type %d\n",os_type);
 
   mu_sched_init();
-  mu_platform_init();
   mu_ansi_term_init();
-
-  //printf("\r\nusb_mon v%s\n", VERSION);
 
   // initialize the mu_task to associate function (task_fn) with context (s_ctx)
   mu_task_init(&s_ctx.task, task_fn, &s_ctx, "USB_MON");
@@ -161,7 +152,6 @@ static void task_fn(void *ctx, void *arg) {
   else 
     err = read_output_from_shell_command("lsusb | tr \"\\n\" \"^\" | tr -d \"\\t\"", readbuf);
 
-
   if(err) {
     printf("read_output_from_shell_command err %d\n", err);
   } else {
@@ -179,19 +169,18 @@ static void task_fn(void *ctx, void *arg) {
 static int read_output_from_shell_command(char *command, char *output_buffer) {
   FILE *input;
   input = popen (command, "r");
-  if (!input)
-    {
-      fprintf (stderr, "incorrect parameters.\n");
-      return -1;
-    }
+  if (!input) {
+    fprintf (stderr, "incorrect parameters.\n");
+    return -1;
+  }
+
   while(fgets(output_buffer, OUTPUT_BUFFER_SIZE, input)) {}
   
-  if (pclose (input) != 0)
-    {
-      fprintf (stderr, "Could not run shell command or other error.\n");
-      return -1;
-    }
-    return 0;
+  if (pclose (input) != 0) {
+    fprintf (stderr, "Could not run shell command or other error.\n");
+    return -1;
+  }
+  return 0;
 }
 
 int mu_str_index_reverse(mu_str_t *str, uint8_t byte) {
@@ -205,13 +194,8 @@ int mu_str_index_reverse(mu_str_t *str, uint8_t byte) {
   return -1;
 }
 
-int mu_str_equals(mu_str_t *str1, mu_str_t *str2) {
+int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2) {
   int len = min(str1->e - str1->s, str2->e - str2->s);
-  // printf("mu_str_equals\n");
-  // print_string(str1,0,0);
-  // printf(" vs ");
-  // print_string(str2,0,0);
-  // printf("\nlen: %d IS %d\n",len, strncmp((char *)str1->buf->rdata + str1->s, (char *)str2->buf->rdata + str2->s, len));
   return strncmp((char *)&str1->buf->rdata[str1->s], (char *)&str2->buf->rdata[str2->s], len);
 }
 
@@ -233,7 +217,6 @@ static void print_string(mu_str_t *str, int a, int b) {
   inspector_str.s = st;
   inspector_str.e = len;
   mu_str_to_cstr(&inspector_str, s_cstr_buf, len);
-  //printf("inspector_str %d %d: %s \n",a,len,s_cstr_buf);  
   printf("%s",s_cstr_buf);  
 }
 
@@ -249,12 +232,9 @@ static void parse_info() {
   mu_strbuf_init_from_cstr(&prev_info_string, readbuf_prev);
   mu_str_init_for_read(&prev_reader, &prev_info_string);
 
-  //print_string(&reader,0,0);
-
   usb_dev_cnt = 0;
   usb_dev_t *usb_dev;
   bool keepGoing = true;
-
   
   while(keepGoing) {
 
@@ -267,25 +247,16 @@ static void parse_info() {
 
     if(!keepGoing) break;
 
-    mu_str_to_cstr(&usb_dev->product_id, s_cstr_buf, (usb_dev->product_id.e - usb_dev->product_id.s));
+    // make a cstr of the location, so we can search for it in the prev readbuf
+    mu_str_to_cstr(&usb_dev->location_id, s_cstr_buf, (usb_dev->location_id.e - usb_dev->location_id.s));
 
-    if(mu_str_find(&prev_reader, s_cstr_buf) < 0) {
-      printf("NEW!");
-    }
-
-    //printf("exists_in_col %d",exists_in_col(usb_dev, other_col));
-
-    print_dev(usb_dev);
+    print_dev(usb_dev, mu_str_find(&prev_reader, s_cstr_buf) < 0);
 
     usb_dev_cnt++;
   }
-
-  if(which_col == 0)
-    which_col = 1;
-  else which_col = 0;
 }
 
-static void print_dev(usb_dev_t *usb_dev) {
+static void print_dev(usb_dev_t *usb_dev, bool isNew) {
 
   if(!verbose_flag) {
     if(mu_str_find(&usb_dev->name,"Hub") >= 0)
@@ -294,96 +265,78 @@ static void print_dev(usb_dev_t *usb_dev) {
       return;
   }
 
-  mu_ansi_term_set_colors(MU_ANSI_TERM_YELLOW, MU_ANSI_TERM_DEFAULT_COLOR);
+  mu_ansi_term_set_colors(isNew ? MU_ANSI_TERM_BRIGHT_GREEN : MU_ANSI_TERM_YELLOW, MU_ANSI_TERM_DEFAULT_COLOR);
   print_string(&usb_dev->name,0,0);
-  printf(" ");
-  //print_string(&usb_dev->manufacturer,0,0);
-  //printf(" ");
-  mu_ansi_term_set_colors(MU_ANSI_TERM_BRIGHT_GREEN, MU_ANSI_TERM_DEFAULT_COLOR);
-
+  mu_ansi_term_set_colors(MU_ANSI_TERM_GRAY, MU_ANSI_TERM_DEFAULT_COLOR);
+  printf(" (");
+  //mu_ansi_term_set_colors(MU_ANSI_TERM_DEFAULT_COLOR, MU_ANSI_TERM_DEFAULT_COLOR);
   print_string(&usb_dev->product_id,0,0);
-  printf(" ");
+  mu_ansi_term_set_colors(MU_ANSI_TERM_GRAY, MU_ANSI_TERM_DEFAULT_COLOR);
+  printf(") ");
+  //mu_ansi_term_set_colors(MU_ANSI_TERM_GRAY, MU_ANSI_TERM_DEFAULT_COLOR);
   mu_ansi_term_set_colors(MU_ANSI_TERM_DEFAULT_COLOR, MU_ANSI_TERM_DEFAULT_COLOR);
+  printf(" [");
   print_string(&usb_dev->location_id,0,0);
-  printf("\n");
+  printf("]\n");
 }
 
 static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev) {
   mu_str_t str_cp;
   char *keystr;
   char separator = '^';
-  int prodindex_a, prodindex_b, loc_index, separator_index;
+  int prodindex_a, prodindex_b, key_index, separator_index;
 
   mu_str_copy(&str_cp, str);
 
-  keystr = "Product ID:";
-
   // find first product_id
+  keystr = "Product ID:";
   prodindex_a = mu_str_find(&str_cp, keystr) + str_cp.s; // absolute index
-  
-  //printf("prodindex_a %d\n",prodindex_a);
 
-  if(prodindex_a < str_cp.s) {
-    //printf("prodindex_a fail\n");
+  if(prodindex_a < str_cp.s) // no records found
     return false;
-  }
+  
   // incr .s then find terminal product_id
-  //mu_str_read_increment(str_cp, prodindex_a + 10);
   str_cp.s = prodindex_a + strlen(keystr);
-  prodindex_b = mu_str_find(&str_cp, keystr) + str_cp.s; // -1 never happens because we add...
-  if(prodindex_b < str_cp.s) {
-    //printf("aha!\n");
+  prodindex_b = mu_str_find(&str_cp, keystr) + str_cp.s;
+  if(prodindex_b < str_cp.s) // must be tge last record
     prodindex_b = mu_str_read_available(&str_cp) + str_cp.s;
-  }
-
-  //printf("prodindex_b %d\n",prodindex_b);
-
-  // store product_id
+  
+  // find end of the product_id
   str_cp.s = prodindex_a + strlen(keystr);
   separator_index = mu_str_index(&str_cp,separator) + str_cp.s; // mu_str_index confusin since offset from ->s
 
+  // store product_id
   usb_dev->product_id.buf = str->buf;
   usb_dev->product_id.s = prodindex_a + strlen(keystr) + 1;
   usb_dev->product_id.e = separator_index;
 
-  //printf("usb_dev->product_id.s e %zu %zu\n",usb_dev->product_id.s,usb_dev->product_id.e);
-
-
-  str_cp.s = prodindex_a + strlen(keystr);
+  // find location_id
   keystr = "Location ID:";
-  loc_index = mu_str_find(&str_cp, keystr) + str_cp.s;
-  str_cp.s = loc_index + strlen(keystr);
+  str_cp.s = prodindex_a + strlen(keystr);
+  key_index = mu_str_find(&str_cp, keystr) + str_cp.s;
+  str_cp.s = key_index + strlen(keystr);
   separator_index = mu_str_index(&str_cp,separator) + str_cp.s; // mu_str_index confusin since offset from ->s
 
-  //printf("loc_index %d %d\n",loc_index,separator_index);
-
-  if(loc_index < 0) { // TODO -- will never be < 0 because + str_cp.s
-    //printf("loc_index fail\n");
+  if(key_index < 0)  // TODO -- will never be < 0 because + str_cp.s
     return false;
-  }
 
   usb_dev->location_id.buf = str->buf;
-  usb_dev->location_id.s = loc_index + strlen(keystr) + 1;
+  usb_dev->location_id.s = key_index + strlen(keystr) + 1;
   usb_dev->location_id.e = separator_index;
 
 
   str_cp.s = prodindex_a + strlen(keystr);
   keystr = "Manufacturer:";
-  loc_index = mu_str_find(&str_cp, keystr) + str_cp.s;
-  str_cp.s = loc_index + strlen(keystr);
+  key_index = mu_str_find(&str_cp, keystr) + str_cp.s;
+  str_cp.s = key_index + strlen(keystr);
   separator_index = mu_str_index(&str_cp,separator) + str_cp.s; // mu_str_index confusin since offset from ->s
 
-  //printf("loc_index %d %d\n",loc_index,separator_index);
-
-  if(loc_index < 0) { // TODO rename loc_index
-    printf("loc_index fail\n");
+  if(key_index < 0)  
     return false;
-  }
 
   usb_dev->manufacturer.buf = str->buf;
-  usb_dev->manufacturer.s = loc_index + strlen(keystr) + 1;
+  usb_dev->manufacturer.s = key_index + strlen(keystr) + 1;
   usb_dev->manufacturer.e = separator_index;
-
 
   // to left of prod is name
 
@@ -413,7 +366,7 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
   mu_str_t str_cp;
   char *keystr;
   char separator = '^';
-  int prodindex_a, prodindex_b, loc_index, separator_index;
+  int prodindex_a, prodindex_b, key_index, separator_index;
 
   mu_str_copy(&str_cp, str);
 
@@ -422,22 +375,16 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
   // find first product_id
   prodindex_a = mu_str_find(&str_cp, keystr) + str_cp.s; // absolute index
   
-  //printf("prodindex_a %d %zu\n",prodindex_a, str_cp.s);
-
   if(prodindex_a < str_cp.s) {
     //printf("prodindex_a fail\n");
     return false;
   }
   // incr .s then find terminal product_id
-  //mu_str_read_increment(str_cp, prodindex_a + 10);
   str_cp.s = prodindex_a + 8;
   prodindex_b = mu_str_find(&str_cp, keystr) + str_cp.s; // -1 never happens because we add...
   if(prodindex_b < str_cp.s) {
-    //printf("aha!\n");
     prodindex_b = mu_str_read_available(&str_cp) + str_cp.s;
   }
-
-  //printf("prodindex_b %d\n",prodindex_b);
 
   // store product_id
   str_cp.s = prodindex_a + strlen(keystr) + 5;
@@ -445,25 +392,19 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
   usb_dev->product_id.s = prodindex_a + strlen(keystr) + 5;
   usb_dev->product_id.e = prodindex_a + strlen(keystr) + 9;
 
-  //printf("usb_dev->product_id.s e %zu %zu\n",usb_dev->product_id.s,usb_dev->product_id.e);
-
   str_cp.s = prodindex_a;
   keystr = "Location ID:";
-  loc_index = mu_str_index_reverse(&str_cp, 'B') + str_cp.s;
+  key_index = mu_str_index_reverse(&str_cp, 'B') + str_cp.s;
 
-  //printf("loc_index %d %d\n",loc_index,separator_index);
-
-  if(loc_index < 0) { // TODO -- will never be < 0 because + str_cp.s
-    printf("loc_index fail\n");
+  if(key_index < 0) { // TODO -- will never be < 0 because + str_cp.s
     return false;
   }
 
   usb_dev->location_id.buf = str->buf;
-  usb_dev->location_id.s = loc_index; // Bus 
+  usb_dev->location_id.s = key_index; // Bus 
   usb_dev->location_id.e = prodindex_a + 1;
 
   // name
-
   str_cp.s = prodindex_a;
   separator_index = mu_str_index(&str_cp,separator) + str_cp.s; 
 
@@ -476,110 +417,4 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
 
   return true;
 }
-
-
-// static int slot_for_dev(char *unique_dev_string) {
-//   //printf("slot_for_dev %s\n",unique_dev_string);
-//   for(int i=0; i < 6; i++) {
-//     if(usb_dev_slots[i]) {
-//       if(strcmp(usb_dev_slots[i], unique_dev_string) == 0) {
-//         //printf("found %s\n",usb_dev_slots[i]);
-//         return i;
-//       }
-//     } 
-//   }
-
-//   for(int i=0; i < 6; i++)
-//     if(!usb_dev_slots[i])  {
-//       usb_dev_slots[i] = unique_dev_string;
-//       //printf("new\n");
-//       return i;
-//     }
-//   fprintf(stderr, "slot_for_dev err");
-//   return 0;
-// }
-
-
-/* 
-
-lsusb output:
-
-Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
-Bus 001 Device 003: ID 05ac:0307 Apple, Inc. Apple Optical USB Mouse
-Bus 001 Device 004: ID 05ac:024f Apple, Inc. 
-Bus 001 Device 002: ID 05ac:1006 Apple, Inc. Hub in Aluminum Keyboard
-Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
-
-system_profiler SPUSBDataType -detailLevel mini 2>/dev/null | tr -d "\t"
-EXAMPLE:
-
-
-      AudioBox USB 96:
-
-          Product ID: 0x0303
-          Vendor ID: 0x194f
-          Version: 1.12
-          Serial Number: 000000000000
-          Speed: Up to 480 Mb/s
-          Manufacturer: PreSonus
-          Location ID: 0x00100000 / 3
-          Current Available (mA): 500
-          Current Required (mA): 500
-          Extra Operating Current (mA): 0
-
-*/
-
-
-
-
-/*
-
-format with colors
-
-add some args
-  -v (will show hubs, what else?)
-
-Test on systems with no hubs
-
-Test on linux
-
-monitor deltas
-  (manage birthdates, keyed by Location ID + Prod_ID)
-
-
-
-REDESIGN
-
-
-OHOHOH  the problem is readbuf is changing out from under us!
-
-
-make usb_devs a linked list.  never thrown anything away.
-
-static array of initally empty structs.
-
-get_next stores in a temp struct.   
-
-then we find matching (non0emopty) struct in linked list, if not exist, we use the first available empty one off our static stack of empties and append to the end of the list
-
-NEED to copy the c+string material to the usb_dev struct (raw string storage) since this is constantly being overwritten by new readbufs
-
-  usb_dev_t first_device = (usb_dev_t){.name = "", .list.next = NULL, .product_id = "", .birth = NULL}; 
-
-    store raw record copy cstring per device
-
-
-  INTERIM solutionm with no list needed:
-
-    store 1 cycle copy of recordbuf
-
-    id mu_find_str fails looking for our raw (prod_a to prod_b) then we're NEW
-
-
-
-
-
-
-
-*/
 
