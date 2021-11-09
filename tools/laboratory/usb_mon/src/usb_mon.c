@@ -272,7 +272,7 @@ static void print_dev(usb_dev_t *usb_dev, bool isNew) {
   //mu_ansi_term_set_colors(MU_ANSI_TERM_DEFAULT_COLOR, MU_ANSI_TERM_DEFAULT_COLOR);
   print_string(&usb_dev->product_id,0,0);
   mu_ansi_term_set_colors(MU_ANSI_TERM_GRAY, MU_ANSI_TERM_DEFAULT_COLOR);
-  printf(") ");
+  printf(")");
   //mu_ansi_term_set_colors(MU_ANSI_TERM_GRAY, MU_ANSI_TERM_DEFAULT_COLOR);
   mu_ansi_term_set_colors(MU_ANSI_TERM_DEFAULT_COLOR, MU_ANSI_TERM_DEFAULT_COLOR);
   printf(" [");
@@ -307,7 +307,7 @@ static bool extract_next_dev(mu_str_t *str, usb_dev_t *usb_dev) {
 
   // store product_id
   usb_dev->product_id.buf = str->buf;
-  usb_dev->product_id.s = prodindex_a + strlen(keystr) + 1;
+  usb_dev->product_id.s = prodindex_a + strlen(keystr) + 3; // skipping "0x" prefix
   usb_dev->product_id.e = separator_index;
 
   // find location_id
@@ -394,7 +394,7 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
 
   str_cp.s = prodindex_a;
   keystr = "Location ID:";
-  key_index = mu_str_index_reverse(&str_cp, 'B') + str_cp.s;
+  key_index = mu_str_index_reverse(&str_cp, 'B') + str_cp.s + 4; // skip back to Bus, then omit it
 
   if(key_index < 0) { // TODO -- will never be < 0 because + str_cp.s
     return false;
