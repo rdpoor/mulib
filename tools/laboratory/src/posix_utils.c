@@ -80,7 +80,7 @@ static int read_output_from_shell_command(char *command, char *output_buffer) {
       fprintf (stderr, "incorrect parameters.\n");
       return -1;
     }
-  while(fgets(output_buffer, OUTPUT_BUFFER_SIZE, input))
+  while(fgets(output_buffer, OUTPUT_BUFFER_SIZE, input)) {}
   
   if (pclose (input) != 0)
     {

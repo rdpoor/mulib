@@ -37,6 +37,7 @@
 #include <mu_task.h>
 #include <mu_str.h>
 #include <mu_strbuf.h>
+//#include <mu_list.h>
 #include <mu_ansi_term.h>
 #include "mu_platform.h"
 
@@ -52,30 +53,28 @@
 // information it needs to run the task.
 typedef struct {
   mu_task_t task;
-  char *usb_state_string;
 } ctx_t;
 
-// A struct to hold an HTTP header key / value pair.
-typedef struct {
-  mu_str_t key;
-  mu_str_t value;
-} kv_pair_t;
-
-
+// A struct to hold info about a connected usb device.
 typedef struct {
   mu_str_t name;
   mu_str_t product_id;
   mu_str_t location_id;
   mu_str_t manufacturer;
+  //mu_list_t list;
 } usb_dev_t;
 
 
 
 // copious string storage for info from lsusb or system_profiler -- on a busy osx this can easily exceed 20kb
 // presumably this is running on a dev machine where ram isn't precious
-#define OUTPUT_BUFFER_SIZE (1024 * 50)
-#define LINE_BUFFER_SIZE 181
-#define MAX_CSTR_LENGTH (1024 * 50)
+#define OUTPUT_BUFFER_SIZE (1024 * 32)
+#define MAX_CSTR_LENGTH (1024)
+#define MAX_RECORD_LENGTH (256)
+#define MAX_DEVS 200
+
+#define min(x, y) ((x) > (y) ? (y) : (x))
+
 
 // =============================================================================
 // Local (forward) declarations
@@ -88,6 +87,7 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev);
 static void print_string(mu_str_t *reader, int a, int b);
 static void print_dev(usb_dev_t *usb_dev);
 int mu_str_index_reverse(mu_str_t *str, uint8_t byte);
+int mu_str_equals(mu_str_t *str1, mu_str_t *str2);
 static void mu_str_trim_char(mu_str_t *str, uint8_t byte);
 
 // =============================================================================
@@ -96,17 +96,20 @@ static void mu_str_trim_char(mu_str_t *str, uint8_t byte);
 static ctx_t s_ctx;
 
 static os_type_t os_type;
-static bool verbose_flag = false;
+extern  bool verbose_flag;
+//static usb_dev_t first_device = (usb_dev_t){.list.next = NULL, .age = -1}; 
 
-static char readbuf[OUTPUT_BUFFER_SIZE];
-//static char linebuf[LINE_BUFFER_SIZE];
+// buffer to hold output of system query (lsusb or similar)
+static char readbuf[OUTPUT_BUFFER_SIZE] = "";
+static char readbuf_prev[OUTPUT_BUFFER_SIZE] = "";
 // temp buffer for printing c-style strings
 static char s_cstr_buf[MAX_CSTR_LENGTH];
 
-#define MAX_DEVS 200
+//static char record_cache[MAX_DEVS][MAX_RECORD_LENGTH] = {{}};
 
-static int usb_dev_cnt = 0;
-static usb_dev_t s_usb_devs[MAX_DEVS];
+
+static int usb_dev_cnt = 0, which_col = 0;
+static usb_dev_t s_usb_devs[MAX_DEVS] = {};
 
 // =============================================================================
 // Public code
@@ -131,9 +134,6 @@ os_type = OS_TYPE_LINUX;
   // initialize the mu_task to associate function (task_fn) with context (s_ctx)
   mu_task_init(&s_ctx.task, task_fn, &s_ctx, "USB_MON");
 
-  // Initialize the context's initial state
-  s_ctx.usb_state_string = readbuf;
-
   // Make the first call to the scheduler to start things off.  The task_fn will
   // reschedule itself upon completion.
   mu_sched_task_now(&s_ctx.task);
@@ -152,28 +152,25 @@ void usb_mon_step(void) {
 
 static void task_fn(void *ctx, void *arg) {
   // Recast the void * argument to a usb_mon ctx_t * argument.
-  ctx_t *self = (ctx_t *)ctx;
+  //ctx_t *self = (ctx_t *)ctx;
   (void)arg;  // unused
   int err;
-  //int err = read_output_from_shell_command("system_profiler SPUSBDataType 2>/dev/null", readbuf);
-  //int err = read_output_from_shell_command("system_profiler SPUSBDataType -detailLevel mini 2>/dev/null | tr \"\\n\" \",\" | tr -d \"\\t\\n\"", readbuf);
 
   if(os_type == OS_TYPE_DARWIN)
     err = read_output_from_shell_command("system_profiler SPUSBDataType -detailLevel mini 2>/dev/null | tr \"\\n\" \"^\" | tr -d \"\\t\"", readbuf);
   else 
     err = read_output_from_shell_command("lsusb | tr \"\\n\" \"^\" | tr -d \"\\t\"", readbuf);
 
-  //printf("readbuf \n %s\n-----------------------------",readbuf);
 
-  //int err = read_output_from_shell_command("ls -l | tr \"\\n\" \"-\" | tr -d \" \\t\\n\"", readbuf);
   if(err) {
     printf("read_output_from_shell_command err %d\n", err);
   } else {
-      self->usb_state_string = readbuf;
       mu_ansi_term_clear_screen();
       mu_ansi_term_home();
       parse_info();
   }
+
+  strncpy(readbuf_prev, readbuf, OUTPUT_BUFFER_SIZE);
 
   mu_sched_reschedule_in(POLL_INTERVAL_MS); // POLL_INTERVAL_MS
 }
@@ -187,7 +184,7 @@ static int read_output_from_shell_command(char *command, char *output_buffer) {
       fprintf (stderr, "incorrect parameters.\n");
       return -1;
     }
-  while(fgets(output_buffer, OUTPUT_BUFFER_SIZE, input))
+  while(fgets(output_buffer, OUTPUT_BUFFER_SIZE, input)) {}
   
   if (pclose (input) != 0)
     {
@@ -207,6 +204,17 @@ int mu_str_index_reverse(mu_str_t *str, uint8_t byte) {
   // not found
   return -1;
 }
+
+int mu_str_equals(mu_str_t *str1, mu_str_t *str2) {
+  int len = min(str1->e - str1->s, str2->e - str2->s);
+  // printf("mu_str_equals\n");
+  // print_string(str1,0,0);
+  // printf(" vs ");
+  // print_string(str2,0,0);
+  // printf("\nlen: %d IS %d\n",len, strncmp((char *)str1->buf->rdata + str1->s, (char *)str2->buf->rdata + str2->s, len));
+  return strncmp((char *)&str1->buf->rdata[str1->s], (char *)&str2->buf->rdata[str2->s], len);
+}
+
 
 static void mu_str_trim_char(mu_str_t *str, uint8_t byte) {
   for (int i=str->s; i<str->e; i++) {
@@ -235,11 +243,19 @@ static void parse_info() {
   // Initialize the mu_strbuf and the reader mu_str objects.
   mu_strbuf_init_from_cstr(&info_string, readbuf);
   mu_str_init_for_read(&reader, &info_string);
+
+  mu_strbuf_t prev_info_string;
+  mu_str_t prev_reader;
+  mu_strbuf_init_from_cstr(&prev_info_string, readbuf_prev);
+  mu_str_init_for_read(&prev_reader, &prev_info_string);
+
   //print_string(&reader,0,0);
 
   usb_dev_cnt = 0;
   usb_dev_t *usb_dev;
   bool keepGoing = true;
+
+  
   while(keepGoing) {
 
     usb_dev = &s_usb_devs[usb_dev_cnt];
@@ -251,10 +267,22 @@ static void parse_info() {
 
     if(!keepGoing) break;
 
+    mu_str_to_cstr(&usb_dev->product_id, s_cstr_buf, (usb_dev->product_id.e - usb_dev->product_id.s));
+
+    if(mu_str_find(&prev_reader, s_cstr_buf) < 0) {
+      printf("NEW!");
+    }
+
+    //printf("exists_in_col %d",exists_in_col(usb_dev, other_col));
+
     print_dev(usb_dev);
 
     usb_dev_cnt++;
   }
+
+  if(which_col == 0)
+    which_col = 1;
+  else which_col = 0;
 }
 
 static void print_dev(usb_dev_t *usb_dev) {
@@ -449,6 +477,29 @@ static bool extract_next_dev_linux(mu_str_t *str, usb_dev_t *usb_dev) {
   return true;
 }
 
+
+// static int slot_for_dev(char *unique_dev_string) {
+//   //printf("slot_for_dev %s\n",unique_dev_string);
+//   for(int i=0; i < 6; i++) {
+//     if(usb_dev_slots[i]) {
+//       if(strcmp(usb_dev_slots[i], unique_dev_string) == 0) {
+//         //printf("found %s\n",usb_dev_slots[i]);
+//         return i;
+//       }
+//     } 
+//   }
+
+//   for(int i=0; i < 6; i++)
+//     if(!usb_dev_slots[i])  {
+//       usb_dev_slots[i] = unique_dev_string;
+//       //printf("new\n");
+//       return i;
+//     }
+//   fprintf(stderr, "slot_for_dev err");
+//   return 0;
+// }
+
+
 /* 
 
 lsusb output:
@@ -485,14 +536,6 @@ EXAMPLE:
 
 format with colors
 
-If name contains HUB, dont print manufacturer, location (#define SHOW_HUBS)
-
-If not show hubs, chop leading spaces
-
-
-monitor deltas
-  (make birthdates, keyed by Location ID)
-
 add some args
   -v (will show hubs, what else?)
 
@@ -500,7 +543,42 @@ Test on systems with no hubs
 
 Test on linux
 
-Pass in strings, which are used as keys for addl display info
+monitor deltas
+  (manage birthdates, keyed by Location ID + Prod_ID)
+
+
+
+REDESIGN
+
+
+OHOHOH  the problem is readbuf is changing out from under us!
+
+
+make usb_devs a linked list.  never thrown anything away.
+
+static array of initally empty structs.
+
+get_next stores in a temp struct.   
+
+then we find matching (non0emopty) struct in linked list, if not exist, we use the first available empty one off our static stack of empties and append to the end of the list
+
+NEED to copy the c+string material to the usb_dev struct (raw string storage) since this is constantly being overwritten by new readbufs
+
+  usb_dev_t first_device = (usb_dev_t){.name = "", .list.next = NULL, .product_id = "", .birth = NULL}; 
+
+    store raw record copy cstring per device
+
+
+  INTERIM solutionm with no list needed:
+
+    store 1 cycle copy of recordbuf
+
+    id mu_find_str fails looking for our raw (prod_a to prod_b) then we're NEW
+
+
+
+
+
 
 
 */
