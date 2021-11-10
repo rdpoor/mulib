@@ -216,9 +216,24 @@ size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len) {
   return copied;       // # of bytes copied, not including null
 }
 
+// int mu_str_strncmp(mu_str_t *str1, mu_str_t *str2, size_t len) {
+//   return strncmp((char *)&str1->buf->rdata[str1->s], (char *)&str2->buf->rdata[str2->s], len);
+// }
+
 int mu_str_strncmp(mu_str_t *str1, mu_str_t *str2, size_t len) {
-  return strncmp((char *)&str1->buf->rdata[str1->s], (char *)&str2->buf->rdata[str2->s], len);
+  register const uint8_t *s1 = mu_str_read_ref(str1); 
+  register const uint8_t *s2 = mu_str_read_ref(str2); 
+  if (len == 0)
+    return (0);
+  do {
+    if (*s1 != *s2++)
+      return (*(uint8_t *)s1 - *(uint8_t *)--s2);
+    if (*s1++ == 0)
+      break;
+  } while (--len != 0);
+  return (0);
 }
+
 
 int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2) {
   int l1 = mu_str_read_available(str1);
