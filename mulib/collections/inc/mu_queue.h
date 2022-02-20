@@ -55,24 +55,61 @@ extern "C" {
 
 typedef struct {
   mu_list_t takr;   // items are removed (popped) from the takr
-  mu_list_t *putr;  // items are added (pushed) at the putr
+  mu_list_t putr;   // items are added (pushed) at the putr
 } mu_queue_t;
 
 // =============================================================================
 // declarations
 
+/**
+ * @brief Initialize a mu_queue structure
+ *
+ * @return An empty queue.
+ */
 mu_queue_t *mu_queue_init(mu_queue_t *q);
 
-mu_queue_t *mu_queue_add(mu_queue_t *q, mu_list_t *item);
+/**
+ * @brief Add an item to the end of the queue.  It will be the last item to be
+ * removed.
+ *
+ * @return The queue object.
+ */
+mu_queue_t *mu_queue_append(mu_queue_t *q, mu_list_t *item);
 
+/**
+ * @brief Add an item to the head of the queue.  It will be first last item to
+ * be removed.  (Usually the queue acts like a FIFO, but this is "butting in",
+ * which makes it more stack-like.)
+ *
+ * @return The queue object.
+ */
+mu_queue_t *mu_queue_prepend(mu_queue_t *q, mu_list_t *item);
+
+/**
+ * @brief Remove an item from the head of the queue.
+ *
+ * @return The list item removed, or NULL if the queue is empty.
+ */
 mu_list_t *mu_queue_remove(mu_queue_t *q);
 
+/**
+ * @brief Return true if the queue is empty
+ */
 bool mu_queue_is_empty(mu_queue_t *q);
 
-void mu_queue_empty(mu_queue_t *q);
+/**
+ * @brief Reset the queue to its empty state.
+ */
+mu_queue_t *mu_queue_reset(mu_queue_t *q);
 
+/**
+ * @brief Return true if the queue contains the given list item.
+ */
 bool mu_queue_contains(mu_queue_t *q, mu_list_t *item);
 
+/**
+ * @brief Return the number of items in the queue.
+ */
 int mu_queue_length(mu_queue_t *q);
 
 #ifdef __cplusplus

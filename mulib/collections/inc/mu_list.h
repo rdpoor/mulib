@@ -212,14 +212,6 @@ mu_list_t *mu_list_reverse(mu_list_t *list);
  */
 void *mu_list_traverse(mu_list_t *list, mu_list_traverse_fn fn, void *arg);
 
-/**
- * @brief Return the next element in a list.
- *
- * @param element The element
- * @return The next element in the list or NULL if at the end of the list.
- */
-mu_list_t *mu_list_next_element(mu_list_t *element);
-
 #ifdef __cplusplus
 }
 #endif

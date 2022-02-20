@@ -109,18 +109,13 @@ mu_list_t *mu_list_reverse(mu_list_t *list) {
 }
 
 void *mu_list_traverse(mu_list_t *list, mu_list_traverse_fn fn, void *arg) {
-  mu_list_t *prev = list;
   void *result = NULL;
 
-  while (prev != NULL && result == NULL) {
-    result = fn(prev, arg);
-    prev = prev->next;
+  while (list != NULL && result == NULL) {
+    result = fn(list, arg);
+    list = list->next;
   }
   return result;
-}
-
-mu_list_t *mu_list_next_element(mu_list_t *element) {
-  return element->next;
 }
 
 // =============================================================================

@@ -76,14 +76,14 @@ void mu_queue_test() {
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item3, link)) == false);
 
   // operations on a queue with one item
-  ASSERT(mu_queue_add(q, MU_LIST_REF(&s_item1, link)) == q);
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item1, link)) == q);
   ASSERT(mu_queue_is_empty(q) == false);
   ASSERT(mu_queue_length(q) == 1);
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item1, link)) == true);
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item2, link)) == false);
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item3, link)) == false);
 
-  // empty the queue and check
+  // remove s_item1 from the queue and check that it is empty
   ASSERT(mu_queue_remove(q) == MU_LIST_REF(&s_item1, link));
   ASSERT(mu_queue_is_empty(q) == true);
   ASSERT(mu_queue_length(q) == 0);
@@ -92,9 +92,9 @@ void mu_queue_test() {
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item2, link)) == false);
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item3, link)) == false);
 
-  // operations on a queue with two items
-  ASSERT(mu_queue_add(q, MU_LIST_REF(&s_item1, link)) == q);
-  ASSERT(mu_queue_add(q, MU_LIST_REF(&s_item2, link)) == q);
+  // appending two items on the queue
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item1, link)) == q);
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item2, link)) == q);
 
   ASSERT(mu_queue_is_empty(q) == false);
   ASSERT(mu_queue_length(q) == 2);
@@ -118,6 +118,43 @@ void mu_queue_test() {
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item1, link)) == false);
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item2, link)) == false);
   ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item3, link)) == false);
+
+  // prepend two items on the queue.  Like append, but LIFE rather than FIFO
+  ASSERT(mu_queue_prepend(q, MU_LIST_REF(&s_item1, link)) == q);
+  ASSERT(mu_queue_prepend(q, MU_LIST_REF(&s_item2, link)) == q);
+
+  ASSERT(mu_queue_is_empty(q) == false);
+  ASSERT(mu_queue_length(q) == 2);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item1, link)) == true);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item2, link)) == true);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item3, link)) == false);
+
+  // remove one item
+  ASSERT(mu_queue_remove(q) == MU_LIST_REF(&s_item2, link));
+  ASSERT(mu_queue_is_empty(q) == false);
+  ASSERT(mu_queue_length(q) == 1);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item1, link)) == true);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item2, link)) == false);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item3, link)) == false);
+
+  // remove remaining item
+  ASSERT(mu_queue_remove(q) == MU_LIST_REF(&s_item1, link));
+  ASSERT(mu_queue_is_empty(q) == true);
+  ASSERT(mu_queue_length(q) == 0);
+  ASSERT(mu_queue_remove(q) == NULL);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item1, link)) == false);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item2, link)) == false);
+  ASSERT(mu_queue_contains(q, MU_LIST_REF(&s_item3, link)) == false);
+
+  // mu_queue_reset()
+  ASSERT(mu_queue_init(q) == q);
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item1, link)) == q);
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item2, link)) == q);
+  ASSERT(mu_queue_length(q) == 2);
+  ASSERT(mu_queue_reset(q) == q);
+  ASSERT(mu_queue_length(q) == 0);
+  ASSERT(mu_list_is_empty(&s_item1.link));
+  ASSERT(mu_list_is_empty(&s_item2.link));
 }
 
 // =============================================================================
