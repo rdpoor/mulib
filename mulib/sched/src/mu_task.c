@@ -27,7 +27,7 @@
 
 #include "mu_task.h"
 #include "mu_dlist.h"
-#include "mu_thunk.h"
+#include "mu_deferrable.h"
 #include "mu_time.h"
 #include <stddef.h>
 
@@ -44,12 +44,12 @@
 // public code
 
 mu_task_t *mu_task_init(mu_task_t *task,
-                        mu_thunk_fn fn,
+                        mu_deferrable_fn fn,
                         void *ctx,
                         const char *name) {
   mu_dlist_init(&task->link);
   task->time = 0;
-  mu_thunk_init(&task->thunk, fn, ctx);
+  mu_deferrable_init(&task->deferrable, fn, ctx);
 #if (MU_TASK_PROFILING)
   task->name = name;
   task->call_count = 0;
@@ -71,12 +71,12 @@ void mu_task_set_time(mu_task_t *task, mu_time_t time) {
   task->time = time;
 }
 
-mu_thunk_fn mu_task_get_fn(mu_task_t *task) {
-  return mu_thunk_get_fn(&task->thunk);
+mu_deferrable_fn mu_task_get_fn(mu_task_t *task) {
+  return mu_deferrable_get_fn(&task->deferrable);
 }
 
 void *mu_task_get_context(mu_task_t *task) {
-  return mu_thunk_get_ctx(&task->thunk);
+  return mu_deferrable_get_ctx(&task->deferrable);
 }
 
 const char *mu_task_name(mu_task_t *task) {
@@ -96,7 +96,7 @@ void mu_task_call(mu_task_t *task, void *arg) {
 #if (MU_TASK_PROFILING)
   mu_time_t called_at = mu_rtc_now();
 #endif
-  mu_thunk_call(&task->thunk, arg);
+  mu_deferrable_call(&task->deferrable, arg);
 #if (MU_TASK_PROFILING)
   task->call_count += 1;
   mu_duration_t duration = mu_time_difference(mu_rtc_now(), called_at);

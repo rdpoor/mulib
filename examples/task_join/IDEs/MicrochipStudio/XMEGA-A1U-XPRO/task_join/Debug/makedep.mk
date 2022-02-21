@@ -10,7 +10,7 @@
 
 ..\..\..\..\..\..\mulib\sched\src\mu_task.c
 
-..\..\..\..\..\..\mulib\sched\src\mu_thunk.c
+..\..\..\..\..\..\mulib\sched\src\mu_deferrable.c
 
 ..\..\..\..\..\..\mulib\sched\src\mu_timer.c
 

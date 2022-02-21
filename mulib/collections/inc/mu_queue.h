@@ -69,6 +69,11 @@ typedef struct {
 mu_queue_t *mu_queue_init(mu_queue_t *q);
 
 /**
+ * @brief Return the list head of the queue
+ */
+mu_list_t *mu_queue_list(mu_queue_t *q);
+
+/**
  * @brief Add an item to the end of the queue.  It will be the last item to be
  * removed.
  *

@@ -22,46 +22,41 @@
  * SOFTWARE.
  */
 
-#ifndef _MU_THUNK_H_
-#define _MU_THUNK_H_
+// =============================================================================
+// Includes
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "mu_deferrable.h"
+#include <stddef.h>
 
 // =============================================================================
-// includes
+// Private types and definitions
 
 // =============================================================================
-// types and definitions
-
-/**
- * A `mu_thunk` is a function that can be called later.  It comprises a function
- * pointer (`mu_thunk_fn`) and a context (`void *ctx`).  When called, the
- * function is passed the ctx argument and a caller-supplied `void *` argument.
- */
-
-// The signature of a mu_thunk function.
-typedef void (*mu_thunk_fn)(void *ctx, void *arg);
-
-typedef struct _mu_thunk {
-  mu_thunk_fn fn; // function to call
-  void *ctx;      // context to pass when called
-} mu_thunk_t;
+// Private declarations
 
 // =============================================================================
-// Declarations
+// Local storage
 
-mu_thunk_t *mu_thunk_init(mu_thunk_t *thunk, mu_thunk_fn fn, void *ctx);
+// =============================================================================
+// Public code
 
-mu_thunk_fn mu_thunk_get_fn(mu_thunk_t *thunk);
-
-void *mu_thunk_get_ctx(mu_thunk_t *thunk);
-
-void mu_thunk_call(mu_thunk_t *thunk, void *arg);
-
-#ifdef __cplusplus
+mu_deferrable_t *mu_deferrable_init(mu_deferrable_t *deferrable, mu_deferrable_fn fn, void *ctx) {
+  deferrable->fn = fn;
+  deferrable->ctx = ctx;
+  return deferrable;
 }
-#endif
 
-#endif // #ifndef _MU_THUNK_H_
+mu_deferrable_fn mu_deferrable_get_fn(mu_deferrable_t *deferrable) { return deferrable->fn; }
+
+void *mu_deferrable_get_ctx(mu_deferrable_t *deferrable) { return deferrable->ctx; }
+
+void mu_deferrable_call(mu_deferrable_t *deferrable, void *arg) {
+  if (deferrable == NULL) {
+    // allow null deferrable arg => no-op
+    return;
+  }
+  deferrable->fn(deferrable->ctx, arg);
+}
+
+// =============================================================================
+// Private functions

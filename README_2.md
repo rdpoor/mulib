@@ -5,7 +5,7 @@ specifically for microcontollers and other resource-constrained environments.
 `mulib` features include:
 
 * A fast and lithe run-to-completion (single threaded) scheduler
-* Support for deferred events ('thunks')
+* Support for deferred events ('deferrables')
 * Fast, safe, copy-free string handling
 * Efficient bit vector operations
 

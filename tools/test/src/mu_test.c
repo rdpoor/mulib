@@ -45,6 +45,7 @@ int mu_pstore_test();
 int mu_queue_test();
 int mu_rtc_test();
 int mu_sched_test();
+int mu_sequence_test();
 int mu_spsc_test();
 int mu_str_test();
 int mu_strbuf_test();
@@ -76,6 +77,7 @@ int main(void) {
   mu_queue_test();
   mu_rtc_test();
   mu_sched_test();
+  mu_sequence_test();
   mu_spsc_test();
   mu_str_test();
   mu_strbuf_test();
@@ -100,4 +102,3 @@ int main(void) {
   mu_ansi_term_reset();
   return mu_test_error_count();  // return error code 0 on success
 }
-

@@ -274,9 +274,9 @@
       <SubType>compile</SubType>
       <Link>mulib\sched\mu_task.h</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_thunk.h">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_deferrable.h">
       <SubType>compile</SubType>
-      <Link>mulib\sched\mu_thunk.h</Link>
+      <Link>mulib\sched\mu_deferrable.h</Link>
     </Compile>
     <Compile Include="..\..\..\..\..\..\mulib\sched\incl\mu_timer.h">
       <SubType>compile</SubType>
@@ -294,9 +294,9 @@
       <SubType>compile</SubType>
       <Link>mulib\sched\mu_task.c</Link>
     </Compile>
-    <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_thunk.c">
+    <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_deferrable.c">
       <SubType>compile</SubType>
-      <Link>mulib\sched\mu_thunk.c</Link>
+      <Link>mulib\sched\mu_deferrable.c</Link>
     </Compile>
     <Compile Include="..\..\..\..\..\..\mulib\sched\src\mu_timer.c">
       <SubType>compile</SubType>

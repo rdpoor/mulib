@@ -35,20 +35,20 @@ extern "C" {
 #include "mu_config.h"
 #include "mu_time.h"
 #include "mu_dlist.h"
-#include "mu_thunk.h"
+#include "mu_deferrable.h"
 
 // =============================================================================
 // types and definitions
 
 /**
- * A `mu_task` is a mu_thunk (deferrable function) with a time and a link field
+ * A `mu_task` is a mu_deferrable (deferrable function) with a time and a link field
  * ddded, primarily for the benefit of the scheduler.
  */
 
 typedef struct _mu_task {
   mu_dlist_t link;         // link into the schedule
   mu_time_t time;          // time at which this task fires
-  mu_thunk_t thunk;        // function to be scheduled
+  mu_deferrable_t deferrable;        // function to be scheduled
 #if (MU_TASK_PROFILING)
   const char *name;        // user defined task name
   unsigned int call_count; // # of times task is called
@@ -57,7 +57,7 @@ typedef struct _mu_task {
 #endif
 } mu_task_t;
 
-mu_task_t *mu_task_init(mu_task_t *task, mu_thunk_fn fn, void *ctx, const char *name);
+mu_task_t *mu_task_init(mu_task_t *task, mu_deferrable_fn fn, void *ctx, const char *name);
 
 mu_dlist_t *mu_task_link(mu_task_t *task);
 
@@ -65,7 +65,7 @@ mu_time_t mu_task_get_time(mu_task_t *task);
 
 void mu_task_set_time(mu_task_t *task, mu_time_t time);
 
-mu_thunk_fn mu_task_get_fn(mu_task_t *task);
+mu_deferrable_fn mu_task_get_fn(mu_task_t *task);
 
 void *mu_task_get_context(mu_task_t *task);
 

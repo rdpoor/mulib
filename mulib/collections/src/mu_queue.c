@@ -50,6 +50,10 @@ mu_queue_t *mu_queue_init(mu_queue_t *q) {
   return q;
 }
 
+mu_list_t *mu_queue_list(mu_queue_t *q) {
+  return q->takr.next;
+}
+
 mu_queue_t *mu_queue_append(mu_queue_t *q, mu_list_t *item) {
   item->next = NULL;
   if (mu_list_is_empty(&q->putr)) {
