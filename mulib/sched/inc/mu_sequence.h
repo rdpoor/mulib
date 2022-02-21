@@ -31,7 +31,7 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_deferrable.h"
+#include "mu_task.h"
 #include "mu_queue.h"
 
 // =============================================================================
@@ -44,7 +44,7 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
-// At its heart, a mu_sequence is really just a queue of mu_deferrable objects.
+// At its heart, a mu_sequence is really just a queue of mu_task objects.
 typedef mu_queue_t mu_sequence_t;
 
 // *****************************************************************************
@@ -56,24 +56,24 @@ typedef mu_queue_t mu_sequence_t;
 mu_sequence_t *mu_sequence_init(mu_sequence_t *sequence);
 
 /**
- * @brief Add a deferrable to the end of the sequence (LIFO order).
+ * @brief Add a task to the end of the sequence (FIFO/queue order).
  */
-mu_sequence_t *mu_sequence_append_deferrable(mu_sequence_t *sequence,
-                                             mu_deferrable_t *deferrable);
+mu_sequence_t *mu_sequence_append_task(mu_sequence_t *sequence,
+                                             mu_task_t *task);
 
 /**
- * @brief Add a deferrable to the beginning of the sequence (FIFO order).
+ * @brief Add a task to the beginning of the sequence (LIFO/stack order).
  */
-mu_sequence_t *mu_sequence_prepend_deferrable(mu_sequence_t *sequence,
-                                              mu_deferrable_t *deferrable);
+mu_sequence_t *mu_sequence_prepend_task(mu_sequence_t *sequence,
+                                              mu_task_t *task);
 
 /**
- * @brief Invoke the individual deferrables in order.
+ * @brief Invoke the individual tasks in order.
  *
  * @param sequence the mu_sequence
- * @param arg The argument to pass to each deferrable
+ * @param arg The argument to pass to each task
  * @param retain If true, the sequence is unmodified.  If false, each
- *        deferrable is removed from the sequence before calling it.
+ *        task is removed from the sequence before calling it.
  */
 void mu_sequence_call(mu_sequence_t *sequence, void *arg, bool retain);
 

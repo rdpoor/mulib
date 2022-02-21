@@ -25,7 +25,7 @@ ORDERED_OBJS += \
 "./mulib/core/mu_str.obj" \
 "./mulib/core/mu_strbuf.obj" \
 "./mulib/core/mu_task.obj" \
-"./mulib/core/mu_deferrable.obj" \
+"./mulib/core/mu_task.obj" \
 "./mulib/core/mu_timer.obj" \
 "./mulib/core/mu_vect.obj" \
 "./mulib/core/mu_version.obj" \
@@ -193,8 +193,8 @@ tower_app.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj" "mu_platform/mu_platform.obj" "mu_platform/mu_stddemo.obj" "mu_platform/mu_time.obj" "mulib/core/mu_bvec.obj" "mulib/core/mu_cirq.obj" "mulib/core/mu_dlist.obj" "mulib/core/mu_fsm.obj" "mulib/core/mu_list.obj" "mulib/core/mu_log.obj" "mulib/core/mu_pstore.obj" "mulib/core/mu_queue.obj" "mulib/core/mu_sched.obj" "mulib/core/mu_spsc.obj" "mulib/core/mu_str.obj" "mulib/core/mu_strbuf.obj" "mulib/core/mu_task.obj" "mulib/core/mu_deferrable.obj" "mulib/core/mu_timer.obj" "mulib/core/mu_vect.obj" "mulib/core/mu_version.obj" "mulib/extras/mu_random.obj" "mulib/extras/mu_rfc_1123.obj" "mulib/mulib.obj" "tower_eg/animator.obj" "tower_eg/ansi_term.obj" "tower_eg/disk.obj" "tower_eg/fb.obj" "tower_eg/pole.obj" "tower_eg/tower.obj" 
-	-$(RM) "main.d" "mu_platform/mu_platform.d" "mu_platform/mu_stddemo.d" "mu_platform/mu_time.d" "mulib/core/mu_bvec.d" "mulib/core/mu_cirq.d" "mulib/core/mu_dlist.d" "mulib/core/mu_fsm.d" "mulib/core/mu_list.d" "mulib/core/mu_log.d" "mulib/core/mu_pstore.d" "mulib/core/mu_queue.d" "mulib/core/mu_sched.d" "mulib/core/mu_spsc.d" "mulib/core/mu_str.d" "mulib/core/mu_strbuf.d" "mulib/core/mu_task.d" "mulib/core/mu_deferrable.d" "mulib/core/mu_timer.d" "mulib/core/mu_vect.d" "mulib/core/mu_version.d" "mulib/extras/mu_random.d" "mulib/extras/mu_rfc_1123.d" "mulib/mulib.d" "tower_eg/animator.d" "tower_eg/ansi_term.d" "tower_eg/disk.d" "tower_eg/fb.d" "tower_eg/pole.d" "tower_eg/tower.d" 
+	-$(RM) "main.obj" "mu_platform/mu_platform.obj" "mu_platform/mu_stddemo.obj" "mu_platform/mu_time.obj" "mulib/core/mu_bvec.obj" "mulib/core/mu_cirq.obj" "mulib/core/mu_dlist.obj" "mulib/core/mu_fsm.obj" "mulib/core/mu_list.obj" "mulib/core/mu_log.obj" "mulib/core/mu_pstore.obj" "mulib/core/mu_queue.obj" "mulib/core/mu_sched.obj" "mulib/core/mu_spsc.obj" "mulib/core/mu_str.obj" "mulib/core/mu_strbuf.obj" "mulib/core/mu_task.obj" "mulib/core/mu_task.obj" "mulib/core/mu_timer.obj" "mulib/core/mu_vect.obj" "mulib/core/mu_version.obj" "mulib/extras/mu_random.obj" "mulib/extras/mu_rfc_1123.obj" "mulib/mulib.obj" "tower_eg/animator.obj" "tower_eg/ansi_term.obj" "tower_eg/disk.obj" "tower_eg/fb.obj" "tower_eg/pole.obj" "tower_eg/tower.obj" 
+	-$(RM) "main.d" "mu_platform/mu_platform.d" "mu_platform/mu_stddemo.d" "mu_platform/mu_time.d" "mulib/core/mu_bvec.d" "mulib/core/mu_cirq.d" "mulib/core/mu_dlist.d" "mulib/core/mu_fsm.d" "mulib/core/mu_list.d" "mulib/core/mu_log.d" "mulib/core/mu_pstore.d" "mulib/core/mu_queue.d" "mulib/core/mu_sched.d" "mulib/core/mu_spsc.d" "mulib/core/mu_str.d" "mulib/core/mu_strbuf.d" "mulib/core/mu_task.d" "mulib/core/mu_task.d" "mulib/core/mu_timer.d" "mulib/core/mu_vect.d" "mulib/core/mu_version.d" "mulib/extras/mu_random.d" "mulib/extras/mu_rfc_1123.d" "mulib/mulib.d" "tower_eg/animator.d" "tower_eg/ansi_term.d" "tower_eg/disk.d" "tower_eg/fb.d" "tower_eg/pole.d" "tower_eg/tower.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

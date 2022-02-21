@@ -848,7 +848,7 @@ mu_spsc_err_t mu_spsc_get(mu_spsc_t *q, mu_spsc_item_t *item) {
      6cc:	b8 01       	movw	r22, r16
      6ce:	ce 01       	movw	r24, r28
      6d0:	08 96       	adiw	r24, 0x08	; 8
-     6d2:	0e 94 86 03 	call	0x70c	; 0x70c <mu_deferrable_init>
+     6d2:	0e 94 86 03 	call	0x70c	; 0x70c <mu_task_init>
      6d6:	ce 01       	movw	r24, r28
      6d8:	df 91       	pop	r29
      6da:	cf 91       	pop	r28
@@ -888,18 +888,18 @@ void mu_task_call(mu_task_t *task, void *arg) {
 #if (MU_TASK_PROFILING)
   mu_time_t called_at = mu_rtc_now();
 #endif
-  mu_deferrable_call(&task->deferrable, arg);
+  mu_task_call(&task->task, arg);
      704:	08 96       	adiw	r24, 0x08	; 8
-     706:	0e 94 8c 03 	call	0x718	; 0x718 <mu_deferrable_call>
+     706:	0e 94 8c 03 	call	0x718	; 0x718 <mu_task_call>
      70a:	08 95       	ret
 
-0000070c <mu_deferrable_init>:
-  return deferrable;
+0000070c <mu_task_init>:
+  return task;
 }
 
-mu_deferrable_fn mu_deferrable_get_fn(mu_deferrable_t *deferrable) { return deferrable->fn; }
+mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
 
-void *mu_deferrable_get_ctx(mu_deferrable_t *deferrable) { return deferrable->ctx; }
+void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
      70c:	fc 01       	movw	r30, r24
      70e:	60 83       	st	Z, r22
      710:	71 83       	std	Z+1, r23	; 0x01
@@ -907,17 +907,17 @@ void *mu_deferrable_get_ctx(mu_deferrable_t *deferrable) { return deferrable->ct
      714:	53 83       	std	Z+3, r21	; 0x03
      716:	08 95       	ret
 
-00000718 <mu_deferrable_call>:
+00000718 <mu_task_call>:
 
-void mu_deferrable_call(mu_deferrable_t *deferrable, void *arg) {
-  if (deferrable == NULL) {
+void mu_task_call(mu_task_t *task, void *arg) {
+  if (task == NULL) {
      718:	00 97       	sbiw	r24, 0x00	; 0
-     71a:	49 f0       	breq	.+18     	; 0x72e <mu_deferrable_call+0x16>
+     71a:	49 f0       	breq	.+18     	; 0x72e <mu_task_call+0x16>
      71c:	dc 01       	movw	r26, r24
-    // allow null deferrable arg => no-op
+    // allow null task arg => no-op
     return;
   }
-  deferrable->fn(deferrable->ctx, arg);
+  task->fn(task->ctx, arg);
      71e:	ed 91       	ld	r30, X+
      720:	fc 91       	ld	r31, X
      722:	11 97       	sbiw	r26, 0x01	; 1

@@ -109,8 +109,8 @@
       <input_file id="fl-13">
          <path>./mulib/core/</path>
          <kind>object</kind>
-         <file>mu_deferrable.obj</file>
-         <name>mu_deferrable.obj</name>
+         <file>mu_task.obj</file>
+         <name>mu_task.obj</name>
       </input_file>
       <input_file id="fl-14">
          <path>./mulib/core/</path>

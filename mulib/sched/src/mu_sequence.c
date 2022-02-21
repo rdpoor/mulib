@@ -39,7 +39,7 @@
 // *****************************************************************************
 // Local (private, static) forward declarations
 
-static void *call_deferrable(mu_list_t *list, void *arg);
+static void *call_task(mu_list_t *list, void *arg);
 
 // *****************************************************************************
 // Local (private, static) storage
@@ -51,35 +51,35 @@ mu_sequence_t *mu_sequence_init(mu_sequence_t *sequence) {
   return mu_queue_init(sequence); // this works b/c mu_squence_t == mu_queue_t
 }
 
-mu_sequence_t *mu_sequence_append_deferrable(mu_sequence_t *sequence,
-                                            mu_deferrable_t *deferrable) {
-  return mu_queue_append(sequence, MU_LIST_REF(deferrable, sequence_link));
+mu_sequence_t *mu_sequence_append_task(mu_sequence_t *sequence,
+                                            mu_task_t *task) {
+  return mu_queue_append(sequence, MU_LIST_REF(task, sequence_link));
 }
 
 /**
- * @brief Add a deferrable to the beginning of the sequence (FIFO order).
+ * @brief Add a task to the beginning of the sequence (FIFO order).
  */
-mu_sequence_t *mu_sequence_prepend_deferrable(mu_sequence_t *sequence,
-                                              mu_deferrable_t *deferrable) {
-  return mu_queue_prepend(sequence, MU_LIST_REF(deferrable, sequence_link));
+mu_sequence_t *mu_sequence_prepend_task(mu_sequence_t *sequence,
+                                              mu_task_t *task) {
+  return mu_queue_prepend(sequence, MU_LIST_REF(task, sequence_link));
 }
 
 /**
- * @brief Invoke the individual deferrables in order.
+ * @brief Invoke the individual tasks in order.
  *
  * @param sequence the mu_sequence
- * @param arg The argument to pass to each deferrable
+ * @param arg The argument to pass to each task
  * @param retain If true, the sequence is unmodified.  If false, each
- *        deferrable is removed from the sequence before calling it.
+ *        task is removed from the sequence before calling it.
  */
 void mu_sequence_call(mu_sequence_t *sequence, void *arg, bool retain) {
   mu_list_t *list;
   if (retain) {
     list = mu_queue_list(sequence);
-    mu_list_traverse(list, call_deferrable, arg);
+    mu_list_traverse(list, call_task, arg);
   } else {
     while ((list = mu_queue_remove(sequence)) != NULL) {
-      call_deferrable(list, arg);
+      call_task(list, arg);
     }
   }
 }
@@ -87,10 +87,10 @@ void mu_sequence_call(mu_sequence_t *sequence, void *arg, bool retain) {
 // *****************************************************************************
 // Local (private, static) code
 
-static void *call_deferrable(mu_list_t *list, void *arg) {
-  mu_deferrable_t *deferrable = MU_LIST_CONTAINER(list,
-                                                  mu_deferrable_t,
+static void *call_task(mu_list_t *list, void *arg) {
+  mu_task_t *task = MU_LIST_CONTAINER(list,
+                                                  mu_task_t,
                                                   sequence_link);
-  mu_deferrable_call(deferrable, arg);
+  mu_task_call(task, arg);
   return NULL;
 }

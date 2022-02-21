@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2020-2022 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,71 +25,66 @@
 #ifndef _MU_TASK_H_
 #define _MU_TASK_H_
 
+// *****************************************************************************
+// Includes
+
+#include "mu_list.h"
+
+// =============================================================================
+// C++ compatibility
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// =============================================================================
-// includes
-
-#include "mu_config.h"
-#include "mu_time.h"
-#include "mu_dlist.h"
-#include "mu_deferrable.h"
-
-// =============================================================================
-// types and definitions
+// *****************************************************************************
+// Public types and definitions
 
 /**
- * A `mu_task` is a mu_deferrable (deferrable function) with a time and a link field
- * ddded, primarily for the benefit of the scheduler.
+ * A `mu_task` is a function that can be called later.  It comprises a
+ * function pointer (`mu_task_fn`) and a context (`void *ctx`).  When
+ * called, the function is passed the ctx argument and a caller-supplied `void
+ * *` argument.
+ *
+ * mu_task objects may be linked together into a mu_seqquece.  See
+ * mu_sequence.h for more information.
  */
 
-typedef struct _mu_task {
-  mu_dlist_t link;         // link into the schedule
-  mu_time_t time;          // time at which this task fires
-  mu_deferrable_t deferrable;        // function to be scheduled
-#if (MU_TASK_PROFILING)
-  const char *name;        // user defined task name
-  unsigned int call_count; // # of times task is called
-  MU_FLOAT runtime;        // accumulated time spent running the task
-  MU_FLOAT max_duration;   // max time spend running the task
-#endif
+// The signature of a mu_task function.
+typedef void (*mu_task_fn)(void *ctx, void *arg);
+
+typedef struct {
+  mu_task_fn fn;     // function to call
+  void *ctx;               // context to pass when called
+  mu_list_t sequence_link; // link field for mu_sequence
 } mu_task_t;
 
-mu_task_t *mu_task_init(mu_task_t *task, mu_deferrable_fn fn, void *ctx, const char *name);
+// *****************************************************************************
+// Public declarations
 
-mu_dlist_t *mu_task_link(mu_task_t *task);
+/**
+ * @brief Initialize a task object with its function and context.
+ */
+mu_task_t *mu_task_init(mu_task_t *task,
+                                    mu_task_fn fn,
+                                    void *ctx);
 
-mu_time_t mu_task_get_time(mu_task_t *task);
+/**
+ * @brief Return the function of this task.
+ */
+mu_task_fn mu_task_get_fn(mu_task_t *task);
 
-void mu_task_set_time(mu_task_t *task, mu_time_t time);
+/**
+ * @brief Return the context of this task.
+ */
+void *mu_task_get_ctx(mu_task_t *task);
 
-mu_deferrable_fn mu_task_get_fn(mu_task_t *task);
-
-void *mu_task_get_context(mu_task_t *task);
-
-const char *mu_task_name(mu_task_t *task);
-
+/**
+ * @brief Invoke the deferred function.
+ *
+ * Note: for convenience task may be null, in which case this is a no-op.
+ */
 void mu_task_call(mu_task_t *task, void *arg);
-
-bool mu_task_is_scheduled(mu_task_t *task);
-
-#if (MU_TASK_PROFILING)
-
-unsigned int mu_task_call_count(mu_task_t *task);
-
-mu_duration_t mu_task_runtime_ms(mu_task_t *task);
-
-mu_duration_t mu_task_max_duration_ms(mu_task_t *task);
-
-#ifdef MU_FLOAT
-MU_FLOAT mu_task_runtime_s(mu_task_t *task);
-
-MU_FLOAT mu_task_max_duration_s(mu_task_t *task);
-#endif
-
-#endif
 
 #ifdef __cplusplus
 }

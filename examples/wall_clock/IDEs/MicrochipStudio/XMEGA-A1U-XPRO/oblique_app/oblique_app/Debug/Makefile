@@ -70,7 +70,7 @@ C_SRCS +=  \
 ../../../../../../../mulib/sched/src/mu_sched.c \
 ../../../../../../../mulib/sched/src/mu_spsc.c \
 ../../../../../../../mulib/sched/src/mu_task.c \
-../../../../../../../mulib/sched/src/mu_deferrable.c \
+../../../../../../../mulib/sched/src/mu_task.c \
 ../../../../../../../mulib/sched/src/mu_timer.c \
 ../../../../../../../mulib/term/src/mu_ansi_term.c \
 ../../../../../../../mulib/utils/src/mu_random.c \
@@ -108,7 +108,7 @@ mulib/collections/mu_list.o \
 mulib/sched/mu_sched.o \
 mulib/sched/mu_spsc.o \
 mulib/sched/mu_task.o \
-mulib/sched/mu_deferrable.o \
+mulib/sched/mu_task.o \
 mulib/sched/mu_timer.o \
 mulib/term/mu_ansi_term.o \
 mulib/utils/mu_random.o \
@@ -139,7 +139,7 @@ mulib/collections/mu_list.o \
 mulib/sched/mu_sched.o \
 mulib/sched/mu_spsc.o \
 mulib/sched/mu_task.o \
-mulib/sched/mu_deferrable.o \
+mulib/sched/mu_task.o \
 mulib/sched/mu_timer.o \
 mulib/term/mu_ansi_term.o \
 mulib/utils/mu_random.o \
@@ -170,7 +170,7 @@ mulib/collections/mu_list.d \
 mulib/sched/mu_sched.d \
 mulib/sched/mu_spsc.d \
 mulib/sched/mu_task.d \
-mulib/sched/mu_deferrable.d \
+mulib/sched/mu_task.d \
 mulib/sched/mu_timer.d \
 mulib/term/mu_ansi_term.d \
 mulib/utils/mu_random.d \
@@ -201,7 +201,7 @@ mulib/collections/mu_list.d \
 mulib/sched/mu_sched.d \
 mulib/sched/mu_spsc.d \
 mulib/sched/mu_task.d \
-mulib/sched/mu_deferrable.d \
+mulib/sched/mu_task.d \
 mulib/sched/mu_timer.d \
 mulib/term/mu_ansi_term.d \
 mulib/utils/mu_random.d \
@@ -275,7 +275,7 @@ mulib/sched/mu_task.o: ../../../../../../../mulib/sched/src/mu_task.c
 	@echo Finished building: $<
 	
 
-mulib/sched/mu_deferrable.o: ../../../../../../../mulib/sched/src/mu_deferrable.c
+mulib/sched/mu_task.o: ../../../../../../../mulib/sched/src/mu_task.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"../examples/include" -I"../include" -I"../utils" -I"../utils/assembler" -I".." -I"../Config" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include" -I"../../../../../../shared/oblique_eg/incl" -I"../../../mu_platform/incl" -I"../../../../../../../mulib/collections/incl" -I"../../../../../../../mulib/sched/incl" -I"../../../../../../../mulib/term/incl" -I"../../../../../../../mulib/utils/incl"  -Og -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=atxmega128a1u -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\gcc\dev\atxmega128a1u" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

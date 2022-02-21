@@ -25,58 +25,36 @@
  /**
 Implmeentation notes:
 
-mu_sched implements a discrete time, run-to-completion scheduler.  A mu_task can
-be scheduled to run at some point in the future through the following calls:
+mu_sched implements a discrete time, run-to-completion scheduler.  A
+mu_task can be scheduled to run at some point in the future through the
+following calls:
 
-    mu_sched_err_t mu_sched_task_now(mu_task_t *task);
-    mu_sched_err_t mu_sched_task_at(mu_task_t *task, mu_time_t at);
-    mu_sched_err_t mu_sched_task_in(mu_task_t *task, mu_duration_t in);
-    mu_sched_err_t mu_sched_reschedule_now(void);
-    mu_sched_err_t mu_sched_reschedule_in(mu_duration_t in);
+    mu_sched_err_t mu_sched_now(mu_task_t *task);
+    mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at);
+    mu_sched_err_t mu_sched_in(mu_task_t *task, mu_duration_t in);
 
-Each of these functions add a task to the scheduler's queue, implemented as a
-doubly linked list.  In every case, if the task is already present in the queue,
-it is removed prior to scheduling.  This prevents "runaway" scheduling.
+Each of these functions add a task to the scheduler's queue.  It is an
+error to schedule a task that is already scheduled.
 
-The following functions support scheduling events from interrupt level:
+mu_sched supports safely scheduling a task from interrupt level:
 
-    mu_sched_err_t mu_sched_isr_task_now(mu_task_t *task);
-    mu_sched_err_t mu_sched_isr_task_at(mu_task_t *task, mu_time_t at);
-    mu_sched_err_t mu_sched_isr_task_in(mu_task_t *task, mu_duration_t in);
+    mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
+
+Any task scheduled from interrupt level is saved in an interrupt safe
+"single producer, single consumer" queue.  Upon returning from interrupt level,
+the next time mu_sched_step() is called, any tasks on the queue are added
+to the regular schedule as if mu_sched_now() was called.
 
 The function
 
     mu_sched_err_t mu_sched_step(void);
 
-is where all the magic happens.  The scheduler examines the first task in the
-queue, and if its start time has arrived, the task is removed from the queue and
-is called.
+is where all the magic happens.  The scheduler examines the first task in
+the queue, and if its start time has arrived, the task is removed from the
+queue and is called.
 
 ## Implementation of the scheduler queue
 
-mu_sched makes an conscious design choice that each task may only appear once
-in the schedule.  This means that at each call to mu_sched_task_xxx(task), the
-scheduler must check to see if the task is already in the queue, and if so, to
-remove it.
-
-To support fast check and removal of a task, the scheduler queue is implemented
-as a doubly linked list: removing a task from the queue merely requires a pair
-of pointer operations.
-
-This approach also means that the task can encapsulate the `prev` and `next`
-link fields requires to insert it into the queue, so no additional storage is
-required.
-
-## Implementation of the ISR queue
-
-mu_sched supports scheduling tasks from interrupt level via the
-`mu_sched_isr_task_xxx()` functions.  Unlike their foreground counterparts,
-these functions do not add tasks directly to the scheduler queue.  Instead,
-tasks are added to a "single produce, single consumer" isr queue, which is
-guaranteed to be interrupt safe.
-
-At foreground level, at the next call to mu_sched_step(), any tasks on the isr
-queue are transferred from the isr queue to the regular scheduler queue.
 */
 
 #ifndef _MU_SCHED_H_
@@ -100,18 +78,19 @@ extern "C" {
 
 typedef enum {
   MU_SCHED_ERR_NONE,
+  MU_SCHED_ERR_ILLEGAL_ARG,
   MU_SCHED_ERR_EMPTY,
   MU_SCHED_ERR_FULL,
   MU_SCHED_ERR_NOT_FOUND,
-  MU_SCHED_ERR_NULL_TASK,  // return value for scheduling null task.
+  MU_SCHED_ERR_ALREADY_SCHEDULED,
 } mu_sched_err_t;
 
 typedef enum {
-  MU_SCHED_TASK_STATUS_IDLE,      // task is not scheduled
-  MU_SCHED_TASK_STATUS_SCHEDULED, // task is in the schedule, not yet runnable
-  MU_SCHED_TASK_STATUS_RUNNABLE,  // task is in the schedule, ready to run
-  MU_SCHED_TASK_STATUS_ACTIVE,    // task is running
-} mu_sched_task_status_t;
+  MU_SCHED_TASK_STATUS_IDLE,      // not scheduled
+  MU_SCHED_TASK_STATUS_SCHEDULED, // in the schedule, not yet runnable
+  MU_SCHED_TASK_STATUS_RUNNABLE,  // in the schedule, ready to run
+  MU_SCHED_TASK_STATUS_ACTIVE,    // currently running
+} mu_sched_status_t;
 
 // Signature for clock source function.  Returns the current time.
 typedef mu_time_t (*mu_clock_fn)(void);
@@ -119,11 +98,11 @@ typedef mu_time_t (*mu_clock_fn)(void);
 /**
  * @brief Signature for a function passed to mu_sched_traverse.
  *
- * @param task a pointer to a task..
+ * @param task a pointer to a task.
  * @param arg A user-supplied argument.
  * @return A NULL value to continue traversing, a non-null value to stop.
  */
-typedef mu_task_t *(*mu_sched_traverse_fn)(mu_task_t *task, void *arg);
+typedef void *(*mu_sched_traverse_fn)(mu_task_t *task, void *arg);
 
 // =============================================================================
 // declarations
@@ -179,7 +158,7 @@ mu_time_t mu_sched_get_current_time(void);
 /**
  * @brief Return the number of tasks currently scheduled.
  */
-int mu_sched_task_count(void);
+int mu_sched_count(void);
 
 /**
  * @brief Return true if there are no items in the schedule.
@@ -216,7 +195,7 @@ mu_task_t *mu_sched_remove_task(mu_task_t *task);
  * @param task The task to be scheduled.
  * @return MU_SCHED_ERR_NONE.  (Other error returns may be added in the future.)
  */
-mu_sched_err_t mu_sched_task_now(mu_task_t *task);
+mu_sched_err_t mu_sched_now(mu_task_t *task);
 
 /**
  * @brief Schedule a task to be run at a particular time.
@@ -228,7 +207,7 @@ mu_sched_err_t mu_sched_task_now(mu_task_t *task);
  * @param at The time at which to run the task.
  * @return MU_SCHED_ERR_NONE.  (Other error returns may be added in the future.)
  */
-mu_sched_err_t mu_sched_task_at(mu_task_t *task, mu_time_t at);
+mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at);
 
 /**
  * @brief Schedule a task to be run after a given interval.
@@ -240,7 +219,7 @@ mu_sched_err_t mu_sched_task_at(mu_task_t *task, mu_time_t at);
  * @param in The interval after which to run the task.
  * @return MU_SCHED_ERR_NONE.  (Other error returns may be added in the future.)
  */
-mu_sched_err_t mu_sched_task_in(mu_task_t *task, mu_duration_t in);
+mu_sched_err_t mu_sched_in(mu_task_t *task, mu_duration_t in);
 
 /**
  * @brief Reschedule the current task to run as soon as possible.
@@ -315,7 +294,7 @@ mu_sched_err_t mu_sched_isr_task_in(mu_task_t *task, mu_duration_t in);
  * @param task The task being queried.
  * @return task status.
  */
-mu_sched_task_status_t mu_sched_get_task_status(mu_task_t *task);
+mu_sched_status_t mu_sched_get_task_status(mu_task_t *task);
 
 /**
  * @brief Call a user-supplied function for each task in the schedule.
