@@ -155,6 +155,20 @@ void mu_queue_test() {
   ASSERT(mu_queue_length(q) == 0);
   ASSERT(mu_list_is_empty(&s_item1.link));
   ASSERT(mu_list_is_empty(&s_item2.link));
+
+  // delete
+  ASSERT(mu_queue_init(q) == q);
+  ASSERT(mu_queue_delete(q, MU_LIST_REF(&s_item1, link)) == NULL);
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item1, link)) == q);
+  ASSERT(mu_queue_delete(q, MU_LIST_REF(&s_item1, link)) == MU_LIST_REF(&s_item1, link));
+  ASSERT(mu_queue_length(q) == 0);
+
+  ASSERT(mu_queue_init(q) == q);
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item1, link)) == q);
+  ASSERT(mu_queue_append(q, MU_LIST_REF(&s_item2, link)) == q);
+  ASSERT(mu_queue_delete(q, MU_LIST_REF(&s_item1, link)) == MU_LIST_REF(&s_item1, link));
+  ASSERT(mu_queue_delete(q, MU_LIST_REF(&s_item2, link)) == MU_LIST_REF(&s_item2, link));
+  ASSERT(mu_queue_length(q) == 0);
 }
 
 // =============================================================================

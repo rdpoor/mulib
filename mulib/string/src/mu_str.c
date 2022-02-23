@@ -51,23 +51,23 @@ static uint8_t str_append(mu_str_t *dst, const uint8_t *src, int count);
 // =============================================================================
 // public code
 
-mu_str_t *mu_str_init_for_read(mu_str_t *str, mu_strbuf_t *buf) {
+mu_str_t *mu_str_init_rd(mu_str_t *str, const mu_strbuf_t *buf) {
   str->buf = buf;
-  return mu_str_read_reset(str);
+  return mu_str_reset_rd(str);
 }
 
-mu_str_t *mu_str_init_for_write(mu_str_t *str, mu_strbuf_t *buf) {
+mu_str_t *mu_str_init_wr(mu_str_t *str, const mu_strbuf_t *buf) {
   str->buf = buf;
-  return mu_str_write_reset(str);
+  return mu_str_reset_wr(str);
 }
 
-mu_str_t *mu_str_read_reset(mu_str_t *str) {
+mu_str_t *mu_str_reset_rd(mu_str_t *str) {
   str->s = 0;
   str->e = str_capacity(str);
   return str;
 }
 
-mu_str_t *mu_str_write_reset(mu_str_t *str) {
+mu_str_t *mu_str_reset_wr(mu_str_t *str) {
   str->s = 0;
   str->e = 0;
   return str;
@@ -78,7 +78,7 @@ mu_str_t *mu_str_copy(mu_str_t *dst, const mu_str_t *src) {
 }
 
 int mu_str_index(mu_str_t *str, uint8_t byte) {
-  for (int i=str->s; i<str->e; i++) {
+  for (int i = str->s; i < str->e; i++) {
     uint8_t b = mu_strbuf_rdata(str->buf)[i];
     if (b == byte) {
       return i - str->s;
@@ -89,7 +89,7 @@ int mu_str_index(mu_str_t *str, uint8_t byte) {
 }
 
 mu_str_t *mu_str_slice(mu_str_t *dst, const mu_str_t *src, int start, int end) {
-  size_t len = mu_str_read_available(src);
+  size_t len = mu_str_available_rd(src);
   size_t s1, e1;
 
   if (dst != src) {
@@ -126,13 +126,13 @@ mu_str_t *mu_str_slice(mu_str_t *dst, const mu_str_t *src, int start, int end) {
   return dst;
 }
 
-size_t mu_str_read_available(const mu_str_t *str) { return str->e - str->s; }
+size_t mu_str_available_rd(const mu_str_t *str) { return str->e - str->s; }
 
-size_t mu_str_write_available(const mu_str_t *str) {
+size_t mu_str_available_wr(const mu_str_t *str) {
   return str_capacity(str) - str->e;
 }
 
-size_t mu_str_read_increment(mu_str_t *str, size_t n_bytes) {
+size_t mu_str_increment_start(mu_str_t *str, size_t n_bytes) {
   size_t s1 = str->s;
 
   str->s += n_bytes;
@@ -142,7 +142,7 @@ size_t mu_str_read_increment(mu_str_t *str, size_t n_bytes) {
   return str->s - s1; // return amount by which s incremented
 }
 
-size_t mu_str_write_increment(mu_str_t *str, size_t n_bytes) {
+size_t mu_str_increment_end(mu_str_t *str, size_t n_bytes) {
   size_t e1 = str->e;
 
   str->e += n_bytes;
@@ -152,34 +152,34 @@ size_t mu_str_write_increment(mu_str_t *str, size_t n_bytes) {
   return str->e - e1; // return amount by which e incremented
 }
 
-const uint8_t *mu_str_read_ref(const mu_str_t *str) {
+const uint8_t *mu_str_ref_rd(const mu_str_t *str) {
   return &mu_strbuf_rdata(str->buf)[str->s];
 }
 
-uint8_t *mu_str_write_ref(const mu_str_t *str) {
+uint8_t *mu_str_ref_wr(const mu_str_t *str) {
   return &mu_strbuf_wdata(str->buf)[str->e];
 }
 
 bool mu_str_read_byte(mu_str_t *str, uint8_t *byte) {
-  if (mu_str_read_available(str) == 0) {
+  if (mu_str_available_rd(str) == 0) {
     return false;
   }
-  *byte = *mu_str_read_ref(str);
+  *byte = *mu_str_ref_rd(str);
   str->s += 1;
   return true;
 }
 
 bool mu_str_write_byte(mu_str_t *str, uint8_t byte) {
-  if (mu_str_write_available(str) == 0) {
+  if (mu_str_available_wr(str) == 0) {
     return false;
   }
-  *mu_str_write_ref(str) = byte;
+  *mu_str_ref_wr(str) = byte;
   str->e += 1;
   return true;
 }
 
 size_t mu_str_append(mu_str_t *dst, const mu_str_t *src) {
-  return str_append(dst, mu_str_read_ref(src), mu_str_read_available(src));
+  return str_append(dst, mu_str_ref_rd(src), mu_str_available_rd(src));
 }
 
 size_t mu_str_append_cstr(mu_str_t *dst, const char *cstr) {
@@ -187,81 +187,89 @@ size_t mu_str_append_cstr(mu_str_t *dst, const char *cstr) {
 }
 
 size_t mu_str_printf(mu_str_t *dst, const char *fmt, ...) {
-  size_t avail = mu_str_write_available(dst);
+  size_t avail = mu_str_available_wr(dst);
   size_t written = 0;
 
   if (avail > 0) {
     va_list ap;
     va_start(ap, fmt);
-    written = vsnprintf((char *)mu_str_write_ref(dst), avail, fmt, ap);
+    written = vsnprintf((char *)mu_str_ref_wr(dst), avail, fmt, ap);
     va_end(ap);
     // Note: written is the number of bytes that *would* have been written if
     // there was enough room, NOT the number of bytes actually written.
     if (written > avail) {
       written = avail;
     }
-    mu_str_write_increment(dst, written);
+    mu_str_increment_end(dst, written);
   }
   return written;
 }
 
 size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len) {
-  size_t copied = mu_str_read_available(src);
+  size_t copied = mu_str_available_rd(src);
   if (copied > len - 1) {
     copied = len - 1; // always leave room for null termination
   }
-  memcpy(cstr, mu_str_read_ref(src), copied);
+  memcpy(cstr, mu_str_ref_rd(src), copied);
   cstr[copied] = '\0'; // null terminate
 
-  return copied;       // # of bytes copied, not including null
+  return copied; // # of bytes copied, not including null
 }
-
-// int mu_str_strncmp(mu_str_t *str1, mu_str_t *str2, size_t len) {
-//   return strncmp((char *)&str1->buf->rdata[str1->s], (char *)&str2->buf->rdata[str2->s], len);
-// }
 
 int mu_str_strncmp(mu_str_t *str1, mu_str_t *str2, size_t len) {
-  register const uint8_t *s1 = mu_str_read_ref(str1); 
-  register const uint8_t *s2 = mu_str_read_ref(str2); 
-  if (len == 0)
-    return (0);
-  do {
-    if (*s1 != *s2++)
-      return (*(uint8_t *)s1 - *(uint8_t *)--s2);
-    if (*s1++ == 0)
-      break;
-  } while (--len != 0);
-  return (0);
+  return strncmp((const char *)mu_str_ref_rd(str1),
+                 (const char *)mu_str_ref_rd(str2),
+                 len);
 }
 
-
 int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2) {
-  int l1 = mu_str_read_available(str1);
-  int l2 = mu_str_read_available(str2);
-  return mu_str_strncmp(str1, str2, l1 < l2 ? l1 : l2);
+  size_t len1 = mu_str_available_rd(str1);
+  size_t len2 = mu_str_available_rd(str2);
+  return strncmp((const char *)mu_str_ref_rd(str1),
+                 (const char *)mu_str_ref_rd(str2),
+                 len1 < len2 ? len1 : len2);
 }
 
 int mu_str_find(mu_str_t *str, char *substring) {
-  register uint8_t *a, *b;
-  const uint8_t *string = mu_str_read_ref(str) - str->s; // includes ->s 
+  uint8_t *a, *b;
+  const uint8_t *string = mu_str_ref_rd(str) - str->s; // includes ->s
   int st = str->s;
-  int nd = st + mu_str_read_available(str);
-  if (*substring == 0) // mimick the behavior of c lib strstr function, which a ptr to the beginning of the searched string
+  int nd = st + mu_str_available_rd(str);
+  if (*substring == 0) // mimick the behavior of c lib strstr function, which a
+                       // ptr to the beginning of the searched string
     return 0;
-    
-  for (int i = st ; i < nd; i++) {
+
+  for (int i = st; i < nd; i++) {
     a = (uint8_t *)string + i;
     b = (uint8_t *)substring; // reset to beginning of substring
-    if (*a != *b) 
-        continue;
+    if (*a != *b)
+      continue;
     while (1) {
-        if (*b == 0)
-          return i - st; // at the end of substring, we must have found it!
-        if (*a++ != *b++) 
-          break;
+      if (*b == 0)
+        return i - st; // at the end of substring, we must have found it!
+      if (*a++ != *b++)
+        break;
     }
   }
   return -1;
+}
+
+mu_str_t *mu_str_trim_left(mu_str_t *str, bool (*predicate)(char ch)) {
+  while ((str->s < str->e) && predicate(mu_strbuf_rdata(str->buf)[str->s])) {
+    str->s += 1;
+  }
+  return str;
+}
+
+mu_str_t *mu_str_trim_right(mu_str_t *str, bool (*predicate)(char ch)) {
+  while ((str->s < str->e) && predicate(mu_strbuf_rdata(str->buf)[str->e-1])) {
+    str->e -= 1;
+  }
+  return str;
+}
+
+mu_str_t *mu_str_trim(mu_str_t *str, bool (*predicate)(char ch)) {
+  return mu_str_trim_right(mu_str_trim_left(str, predicate), predicate);
 }
 
 // =============================================================================
@@ -272,11 +280,11 @@ static size_t str_capacity(const mu_str_t *str) {
 }
 
 static uint8_t str_append(mu_str_t *dst, const uint8_t *src, int count) {
-  size_t available = mu_str_write_available(dst);
+  size_t available = mu_str_available_wr(dst);
   if (count > available) {
     count = available;
   }
-  memcpy(mu_str_write_ref(dst), src, count);
-  mu_str_write_increment(dst, count);
+  memcpy(mu_str_ref_wr(dst), src, count);
+  mu_str_increment_end(dst, count);
   return count;
 }

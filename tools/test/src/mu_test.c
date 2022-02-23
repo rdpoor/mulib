@@ -39,6 +39,7 @@
 int mu_bvec_test();
 int mu_cirq_test();
 int mu_dlist_test();
+int mu_event_test();
 int mu_list_test();
 int mu_log_test();
 int mu_pstore_test();
@@ -71,19 +72,20 @@ int main(void) {
   mu_bvec_test();
   mu_cirq_test();
   mu_dlist_test();
+  mu_event_test();
   mu_list_test();
   mu_log_test();
   mu_pstore_test();
   mu_queue_test();
   mu_rtc_test();
-  mu_sched_test();
-  mu_sequence_test();
+  // mu_sched_test();
+  // mu_sequence_test();
   mu_spsc_test();
   mu_str_test();
   mu_strbuf_test();
   mu_task_test();
-  //mu_time_test();
-  mu_timer_test();
+  // mu_time_test();
+  // mu_timer_test();
   mu_vect_test();
   // extras
   //mu_ansi_term_test();

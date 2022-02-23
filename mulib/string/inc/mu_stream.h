@@ -1,5 +1,5 @@
 /**
- * @file mu_sequence.h
+ * @file mu_stream.h
  *
  * MIT License
  *
@@ -25,14 +25,16 @@
  *
  */
 
-#ifndef _MU_SEQUENCE_H_
-#define _MU_SEQUENCE_H_
+#ifndef _MU_STREAM_H_
+#define _MU_STREAM_H_
 
 // *****************************************************************************
 // Includes
 
-#include "mu_task.h"
-#include "mu_queue.h"
+#include "mu_str.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
 
 // =============================================================================
 // C++ compatibility
@@ -44,41 +46,44 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
-// At its heart, a mu_sequence is really just a queue of mu_task objects.
-typedef mu_queue_t mu_sequence_t;
+typedef void (*mu_stream_writer_fn)(const uint8_t *data,
+                                    size_t n_bytes,
+                                    void *user_data);
+
+typedef struct {
+  mu_stream_writer_fn writer;
+  void *user_data;
+  mu_str_t str;
+} mu_stream_t;
 
 // *****************************************************************************
 // Public declarations
 
-/**
- * @brief Initialize a sequence object with an empty sequence of deferables.
- */
-mu_sequence_t *mu_sequence_init(mu_sequence_t *sequence);
+mu_stream_t *mu_stream_init(mu_stream_t *stream,
+                            const mu_strbuf_t *strbuf,
+                            mu_stream_writer_fn writer,
+                            void *user_data);
 
-/**
- * @brief Add a task to the end of the sequence (FIFO/queue order).
- */
-mu_sequence_t *mu_sequence_append_task(mu_sequence_t *sequence,
-                                             mu_task_t *task);
+void mu_stream_flush(mu_stream_t *stream);
 
-/**
- * @brief Add a task to the beginning of the sequence (LIFO/stack order).
- */
-mu_sequence_t *mu_sequence_prepend_task(mu_sequence_t *sequence,
-                                              mu_task_t *task);
+void mu_stream_write_byte(mu_stream_t *stream, uint8_t byte);
 
-/**
- * @brief Invoke the individual tasks in order.
- *
- * @param sequence the mu_sequence
- * @param arg The argument to pass to each task
- * @param retain If true, the sequence is unmodified.  If false, each
- *        task is removed from the sequence before calling it.
- */
-void mu_sequence_call(mu_sequence_t *sequence, void *arg, bool retain);
+void mu_stream_write_buffer(mu_stream_t *stream,
+                            const uint8_t *buffer,
+                            size_t n_bytes);
+
+void mu_stream_write_cstring(mu_stream_t *stream, const char *string);
+
+void mu_stream_write_16be(mu_stream_t *stream, uint16_t value);
+
+void mu_stream_write_16le(mu_stream_t *stream, uint16_t value);
+
+void mu_stream_write_32be(mu_stream_t *stream, uint32_t value);
+
+void mu_stream_write_32le(mu_stream_t *stream, uint32_t value);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* #ifndef _MU_SEQUENCE_H_ */
+#endif /* #ifndef _MU_STREAM_H_ */

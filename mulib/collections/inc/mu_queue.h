@@ -42,20 +42,36 @@ extern "C" {
 // =============================================================================
 // types and definitions
 
-// To avoid the age-old debate as to whether you add to the head of the queue
-// or to the tail, we use the term 'putr' to refer to where you put a new item
-// and 'takr' to where you take an item from.  And it looks like this:
+// A mu_queue is implemented as a singly linked list with an extra pointer to
+// the end of the list (the tail).  An item is appended to the tail of the queue
+// by pushing it after the tail and then updating the tail pointer:
 //
-//  queue:
+// Before Appending:
+// +-------+     +---------+     +---------+
+// | head .|---->| item1 . |---->| item2 ^ |
+// +-------+     +---------+  /  +---------+
+// | tail .|------------------
+// +-------+
+//
+// After Appending:
 // +-------+     +---------+     +---------+     +---------+
-// | takr .|---->| item1 . |---->| item2 . |---->| item3 ^ |
+// | head .|---->| item1 . |---->| item2 . |---->| item3 ^ |
 // +-------+     +---------+     +---------+  /  +---------+
-// | putr .|----------------------------------
+// | tail .|----------------------------------
+// +-------+
+//
+// Removing an item from the head of the queue done by pushing at the head:
+//
+// After Removing:
+// +-------+     +---------+     +---------+
+// | head .|---->| item2 . |---->| item3 ^ |
+// +-------+     +---------+  /  +---------+
+// | tail .|------------------
 // +-------+
 
 typedef struct {
-  mu_list_t takr;   // items are removed (popped) from the takr
-  mu_list_t putr;   // items are added (pushed) at the putr
+  mu_list_t head;   // items are removed (popped) from the head
+  mu_list_t tail;   // items are added (pushed) after the tail
 } mu_queue_t;
 
 // =============================================================================
@@ -96,6 +112,15 @@ mu_queue_t *mu_queue_prepend(mu_queue_t *q, mu_list_t *item);
  * @return The list item removed, or NULL if the queue is empty.
  */
 mu_list_t *mu_queue_remove(mu_queue_t *q);
+
+/**
+ * @brief Remove a list item from the queue.
+ *
+ * @param q The queue.
+ * @param item The item to be removed.
+ * @return the removed item if the it was present in the queue, NULL otherwise.
+ */
+mu_list_t *mu_queue_delete(mu_queue_t *q, mu_list_t *item);
 
 /**
  * @brief Return true if the queue is empty

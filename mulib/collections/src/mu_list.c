@@ -51,12 +51,20 @@ mu_list_t *mu_list_init(mu_list_t *list) {
 }
 
 bool mu_list_is_empty(mu_list_t *list) {
-  return list->next == NULL;
+  return list ? list->next == NULL : true;
+}
+
+mu_list_t *mu_list_first(mu_list_t *list) {
+  return list;
+}
+
+mu_list_t *mu_list_rest(mu_list_t *list) {
+  return list ? list->next : NULL;
 }
 
 size_t mu_list_length(mu_list_t *list) {
   size_t length = 0;
-  while (list->next != NULL) {
+  while (list && (list->next != NULL)) {
     length += 1;
     list = list->next;
   }
@@ -67,20 +75,18 @@ bool mu_list_contains(mu_list_t *list, mu_list_t *element) {
   return mu_list_find(list, element) != NULL;
 }
 
-mu_list_t *mu_list_first(mu_list_t *list) {
-  return list->next;
-}
-
 mu_list_t *mu_list_push(mu_list_t *list, mu_list_t *element) {
-  element->next = list->next;
-  list->next = element;
+  if (list) {
+    element->next = list->next;
+    list->next = element;
+  }
   return list;
 }
 
 mu_list_t *mu_list_pop(mu_list_t *list) {
   mu_list_t *element = NULL;
 
-  if (list->next != NULL) {
+  if (list && (list->next != NULL)) {
     element = list->next;
     list->next = element->next;
     element->next = NULL;
@@ -97,14 +103,15 @@ mu_list_t *mu_list_delete(mu_list_t *list, mu_list_t *element) {
 }
 
 mu_list_t *mu_list_reverse(mu_list_t *list) {
-  mu_list_t reversed;
+  if (list != NULL) {
+      mu_list_t reversed;
 
-  mu_list_init(&reversed);
-  while (!mu_list_is_empty(list)) {
-    mu_list_push(&reversed, mu_list_pop(list));
+      mu_list_init(&reversed);
+      while (!mu_list_is_empty(list)) {
+        mu_list_push(&reversed, mu_list_pop(list));
+      }
+      list->next = reversed.next;
   }
-  list->next = reversed.next;
-
   return list;
 }
 

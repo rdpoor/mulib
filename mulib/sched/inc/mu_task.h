@@ -50,13 +50,17 @@ extern "C" {
  * mu_sequence.h for more information.
  */
 
+// forward decls to avoid circular dependencies
+struct _mu_event;
+
 // The signature of a mu_task function.
 typedef void (*mu_task_fn)(void *ctx, void *arg);
 
 typedef struct {
-  mu_task_fn fn;     // function to call
-  void *ctx;               // context to pass when called
-  mu_list_t sequence_link; // link field for mu_sequence
+  mu_task_fn fn;      // function to call
+  void *ctx;          // context to pass when called
+  mu_list_t _link;    // link field to next mu_task
+  struct _mu_event *_event; // back pointer to mu_event
 } mu_task_t;
 
 // *****************************************************************************
@@ -65,9 +69,7 @@ typedef struct {
 /**
  * @brief Initialize a task object with its function and context.
  */
-mu_task_t *mu_task_init(mu_task_t *task,
-                                    mu_task_fn fn,
-                                    void *ctx);
+mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn, void *ctx);
 
 /**
  * @brief Return the function of this task.
@@ -85,6 +87,18 @@ void *mu_task_get_ctx(mu_task_t *task);
  * Note: for convenience task may be null, in which case this is a no-op.
  */
 void mu_task_call(mu_task_t *task, void *arg);
+
+// The following accessors are reserved for use by mu_event
+
+/**
+ * @brief Return the link to the next task in this tasks event.
+ */
+struct _mu_list *mu_task_get_link(mu_task_t *task);
+
+/**
+ * @brief Return the event associated with this task.
+ */
+struct _mu_event *mu_task_get_event(mu_task_t *task);
 
 #ifdef __cplusplus
 }

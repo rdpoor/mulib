@@ -35,14 +35,15 @@ extern "C" {
 #include "mu_strbuf.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 // =============================================================================
 // Types and definitions
 
 typedef struct {
-  mu_strbuf_t *buf; // reference to underlying buffer
-  size_t s;          // index of next byte to be read, or start of string
-  size_t e;          // index of next byte to be written, or end of string
+  const mu_strbuf_t *buf; // reference to underlying buffer
+  size_t s;               // index of next byte to be read, or start of string
+  size_t e;               // index of next byte to be written, or end of string
 } mu_str_t;
 
 // =============================================================================
@@ -55,9 +56,9 @@ typedef struct {
  * @param buf The underlying mu_str_buf
  * @return str
  */
-mu_str_t *mu_str_init_for_read(mu_str_t *str, mu_strbuf_t *buf);
+mu_str_t *mu_str_init_rd(mu_str_t *str, const mu_strbuf_t *buf);
 
-mu_str_t *mu_str_init_for_write(mu_str_t *str, mu_strbuf_t *buf);
+mu_str_t *mu_str_init_wr(mu_str_t *str, const mu_strbuf_t *buf);
 
 /**
  * @brief Reset start and end pointers for a read buffer
@@ -67,17 +68,17 @@ mu_str_t *mu_str_init_for_write(mu_str_t *str, mu_strbuf_t *buf);
  * @param str A mu_str
  * @return str
  */
-mu_str_t *mu_str_read_reset(mu_str_t *str);
+mu_str_t *mu_str_reset_rd(mu_str_t *str);
 
 /**
 * @brief Reset start and end pointers for a write buffer
 *
-* Note: s  and e are set to 0.
+* Note: s and e are set to 0.
 *
 * @param str A mu_str
 * @return str
  */
-mu_str_t *mu_str_write_reset(mu_str_t *str);
+mu_str_t *mu_str_reset_wr(mu_str_t *str);
 
 
 /**
@@ -118,8 +119,8 @@ int mu_str_index(mu_str_t *str, uint8_t byte);
  *
  * Notes:
  * * The resulting dst is always equal to or shorter than the src
- * * mu_str_slice manipulates indecs; it does not move any data bytes.
- * * dst and src may pointe to the same object.
+ * * mu_str_slice manipulates indeces; it does not move any data bytes.
+ * * dst and src may point to the same object.
  *
  * @param dst The ref to be modified
  * @param src The ref from which to take a slice
@@ -136,7 +137,7 @@ mu_str_t *mu_str_slice(mu_str_t *dst, const mu_str_t *src, int start, int end);
  * @param str A mu_str
  * @return The number of bytes available for reading, i.e. e-s
  */
-size_t mu_str_read_available(const mu_str_t *str);
+size_t mu_str_available_rd(const mu_str_t *str);
 
 /**
  * @brief Return the number of bytes available for writing.
@@ -144,7 +145,7 @@ size_t mu_str_read_available(const mu_str_t *str);
  * @param str A mu_str
  * @return The number of bytes available for writing, i.e. capacity - e
  */
-size_t mu_str_write_available(const mu_str_t *str);
+size_t mu_str_available_wr(const mu_str_t *str);
 
 /**
  * @brief Advance the start index of a mu_str
@@ -157,7 +158,7 @@ size_t mu_str_write_available(const mu_str_t *str);
  *        index is never moved beyond the end index.
  * @return The number of bytes by which the start index was incremented.
  */
-size_t mu_str_read_increment(mu_str_t *str, size_t n_bytes);
+size_t mu_str_increment_start(mu_str_t *str, size_t n_bytes);
 
 /**
  * @brief Advance the end index of a mu_str
@@ -170,7 +171,7 @@ size_t mu_str_read_increment(mu_str_t *str, size_t n_bytes);
  *        is never moved beyond the capacity of the underlying string.
  * @return The number of bytes by which the end index was incremented.
  */
-size_t mu_str_write_increment(mu_str_t *str, size_t n_bytes);
+size_t mu_str_increment_end(mu_str_t *str, size_t n_bytes);
 
 /**
  * @brief Return a pointer to the start of the underlyng string.
@@ -178,7 +179,7 @@ size_t mu_str_write_increment(mu_str_t *str, size_t n_bytes);
  * @param str The mu_str
  * @return A pointer to the start of the underlying string
  */
-const uint8_t *mu_str_read_ref(const mu_str_t *str);
+const uint8_t *mu_str_ref_rd(const mu_str_t *str);
 
 /**
  * @brief Return a pointer to the end of the underlyng string.
@@ -186,7 +187,7 @@ const uint8_t *mu_str_read_ref(const mu_str_t *str);
  * @param str The mu_str
  * @return A pointer to the end of the underlying string
  */
-uint8_t *mu_str_write_ref(const mu_str_t *str);
+uint8_t *mu_str_ref_wr(const mu_str_t *str);
 
 /**
  * @brief Read one byte from the underlying string.  Return it by reference.
@@ -254,9 +255,9 @@ size_t mu_str_to_cstr(const mu_str_t *src, char *cstr, size_t len);
 /**
  * @brief Compare str1 and str2, using the c lib function strncmp()
  * *
- *  
+ *
  * Note: If either string is shorter than n, the comparison will cease there
- * 
+ *
  * @param str1 The first mu_str to compare
  * @param str2 The second mu_str to compare
  * @param n The maximum number of characters to compare
@@ -283,6 +284,10 @@ int mu_str_strcmp(mu_str_t *str1, mu_str_t *str2);
  * @return The offset index from str->s at which the cstr begins, -1 if not found, 0 if cstr is empty
  */
 int mu_str_find(mu_str_t *str, char *substring);
+
+mu_str_t *mu_str_trim_left(mu_str_t *str, bool (*predicate)(char ch));
+mu_str_t *mu_str_trim_right(mu_str_t *str, bool (*predicate)(char ch));
+mu_str_t *mu_str_trim(mu_str_t *str, bool (*predicate)(char ch));
 
 // TBD:
 // mu_str_equals -- mu_str_cmp() == 0

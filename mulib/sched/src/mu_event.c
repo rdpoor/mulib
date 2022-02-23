@@ -1,5 +1,5 @@
 /**
- * @file mu_sequence.c
+ * @file mu_event.c
  *
  * MIT License
  *
@@ -28,8 +28,10 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_sequence.h"
+#include "mu_event.h"
 
+#include "mu_list.h"
+#include "mu_queue.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -47,39 +49,64 @@ static void *call_task(mu_list_t *list, void *arg);
 // *****************************************************************************
 // Public code
 
-mu_sequence_t *mu_sequence_init(mu_sequence_t *sequence) {
-  return mu_queue_init(sequence); // this works b/c mu_squence_t == mu_queue_t
+mu_event_t *mu_event_init(mu_event_t *event) {
+  mu_queue_init(&event->tasks);
+  return event;
 }
 
-mu_sequence_t *mu_sequence_append_task(mu_sequence_t *sequence,
-                                            mu_task_t *task) {
-  return mu_queue_append(sequence, MU_LIST_REF(task, sequence_link));
+mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_t at) {
+  event->at = at;
+  return event;
 }
 
-/**
- * @brief Add a task to the beginning of the sequence (FIFO order).
- */
-mu_sequence_t *mu_sequence_prepend_task(mu_sequence_t *sequence,
-                                              mu_task_t *task) {
-  return mu_queue_prepend(sequence, MU_LIST_REF(task, sequence_link));
+mu_time_t mu_event_get_time(mu_event_t *event) {
+  return event->at;
 }
 
-/**
- * @brief Invoke the individual tasks in order.
- *
- * @param sequence the mu_sequence
- * @param arg The argument to pass to each task
- * @param retain If true, the sequence is unmodified.  If false, each
- *        task is removed from the sequence before calling it.
- */
-void mu_sequence_call(mu_sequence_t *sequence, void *arg, bool retain) {
+bool mu_event_is_empty(mu_event_t *event) {
+  return mu_queue_is_empty(&event->tasks);
+}
+
+mu_event_t *mu_event_append_task(mu_event_t *event, mu_task_t *task) {
+  if (mu_task_get_event(task) != NULL) {
+    // Task is already assigned to an event
+    return NULL;
+  }
+  mu_queue_append(&event->tasks, MU_LIST_REF(task, _link));
+  task->_event = event; // install back pointer
+  return event;
+}
+
+mu_event_t *mu_event_prepend_task(mu_event_t *event, mu_task_t *task) {
+  if (mu_task_get_event(task) != NULL) {
+    // Task is already assigned to an event
+    return NULL;
+  }
+  mu_queue_prepend(&event->tasks, MU_LIST_REF(task, _link));
+  task->_event = event;  // install back pointer
+  return event;
+}
+
+mu_task_t *mu_event_remove_task(mu_event_t *event, mu_task_t *task) {
+  mu_list_t *removed = mu_queue_delete(&event->tasks, MU_LIST_REF(task, _link));
+  if (removed) {
+    task->_event = NULL;   // remove back pointer
+    return task;
+  } else {
+    return NULL;
+  }
+}
+
+void mu_event_call(mu_event_t *event, void *arg, bool retain) {
   mu_list_t *list;
   if (retain) {
-    list = mu_queue_list(sequence);
+    list = mu_queue_list(&event->tasks);
     mu_list_traverse(list, call_task, arg);
   } else {
-    while ((list = mu_queue_remove(sequence)) != NULL) {
-      call_task(list, arg);
+    while ((list = mu_queue_remove(&event->tasks)) != NULL) {
+      mu_task_t *task = MU_LIST_CONTAINER(list, mu_task_t, _link);
+      task->_event = NULL;  // remove back pointer.
+      mu_task_call(task, arg);
     }
   }
 }
@@ -88,9 +115,7 @@ void mu_sequence_call(mu_sequence_t *sequence, void *arg, bool retain) {
 // Local (private, static) code
 
 static void *call_task(mu_list_t *list, void *arg) {
-  mu_task_t *task = MU_LIST_CONTAINER(list,
-                                                  mu_task_t,
-                                                  sequence_link);
+  mu_task_t *task = MU_LIST_CONTAINER(list, mu_task_t, _link);
   mu_task_call(task, arg);
   return NULL;
 }

@@ -1,7 +1,9 @@
 /**
+ * @file mu_seuqnce_test.c
+ *
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2022 R. Dunbar Poor
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,50 +22,72 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ *
  */
 
 // *****************************************************************************
 // Includes
 
+#include "mu_test_utils.h"
 #include "mu_task.h"
-
-#include "mu_event.h"
-#include "mu_list.h"
 #include <stddef.h>
 
 // *****************************************************************************
-// Private types and definitions
+// Local (private) types and definitions
+
+typedef struct {
+  int count;
+} ctx_t;
 
 // *****************************************************************************
-// Private declarations
+// Local (private, static) forward declarations
+
+static void task_fn(void *ctx, void *arg);
 
 // *****************************************************************************
-// Local storage
+// Local (private, static) storage
+
+static mu_task_t s_task;
+static ctx_t s_ctx;
+static int s_arg;
 
 // *****************************************************************************
 // Public code
 
-mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn, void *ctx) {
-  task->fn = fn;
-  task->ctx = ctx;
-  mu_list_init(&task->_link);
-  task->_event = NULL;
-  return task;
+void mu_task_test() {
+
+  // mu_task_init returns task.
+  ASSERT(mu_task_init(&s_task, task_fn, &s_ctx) == &s_task);
+
+  mu_task_fn mu_task_get_fn(mu_task_t *task);
+
+  // mu_task_get_fn returns function
+  ASSERT(mu_task_get_fn(&s_task) == task_fn);
+
+  // mu_task_get_ctx returns function
+  ASSERT(mu_task_get_ctx(&s_task) == &s_ctx);
+
+  s_ctx.count = 21;
+  mu_task_call(&s_task, &s_arg);
+  // mu_task_call invokes the function
+  ASSERT(s_ctx.count == 22);
+
+  // mu_task_call)() with NULL task is permitted as a convenience
+  mu_task_call(NULL, NULL);
+  ASSERT(s_ctx.count == 22);
 }
-
-mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
-
-void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
-
-void mu_task_call(mu_task_t *task, void *arg) {
-  if (task != NULL) { // allow null task => no-op
-    task->fn(task->ctx, arg);
-  }
-}
-
-mu_list_t *mu_task_get_link(mu_task_t *task) { return &task->_link; }
-
-mu_event_t *mu_task_get_event(mu_task_t *task) { return task->_event; }
 
 // *****************************************************************************
-// Private functions
+// Local (private, static) code
+
+static void task_fn(void *ctx, void *arg) {
+  ctx_t *task_ctx = (ctx_t *)ctx;
+  int *task_arg = (int *)arg;
+
+  // task_fn is passed context as first parameter
+  ASSERT(task_ctx == &s_ctx);
+  // task_fn is passed user argument as second parameter
+  ASSERT(task_arg == &s_arg);
+
+  task_ctx->count += 1;
+}

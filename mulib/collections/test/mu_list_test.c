@@ -1,7 +1,9 @@
 /**
+ * @file mu_seuqnce_test.c
+ *
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2022 R. Dunbar Poor
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,35 +22,26 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ *
  */
 
-// =============================================================================
-// includes
+// *****************************************************************************
+// Includes
 
 #include "mu_test_utils.h"
-#include "mu_list.h"
-#include <stdlib.h>
-#include <stdio.h>
+#include "mu_event.h"
 
-// =============================================================================
-// private types and definitions
+// *****************************************************************************
+// Local (private) types and definitions
 
-// Define a data type to be linked into a list.  We've intentionally chosen a
-// structure in which the next field not the first field in order to test the
-// MU_LIST_REF and MU_LIST_CONTAINER macros.
-//
 typedef struct {
-  float value;
-  mu_list_t list;  // list is not first slot in structure
-  char id;
+  int visited;
+  mu_list_t link;
 } element_t;
 
-// =============================================================================
-// private declarations
+// *****************************************************************************
+// Local (private, static) forward declarations
 
-/**
- * @brief Reset all static storage for this test.
- */
 static void reset(void);
 
 /**
@@ -61,177 +54,163 @@ static mu_list_t *etl(element_t *element);
  */
 static element_t *efl(mu_list_t *list);
 
-// =============================================================================
-// local storage
+static void *visitor_fn(mu_list_t *list, void *arg);
 
-static mu_list_t s_list;
+// *****************************************************************************
+// Local (private, static) storage
 
-static element_t s_element_a, s_element_b, s_element_c, s_element_d;
+static mu_list_t s_list1;
+static element_t s_element_a;
+static element_t s_element_b;
+static element_t s_element_c;
 
-// =============================================================================
-// public code
+// *****************************************************************************
+// Public code
 
 void mu_list_test() {
 
-  // ==========
-  // MU_LIST_REF and MU_LIST_CONTAINER
+  // Verify MU_LIST_REF and MU_LIST_CONTAINER macros
+  ASSERT(etl(&s_element_a) == &s_element_a.link);
+  ASSERT(efl(&s_element_a.link) == &s_element_a);
+
+  // A NULL list pointer is treated like an empty list.
+  ASSERT(mu_list_first(NULL) == NULL);
+  ASSERT(mu_list_rest(NULL) == NULL);
+  ASSERT(mu_list_is_empty(NULL) == true);
+  ASSERT(mu_list_length(NULL) == 0);
+  ASSERT(mu_list_contains(NULL, etl(&s_element_a)) == false);
+  ASSERT(mu_list_push(NULL, etl(&s_element_a)) == NULL); // dubious
+  ASSERT(mu_list_pop(NULL) == NULL);
+  ASSERT(mu_list_find(NULL, etl(&s_element_a)) == NULL);
+  ASSERT(mu_list_delete(NULL, etl(&s_element_a)) == NULL);
+  ASSERT(mu_list_reverse(NULL) == NULL);
+  ASSERT(mu_list_traverse(NULL, visitor_fn, NULL) == NULL);
+
+  // mu_list_init() returns list object
+  ASSERT(mu_list_init(&s_list1) == &s_list1);
+
   reset();
-  ASSERT(etl(&s_element_a) == &s_element_a.list);
-  ASSERT(efl(&s_element_a.list) == &s_element_a);
-
-  // ==========
-  // reset();
-  reset();
-  ASSERT(s_list.next == NULL);
-
-  ASSERT(s_element_a.list.next == NULL);
-  ASSERT(s_element_a.value = 1.0);
-  ASSERT(s_element_a.id = 'a');
-
-  ASSERT(s_element_b.list.next == NULL);
-  ASSERT(s_element_b.value = 2.0);
-  ASSERT(s_element_b.id = 'b');
-
-  ASSERT(s_element_c.list.next == NULL);
-  ASSERT(s_element_c.value = 3.0);
-  ASSERT(s_element_c.id = 'c');
-
-  ASSERT(s_element_d.list.next == NULL);
-  ASSERT(s_element_d.value = 4.0);
-  ASSERT(s_element_d.id = 'd');
-
-  // ==========
   // operations on an empty list
-  reset();
-  ASSERT(mu_list_is_empty(&s_list) == true);
-  ASSERT(mu_list_length(&s_list) == 0);
-  ASSERT(mu_list_contains(&s_list, etl(&s_element_a)) == false);
-  ASSERT(mu_list_first(&s_list) == NULL);
-
-  // ==========
-  // mu_list_push()
-
-  // mu_list_push() on empty list
-  reset();
-  ASSERT(mu_list_push(&s_list, etl(&s_element_a)) == &s_list);
-  ASSERT(mu_list_is_empty(&s_list) == false);
-  ASSERT(mu_list_length(&s_list) == 1);
-  ASSERT(mu_list_contains(&s_list, etl(&s_element_a)) == true);
-  ASSERT(mu_list_first(&s_list) == etl(&s_element_a));
-
-  // mu_list_push() on non-empty list
-  reset();
-  ASSERT(mu_list_push(&s_list, etl(&s_element_a)) == &s_list);
-  ASSERT(mu_list_push(&s_list, etl(&s_element_b)) == &s_list);
-  // list = [b, a]
-  ASSERT(mu_list_is_empty(&s_list) == false);
-  ASSERT(mu_list_length(&s_list) == 2);
-  ASSERT(mu_list_contains(&s_list, etl(&s_element_a)) == true);
-  ASSERT(mu_list_contains(&s_list, etl(&s_element_b)) == true);
-  ASSERT(mu_list_first(&s_list) == etl(&s_element_b));
-
-  // ==========
-  // mu_list_pop()
-
-  // mu_list_pop() on empty list
-  reset();
-  ASSERT(mu_list_pop(&s_list) == NULL);
-
-  // mu_list_pop() on singleton list
-  reset();
-  ASSERT(mu_list_push(&s_list, etl(&s_element_a)) == &s_list);
-  ASSERT(mu_list_pop(&s_list) == etl(&s_element_a));
-  ASSERT(mu_list_is_empty(&s_list) == true);
-  ASSERT(mu_list_length(&s_list) == 0);
+  ASSERT(mu_list_first(&s_list1) == &s_list1);
+  ASSERT(mu_list_rest(&s_list1) == NULL);
+  ASSERT(mu_list_is_empty(&s_list1) == true);
+  ASSERT(mu_list_length(&s_list1) == 0);
+  ASSERT(mu_list_contains(&s_list1, etl(&s_element_a)) == false);
+  // ASSERT(mu_list_push(&s_list1, etl(&s_element_a)) == &s_list1);
+  ASSERT(mu_list_pop(&s_list1) == NULL);
+  ASSERT(mu_list_find(&s_list1, etl(&s_element_a)) == NULL);
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_a)) == NULL);
+  ASSERT(mu_list_reverse(&s_list1) == &s_list1);
+  ASSERT(mu_list_traverse(&s_list1, visitor_fn, NULL) == NULL);
 
   reset();
-  ASSERT(mu_list_push(&s_list, etl(&s_element_a)) == &s_list);
-  ASSERT(mu_list_push(&s_list, etl(&s_element_b)) == &s_list);
-  // list = [b, a]
-  ASSERT(mu_list_pop(&s_list) == etl(&s_element_b));
-  ASSERT(mu_list_is_empty(&s_list) == false);
-  ASSERT(mu_list_length(&s_list) == 1);
-  ASSERT(mu_list_pop(&s_list) == etl(&s_element_a));
-  ASSERT(mu_list_is_empty(&s_list) == true);
-  ASSERT(mu_list_length(&s_list) == 0);
+  ASSERT(mu_list_push(&s_list1, etl(&s_element_a)) == &s_list1);
+  // Operations on a singleton list
+  ASSERT(mu_list_first(&s_list1) == &s_list1);
+  ASSERT(mu_list_rest(&s_list1) == etl(&s_element_a));
+  ASSERT(mu_list_is_empty(&s_list1) == false);
+  ASSERT(mu_list_length(&s_list1) == 1);
+  ASSERT(mu_list_contains(&s_list1, etl(&s_element_a)) == true);
+  ASSERT(mu_list_find(&s_list1, etl(&s_element_a)) == etl(&s_element_a));
+  ASSERT(mu_list_reverse(&s_list1) == &s_list1);
+  ASSERT(mu_list_traverse(&s_list1, visitor_fn, NULL) == NULL);
+  ASSERT(s_element_a.visited == 1);
+  ASSERT(s_element_b.visited == 0);
+  ASSERT(s_element_c.visited == 0);
 
-  // ==========
-  // mu_list_length() - already tested
-
-  // ==========
-  // mu_list_find()
   reset();
+  ASSERT(mu_list_push(&s_list1, etl(&s_element_a)) == &s_list1);
+  // pop from a singleton list
+  ASSERT(mu_list_pop(&s_list1) == etl(&s_element_a));
+  ASSERT(mu_list_rest(&s_list1) == NULL);
 
-  // mu_list_find() on empty list
-  ASSERT(mu_list_find(&s_list, etl(&s_element_a)) == NULL);
-
-  // mu_list_find() on first and second elements of non-empty list
-  ASSERT(mu_list_push(&s_list, etl(&s_element_a)) == &s_list);
-  ASSERT(mu_list_push(&s_list, etl(&s_element_b)) == &s_list);
-  // list = [b, a]
-  ASSERT(mu_list_find(&s_list, etl(&s_element_a)) == etl(&s_element_a));
-  ASSERT(mu_list_find(&s_list, etl(&s_element_b)) == etl(&s_element_b));
-  ASSERT(mu_list_find(&s_list, etl(&s_element_c)) == NULL);
-
-  // ==========
-  // mu_list_reverse()
-
-  // mu_list_reverse() an empty list
   reset();
-  ASSERT(mu_list_reverse(&s_list) == &s_list);
-  ASSERT(mu_list_is_empty(&s_list) == true);
-  ASSERT(mu_list_length(&s_list) == 0);
+  ASSERT(mu_list_push(&s_list1, etl(&s_element_a)) == &s_list1);
+  // delete from a singleton list
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_a)) == etl(&s_element_a));
+  ASSERT(mu_list_rest(&s_list1) == NULL);
 
-  // mu_list_reverse() a singleton list
   reset();
-  ASSERT(mu_list_push(&s_list, etl(&s_element_a)) == &s_list);
-  // list is [a]
-  ASSERT(mu_list_reverse(&s_list) == &s_list);
-  ASSERT(mu_list_is_empty(&s_list) == false);
-  ASSERT(mu_list_length(&s_list) == 1);
-  ASSERT(mu_list_first(&s_list) == etl(&s_element_a));
+  // push ahd pop
+  mu_list_push(&s_list1, etl(&s_element_a));   // [a]
+  mu_list_traverse(&s_list1, visitor_fn, NULL);
+  mu_list_push(&s_list1, etl(&s_element_b));   // [b, a]
+  mu_list_traverse(&s_list1, visitor_fn, NULL);
+  mu_list_push(&s_list1, etl(&s_element_c));   // [c, b, a]
+  mu_list_traverse(&s_list1, visitor_fn, NULL);
+  ASSERT(s_element_a.visited == 3);
+  ASSERT(s_element_b.visited == 2);
+  ASSERT(s_element_c.visited == 1);
+  ASSERT(mu_list_length(&s_list1) == 3);
+  ASSERT(mu_list_find(&s_list1, etl(&s_element_a)) == etl(&s_element_a));
+  ASSERT(mu_list_find(&s_list1, etl(&s_element_b)) == etl(&s_element_b));
+  ASSERT(mu_list_find(&s_list1, etl(&s_element_c)) == etl(&s_element_c));
+  ASSERT(mu_list_pop(&s_list1) == etl(&s_element_c));
+  ASSERT(mu_list_pop(&s_list1) == etl(&s_element_b));
+  ASSERT(mu_list_pop(&s_list1) == etl(&s_element_a));
+  ASSERT(mu_list_pop(&s_list1) == NULL);
 
-  // mu_list_reverse() a multi-element list
   reset();
-  ASSERT(mu_list_push(&s_list, etl(&s_element_a)) == &s_list);
-  ASSERT(mu_list_push(&s_list, etl(&s_element_b)) == &s_list);
-  ASSERT(mu_list_push(&s_list, etl(&s_element_c)) == &s_list);
-  // list is [c, b, a]
-  ASSERT(mu_list_reverse(&s_list) == &s_list);
-  // list is [a, b, c]
-  ASSERT(mu_list_is_empty(&s_list) == false);
-  ASSERT(mu_list_length(&s_list) == 3);
-  ASSERT(mu_list_first(&s_list) == etl(&s_element_a));
+  // delete
+  mu_list_push(&s_list1, etl(&s_element_a));   // [a]
+  mu_list_push(&s_list1, etl(&s_element_b));   // [b, a]
+  mu_list_push(&s_list1, etl(&s_element_c));   // [c, b, a]
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_a)) == etl(&s_element_a));
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_b)) == etl(&s_element_b));
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_c)) == etl(&s_element_c));
 
-  // =========
-  // mu_list_traverse() is intrinsically tested by other functions
+  mu_list_push(&s_list1, etl(&s_element_a));   // [a]
+  mu_list_push(&s_list1, etl(&s_element_b));   // [b, a]
+  mu_list_push(&s_list1, etl(&s_element_c));   // [c, b, a]
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_c)) == etl(&s_element_c));
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_b)) == etl(&s_element_b));
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_a)) == etl(&s_element_a));
 
+  mu_list_push(&s_list1, etl(&s_element_a));   // [a]
+  mu_list_push(&s_list1, etl(&s_element_b));   // [b, a]
+  mu_list_push(&s_list1, etl(&s_element_c));   // [c, b, a]
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_b)) == etl(&s_element_b));
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_c)) == etl(&s_element_c));
+  ASSERT(mu_list_delete(&s_list1, etl(&s_element_a)) == etl(&s_element_a));
+
+  reset();
+  // reverse
+  mu_list_push(&s_list1, etl(&s_element_a));   // [a]
+  mu_list_push(&s_list1, etl(&s_element_b));   // [b, a]
+  mu_list_push(&s_list1, etl(&s_element_c));   // [c, b, a]
+  ASSERT(mu_list_rest(etl(&s_element_c)) == etl(&s_element_b));
+  ASSERT(mu_list_rest(etl(&s_element_b)) == etl(&s_element_a));
+  ASSERT(mu_list_rest(etl(&s_element_a)) == NULL);
+  ASSERT(mu_list_reverse(&s_list1) == &s_list1); // [a, b, c]
+  ASSERT(mu_list_rest(etl(&s_element_c)) == NULL);
+  ASSERT(mu_list_rest(etl(&s_element_b)) == etl(&s_element_c));
+  ASSERT(mu_list_rest(etl(&s_element_a)) == etl(&s_element_b));
 }
 
-// =============================================================================
-// private code
+// *****************************************************************************
+// Local (private, static) code
 
-/**
- * @brief Reset all static storage for this test.
- */
 static void reset(void) {
-  s_list.next = NULL;
-  s_element_a = (element_t){.value = 1.0, .list.next = NULL, .id = 'a'};
-  s_element_b = (element_t){.value = 2.0, .list.next = NULL, .id = 'b'};
-  s_element_c = (element_t){.value = 3.0, .list.next = NULL, .id = 'c'};
-  s_element_d = (element_t){.value = 4.0, .list.next = NULL, .id = 'd'};
+  mu_list_init(&s_list1);
+  mu_list_init(&s_element_a.link);
+  mu_list_init(&s_element_b.link);
+  mu_list_init(&s_element_c.link);
+  s_element_a.visited = 0;
+  s_element_b.visited = 0;
+  s_element_c.visited = 0;
 }
 
-/**
- * @brief Return a reference to the list associated with the given element.
- */
 static mu_list_t *etl(element_t *element) {
-  return MU_LIST_REF(element, list);
+  return MU_LIST_REF(element, link);
 }
 
-/**
- * @brief Return a reference to the element associated with the given list.
- */
 static element_t *efl(mu_list_t *list) {
-  return MU_LIST_CONTAINER(list, element_t, list);
+  return MU_LIST_CONTAINER(list, element_t, link);
+}
+
+
+static void *visitor_fn(mu_list_t *list, void *arg) {
+  element_t *list_item = MU_LIST_CONTAINER(list, element_t, link);
+  list_item->visited += 1;
+  return NULL;
 }

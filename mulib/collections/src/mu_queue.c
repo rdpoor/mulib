@@ -45,44 +45,48 @@
 // public code
 
 mu_queue_t *mu_queue_init(mu_queue_t *q) {
-  mu_list_init(&q->takr);
-  mu_list_init(&q->putr);
+  mu_list_init(&q->head);
+  mu_list_init(&q->tail);
   return q;
 }
 
 mu_list_t *mu_queue_list(mu_queue_t *q) {
-  return q->takr.next;
+  return mu_list_rest(&q->head);
 }
 
 mu_queue_t *mu_queue_append(mu_queue_t *q, mu_list_t *item) {
   item->next = NULL;
-  if (mu_list_is_empty(&q->putr)) {
-    mu_list_push(&q->takr, item);
+  if (mu_list_is_empty(&q->tail)) {
+    mu_list_push(&q->head, item);
   } else {
-    mu_list_push(q->putr.next, item);
+    mu_list_push(q->tail.next, item);
   }
-  q->putr.next = item;
+  q->tail.next = item;
   return q;
 }
 
 mu_queue_t *mu_queue_prepend(mu_queue_t *q, mu_list_t *item) {
-  mu_list_push(&q->takr, item);
-  if (mu_list_is_empty(&q->putr)) {
-    q->putr.next = item;
+  mu_list_push(&q->head, item);
+  if (mu_list_is_empty(&q->tail)) {
+    q->tail.next = item;
   }
   return q;
 }
 
 mu_list_t *mu_queue_remove(mu_queue_t *q) {
-  mu_list_t *item = mu_list_pop(&q->takr);
-  if (mu_list_is_empty(&q->takr)) {
-    q->putr.next = NULL;       // removing last item;
+  mu_list_t *item = mu_list_pop(&q->head);
+  if (mu_list_is_empty(&q->head)) {
+    q->tail.next = NULL;       // removing last item;
   }
   return item;
 }
 
+mu_list_t *mu_queue_delete(mu_queue_t *q, mu_list_t *item) {
+  return mu_list_delete(&q->head, item);
+}
+
 bool mu_queue_is_empty(mu_queue_t *q) {
-  return mu_list_is_empty(&q->takr);
+  return mu_list_is_empty(&q->head);
 }
 
 mu_queue_t *mu_queue_reset(mu_queue_t *q) {
@@ -93,11 +97,11 @@ mu_queue_t *mu_queue_reset(mu_queue_t *q) {
 }
 
 bool mu_queue_contains(mu_queue_t *q, mu_list_t *item) {
-  return mu_list_contains(&q->takr, item);
+  return mu_list_contains(&q->head, item);
 }
 
 int mu_queue_length(mu_queue_t *q) {
-  return mu_list_length(&q->takr);
+  return mu_list_length(&q->head);
 }
 
 // =============================================================================

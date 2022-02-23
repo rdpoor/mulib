@@ -124,6 +124,20 @@ typedef void *(*mu_list_traverse_fn)(mu_list_t *prev, void *arg);
 mu_list_t *mu_list_init(mu_list_t *list);
 
 /**
+ * @brief Return (a pointer to) the head of the list.
+ *
+ * NOTE: this just returns the *list argument.
+ */
+mu_list_t *mu_list_first(mu_list_t *list);
+
+/**
+ * @brief Return (a pointer to) the next item in the list.
+ *
+ * NOTE: As a convenience, if list is NULL, this returns NULL.
+ */
+mu_list_t *mu_list_rest(mu_list_t *list);
+
+/**
  * @brief Return true if the list is the null list (is empty).
  *
  * @param ref A pointer to the list head.
@@ -147,15 +161,6 @@ size_t mu_list_length(mu_list_t *list);
  * @return True if the item is a member of the list.
  */
 bool mu_list_contains(mu_list_t *list, mu_list_t *element);
-
-/**
- * @brief Return a reference to the first element in the list, or NULL if the
- * list is empty.
- *
- * @param list A pointer to the list head.
- * @return A reference to the first list element, or NULL on empty list.
- */
-mu_list_t *mu_list_first(mu_list_t *list);
 
 /**
  * @brief Push an item onto the head ot the list.
