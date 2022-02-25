@@ -33,8 +33,8 @@ following calls:
     mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at);
     mu_sched_err_t mu_sched_in(mu_task_t *task, mu_duration_t in);
 
-Each of these functions add a task to the scheduler's queue.  It is an
-error to schedule a task that is already scheduled.
+Each of these functions add a task to the scheduler's queue.  Attempting to
+schedule a task that is already scheduled will return an error code.
 
 mu_sched supports safely scheduling a task from interrupt level:
 
@@ -53,8 +53,6 @@ is where all the magic happens.  The scheduler examines the first task in
 the queue, and if its start time has arrived, the task is removed from the
 queue and is called.
 
-## Implementation of the scheduler queue
-
 */
 
 #ifndef _MU_SCHED_H_
@@ -67,6 +65,7 @@ extern "C" {
 // =============================================================================
 // includes
 
+#include "mu_event.h"
 #include "mu_task.h"
 #include "mu_time.h"
 #include <stdbool.h>
@@ -75,6 +74,10 @@ extern "C" {
 
 // =============================================================================
 // types and definitions
+
+#ifndef MU_SCHED_MAX_EVENTS
+#define MU_SCHED_MAX_EVENTS 30
+#endif
 
 typedef enum {
   MU_SCHED_ERR_NONE,
@@ -90,7 +93,7 @@ typedef enum {
   MU_SCHED_TASK_STATUS_SCHEDULED, // in the schedule, not yet runnable
   MU_SCHED_TASK_STATUS_RUNNABLE,  // in the schedule, ready to run
   MU_SCHED_TASK_STATUS_ACTIVE,    // currently running
-} mu_sched_status_t;
+} mu_sched_task_status_t;
 
 // Signature for clock source function.  Returns the current time.
 typedef mu_time_t (*mu_clock_fn)(void);
@@ -124,9 +127,18 @@ void mu_sched_reset(void);
 mu_sched_err_t mu_sched_step(void);
 
 /**
- * @brief Return the default idle task (which does nothing but return).
+ * @brief Return the current clock souce.
  */
-mu_task_t *mu_sched_get_default_idle_task(void);
+mu_clock_fn mu_sched_get_clock_source(void);
+
+/**
+ * @brief Set the clock source for the scheduler.
+ *
+ * This function is provided primarily for unit testing.
+ *
+ * @param clock_fn A function that returns the current time.
+ */
+void mu_sched_set_clock_source(mu_clock_fn clock_fn);
 
 /**
  * @brief Return the idle task.
@@ -135,30 +147,10 @@ mu_task_t *mu_sched_get_idle_task(void);
 
 /**
  * @brief Set the task to be invoked when there are no tasks to run.
+ *
+ * Setting this to NULL runs the default idle task.
  */
 void mu_sched_set_idle_task(mu_task_t *task);
-
-/**
- * @brief Return the current clock souce.
- */
-mu_clock_fn mu_sched_get_clock_source(void);
-
-/**
- * @brief Set the clock source for the scheduler.
- *
- * @param clock_fn A function that returns the current time.
- */
-void mu_sched_set_clock_source(mu_clock_fn clock_fn);
-
-/**
- * @brief Return the current time.
- */
-mu_time_t mu_sched_get_current_time(void);
-
-/**
- * @brief Return the number of tasks currently scheduled.
- */
-int mu_sched_count(void);
 
 /**
  * @brief Return true if there are no items in the schedule.
@@ -166,14 +158,24 @@ int mu_sched_count(void);
 bool mu_sched_is_empty(void);
 
 /**
+ * @brief Return the scheduler's idea of time according to the clock source.
+ */
+mu_time_t mu_sched_get_current_time(void);
+
+/**
  * @brief Return the task currently being run, or NULL if none.
  */
 mu_task_t *mu_sched_get_current_task(void);
 
 /**
- * @brief Return the next task to be run or NULL if thre are none to run.
+ * @brief Return the current event being processeed, or NULL if none.
  */
-mu_task_t *mu_sched_get_next_task(void);
+mu_event_t *mu_sched_get_current_event(void);
+
+/**
+ * @brief Return the next event to be run or NULL if there isn't one.
+ */
+mu_event_t *mu_sched_peek_next_event(void);
 
 /**
  * @brief Remove a scheduled task.
@@ -189,35 +191,24 @@ mu_task_t *mu_sched_remove_task(mu_task_t *task);
  * Note: If there are other runnable tasks, the new task will be scheduled after
  * those have run.
  *
- * Note: If the task is currently in the schedule, it will be removed and
- * re-scheduled.
- *
- * @param task The task to be scheduled.
- * @return MU_SCHED_ERR_NONE.  (Other error returns may be added in the future.)
+ * Note: If the task is currently in the schedule, this will return the error
+ * MU_SCHED_ERR_ALREADY_SCHEDULED
  */
 mu_sched_err_t mu_sched_now(mu_task_t *task);
 
 /**
  * @brief Schedule a task to be run at a particular time.
  *
- * Note: If the task is currently in the schedule, it will be removed and
- * re-scheduled.
- *
- * @param task The task to be scheduled.
- * @param at The time at which to run the task.
- * @return MU_SCHED_ERR_NONE.  (Other error returns may be added in the future.)
+ * Note: If the task is currently in the schedule, this will return the error
+ * MU_SCHED_ERR_ALREADY_SCHEDULED
  */
 mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at);
 
 /**
  * @brief Schedule a task to be run after a given interval.
  *
- * Note: If the task is currently in the schedule, it will be removed and
- * re-scheduled.
- *
- * @param task The task to be scheduled.
- * @param in The interval after which to run the task.
- * @return MU_SCHED_ERR_NONE.  (Other error returns may be added in the future.)
+ * Note: If the task is currently in the schedule, this will return the error
+ * MU_SCHED_ERR_ALREADY_SCHEDULED
  */
 mu_sched_err_t mu_sched_in(mu_task_t *task, mu_duration_t in);
 
@@ -257,32 +248,6 @@ mu_sched_err_t mu_sched_reschedule_in(mu_duration_t in);
 mu_sched_err_t mu_sched_isr_task_now(mu_task_t *task);
 
 /**
- * @brief Schedule a task from interrupt level to be run at a particular time.
- *
- * Note: At the next call to mu_sched_step(), if the task is currently in the
- * schedule, it will be removed and re-scheduled.
- *
- * @param task The task to be scheduled.
- * @param at The time at which to run the task.
- * @return MU_SCHED_ERR_NONE on no error, MU_SCHED_ERR_FULL if the interrupt
- *         queue is full.
- */
-mu_sched_err_t mu_sched_isr_task_at(mu_task_t *task, mu_time_t at);
-
-/**
- * @brief Schedule a task from interrupt level to be run after a given interval.
- *
- * Note: At the next call to mu_sched_step(), if the task is currently in the
- * schedule, it will be removed and re-scheduled.
- *
- * @param task The task to be scheduled.
- * @param in The interval after which to run the task.
- * @return MU_SCHED_ERR_NONE on no error, MU_SCHED_ERR_FULL if the interrupt
- *         queue is full.
- */
-mu_sched_err_t mu_sched_isr_task_in(mu_task_t *task, mu_duration_t in);
-
-/**
  * @brief Return the status of a task.
  *
  * Task status may be one of
@@ -294,7 +259,7 @@ mu_sched_err_t mu_sched_isr_task_in(mu_task_t *task, mu_duration_t in);
  * @param task The task being queried.
  * @return task status.
  */
-mu_sched_status_t mu_sched_get_task_status(mu_task_t *task);
+mu_sched_task_status_t mu_sched_get_task_status(mu_task_t *task);
 
 /**
  * @brief Call a user-supplied function for each task in the schedule.

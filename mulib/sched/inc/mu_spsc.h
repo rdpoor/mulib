@@ -82,6 +82,8 @@ mu_spsc_err_t mu_spsc_reset(mu_spsc_t *q);
  */
 uint16_t mu_spsc_capacity(mu_spsc_t *q);
 
+// TDOO: bool mu_spsc_is_empty() / mu_spsc_is_full() ?
+
 /**
  * @brief Insert an item at the tail of the queue.  May only be called by the
  * producer (interrupt level).

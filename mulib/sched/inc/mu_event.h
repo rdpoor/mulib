@@ -59,6 +59,11 @@ typedef struct _mu_event {
 mu_event_t *mu_event_init(mu_event_t *event);
 
 /**
+ * @brief Remove all the tasks in the event.
+ */
+mu_event_t *mu_event_reset(mu_event_t *event);
+
+/**
  * @brief Set the time for this event.
  */
 mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_t at);
@@ -95,6 +100,13 @@ mu_event_t *mu_event_prepend_task(mu_event_t *event, mu_task_t *task);
  * @return The task if it was present, NULL if it was not present.
  */
 mu_task_t *mu_event_remove_task(mu_event_t *event, mu_task_t *task);
+
+/**
+ * @brief Remove the first task from the list of tasks.
+ *
+ * Returns NULL if the queue is empty.
+ */
+mu_task_t *mu_event_pop_task(mu_event_t *event);
 
 /**
  * @brief Sequentially invoke all of the tasks in this event.

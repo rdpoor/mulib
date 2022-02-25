@@ -54,6 +54,14 @@ mu_event_t *mu_event_init(mu_event_t *event) {
   return event;
 }
 
+mu_event_t *mu_event_reset(mu_event_t *event) {
+  mu_task_t *task = NULL;
+  while ((task = mu_event_pop_task(event)) != NULL) {
+    // remove all tasks
+  }
+  return event;
+}
+
 mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_t at) {
   event->at = at;
   return event;
@@ -91,6 +99,17 @@ mu_task_t *mu_event_remove_task(mu_event_t *event, mu_task_t *task) {
   mu_list_t *removed = mu_queue_delete(&event->tasks, MU_LIST_REF(task, _link));
   if (removed) {
     task->_event = NULL;   // remove back pointer
+    return task;
+  } else {
+    return NULL;
+  }
+}
+
+mu_task_t *mu_event_pop_task(mu_event_t *event) {
+  mu_list_t *list = mu_queue_remove(&event->tasks);
+  if (list != NULL) {
+    mu_task_t *task = MU_LIST_CONTAINER(list, mu_task_t, _link);
+    task->_event = NULL;  // remove back pointer.
     return task;
   } else {
     return NULL;

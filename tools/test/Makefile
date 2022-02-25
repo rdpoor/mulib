@@ -71,7 +71,7 @@ run: all
 	./$(APP_NAME)
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) ./$(APP_NAME)
 
 .c.o:
 	$(CC) $(CFLAGS) $(IFLAGS) -c $(<) -o $@

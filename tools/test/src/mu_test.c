@@ -78,8 +78,7 @@ int main(void) {
   mu_pstore_test();
   mu_queue_test();
   mu_rtc_test();
-  // mu_sched_test();
-  // mu_sequence_test();
+  mu_sched_test();
   mu_spsc_test();
   mu_str_test();
   mu_strbuf_test();

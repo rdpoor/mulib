@@ -161,7 +161,28 @@ void mu_event_test() {
   ASSERT(mu_event_prepend_task(&s_event2, &s_task1) == NULL);
   ASSERT(mu_event_is_empty(&s_event1) == false);
   ASSERT(mu_event_is_empty(&s_event2) == true);
+
+  reset();
+  // mu_event_reset()
+  mu_event_append_task(&s_event1, &s_task1);
+  mu_event_append_task(&s_event1, &s_task2);
+  ASSERT(mu_event_is_empty(&s_event1) == false);
+  ASSERT(mu_task_get_event(&s_task1) == &s_event1);
+  ASSERT(mu_task_get_event(&s_task2) == &s_event1);
+  ASSERT(mu_event_reset(&s_event1) == &s_event1);
+  ASSERT(mu_event_is_empty(&s_event1) == true);
+  ASSERT(mu_task_get_event(&s_task1) == NULL);
+  ASSERT(mu_task_get_event(&s_task2) == NULL);
+
+  reset();
+  mu_event_append_task(&s_event1, &s_task1);
+  mu_event_append_task(&s_event1, &s_task2);
+  // mu_event_pop_task()
+  ASSERT(mu_event_pop_task(&s_event1) == &s_task1);
+  ASSERT(mu_event_pop_task(&s_event1) == &s_task2);
+  ASSERT(mu_event_pop_task(&s_event1) == NULL);
 }
+
 
 // *****************************************************************************
 // Local (private, static) code
