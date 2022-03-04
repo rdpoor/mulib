@@ -50,7 +50,7 @@ extern "C" {
 
 typedef struct _mu_event {
   mu_queue_t tasks;  // a collection of tasks to be invoked sequentially
-  mu_time_t at;      // (for the scheduler) the time at which to invoke them
+  mu_time_abs_t at;      // (for the scheduler) the time at which to invoke them
 } mu_event_t;
 
 // *****************************************************************************
@@ -66,12 +66,12 @@ mu_event_t *mu_event_reset(mu_event_t *event);
 /**
  * @brief Set the time for this event.
  */
-mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_t at);
+mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_abs_t at);
 
 /**
  * @brief Get the time for this event.
  */
-mu_time_t mu_event_get_time(mu_event_t *event);
+mu_time_abs_t mu_event_get_time(mu_event_t *event);
 
 /**
  * @brief Return true if there are no events in the queue.

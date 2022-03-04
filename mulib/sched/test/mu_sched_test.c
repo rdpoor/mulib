@@ -60,12 +60,11 @@ typedef struct {
 static void reset(void);
 
 // Give us the power to control time!
-static void set_local_time(mu_time_t t);
-static mu_time_t get_local_time(void);
+static void set_local_time(mu_time_abs_t t);
+static mu_time_abs_t get_local_time(void);
 
 // functions for test tasks
 static void counting_fn(void *ctx, void *arg);
-static void resched_fn(void *ctx, void *arg);
 static void idle_fn(void *ctx, void *arg);
 
 
@@ -88,7 +87,7 @@ static mu_task_t s_resched_task;
 
 static mu_task_t s_idle_task;
 
-static mu_time_t s_local_time;
+static mu_time_abs_t s_local_time;
 
 // *****************************************************************************
 // Public code
@@ -219,7 +218,6 @@ static void reset(void) {
   mu_task_init(&s_counting_task3, counting_fn, &s_counting_ctx3);
   mu_task_init(&s_counting_task4, counting_fn, &s_counting_ctx4);
   mu_task_init(&s_counting_task5, counting_fn, &s_counting_ctx5);
-  mu_task_init(&s_resched_task, resched_fn, &s_resched_ctx);
   mu_task_init(&s_idle_task, idle_fn, NULL);
 
   mu_sched_init();
@@ -229,11 +227,11 @@ static void reset(void) {
   set_local_time(0);
 }
 
-static void set_local_time(mu_time_t t) {
+static void set_local_time(mu_time_abs_t t) {
   s_local_time = t;
 }
 
-static mu_time_t get_local_time(void) {
+static mu_time_abs_t get_local_time(void) {
   return s_local_time;
 }
 
@@ -242,22 +240,6 @@ static void counting_fn(void *ctx, void *arg) {
   (void)arg;
   ASSERT(mu_task_get_ctx(mu_sched_get_current_task()) == this);
   this->call_count += 1;
-}
-
-static void resched_fn(void *ctx, void *arg) {
-  resched_ctx_t *this = (resched_ctx_t *)ctx;
-  (void)arg;
-
-  switch(this->state) {
-    case RESCHEDULE_NOW: {
-      mu_sched_reschedule_now();
-    } break;
-    case RESCHEDULE_IN: {
-      mu_sched_reschedule_in(10);
-    } break;
-    case DONT_RESCHEDULE: {
-    } break;
-  }  // switch
 }
 
 static void idle_fn(void *ctx, void *arg) {

@@ -84,7 +84,7 @@ static void process_current_event(void);
 /**
  * @brief Schedule the given task at the given time.
  */
-static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_t at);
+static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_abs_t at);
 
 
 /**
@@ -93,7 +93,7 @@ static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_t at);
  * It will return a pointer to the event, or NULL if the event could not be
  * found.
  */
-static mu_event_t *find_event(mu_time_t at);
+static mu_event_t *find_event(mu_time_abs_t at);
 
 /**
  * @brief Find or create an event at the specified time.
@@ -102,7 +102,7 @@ static mu_event_t *find_event(mu_time_t at);
  * It will return a pointer to the event, or NULL if the event could not be
  * created (i.e. if the events[] array is full).
  */
-static mu_event_t *find_or_create_event(mu_time_t at);
+static mu_event_t *find_or_create_event(mu_time_abs_t at);
 
 // *****************************************************************************
 // Local (private, static) storage
@@ -128,7 +128,7 @@ void mu_sched_reset(void) {
 
 mu_sched_err_t mu_sched_step(void) {
   mu_event_t *next_event;
-  mu_time_t now = s_sched.clock_fn();
+  mu_time_abs_t now = mu_sched_get_current_time();
 
   process_irq_events();
   next_event = mu_sched_peek_next_event();
@@ -167,7 +167,7 @@ bool mu_sched_is_empty(void) {
   return (s_sched.event_idx == 0) && (mu_event_is_empty(&s_sched.current_event));
 }
 
-mu_time_t mu_sched_get_current_time(void) {
+mu_time_abs_t mu_sched_get_current_time(void) {
   return s_sched.clock_fn();
 }
 
@@ -218,25 +218,18 @@ mu_sched_err_t mu_sched_now(mu_task_t *task) {
   return sched_aux(task, mu_sched_get_current_time());
 }
 
-mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at) {
+mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_abs_t at) {
   return sched_aux(task, at);
 }
 
-mu_sched_err_t mu_sched_in(mu_task_t *task, mu_duration_t in) {
-  mu_time_t at = mu_time_offset(mu_sched_get_current_time(), in);
+mu_sched_err_t mu_sched_in(mu_task_t *task, mu_time_rel_t in) {
+  mu_time_abs_t at = mu_time_offset(mu_sched_get_current_time(), in);
   return sched_aux(task, at);
 }
 
-mu_sched_err_t mu_sched_reschedule_now(void) {
-  return mu_sched_now(mu_sched_get_current_task());
-}
-
-mu_sched_err_t mu_sched_reschedule_in(mu_duration_t in) {
-  return mu_sched_in(mu_sched_get_current_task(), in);
-}
-
-mu_sched_err_t mu_sched_isr_task_now(mu_task_t *task) {
-  if (mu_task_get_link(task)) {
+mu_sched_err_t mu_sched_from_isr(mu_task_t *task) {
+  if (mu_task_get_event(task)) {
+    // task is part of another event -- it may only participate in one.
     return MU_SCHED_ERR_ALREADY_SCHEDULED;
   }
   if (mu_spsc_put(&s_sched.irq_spsc, task) == MU_SPSC_ERR_FULL) {
@@ -292,7 +285,7 @@ static void process_current_event(void) {
   }
 }
 
-static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_t at) {
+static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_abs_t at) {
   mu_sched_err_t err = MU_SCHED_ERR_NONE;
   do {
     if (mu_task_get_event(task)) {
@@ -312,12 +305,12 @@ static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_t at) {
   return err;
 }
 
-static mu_event_t *find_event(mu_time_t at) {
+static mu_event_t *find_event(mu_time_abs_t at) {
   int i = s_sched.event_idx;
 
   while (i > 0) {
     mu_event_t *candidate_event = &s_sched.events[--i];
-    mu_time_t candidate_time = mu_event_get_time(candidate_event);
+    mu_time_abs_t candidate_time = mu_event_get_time(candidate_event);
 
     if (mu_time_equals(at, candidate_time)) {
       // exact match!
@@ -334,13 +327,13 @@ static mu_event_t *find_event(mu_time_t at) {
   return NULL;   // not found
 }
 
-static mu_event_t *find_or_create_event(mu_time_t at) {
+static mu_event_t *find_or_create_event(mu_time_abs_t at) {
   mu_event_t *candidate_event;
   int i = s_sched.event_idx;
 
   while (i > 0) {
     candidate_event = &s_sched.events[--i];
-    mu_time_t candidate_time = mu_event_get_time(candidate_event);
+    mu_time_abs_t candidate_time = mu_event_get_time(candidate_event);
 
     if (mu_time_equals(at, candidate_time)) {
       // exact match!
@@ -358,8 +351,6 @@ static mu_event_t *find_or_create_event(mu_time_t at) {
   // Before creating a new event, make sure there's room.
   if (s_sched.event_idx == MU_SCHED_MAX_EVENTS - 1) {
     return NULL;
-  } else {
-    s_sched.event_idx += 1;
   }
 
   // Here, i is the index at which we need to create a new event.  Start by
@@ -376,6 +367,8 @@ static mu_event_t *find_or_create_event(mu_time_t at) {
   candidate_event = &s_sched.events[i];
   mu_event_init(candidate_event);
   mu_event_set_time(candidate_event, at);
+
+  s_sched.event_idx += 1;
 
   return candidate_event;
 }

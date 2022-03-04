@@ -38,8 +38,8 @@
 static void setup(void);
 
 // get_now() / set_now() allows us to control the time manually for testing.
-static mu_time_t get_now(void);
-static void set_now(mu_time_t now);
+static mu_time_abs_t get_now(void);
+static void set_now(mu_time_abs_t now);
 
 // generic function to call from timer
 static void task_fn(void *ctx, void *arg);
@@ -47,7 +47,7 @@ static void task_fn(void *ctx, void *arg);
 // =============================================================================
 // local storage
 
-static mu_time_t s_now;
+static mu_time_abs_t s_now;
 
 static mu_task_t s_task;
 static int s_task_call_count;
@@ -161,11 +161,11 @@ static void setup(void) {
   s_task_call_count = 0;
 }
 
-static mu_time_t get_now(void) {
+static mu_time_abs_t get_now(void) {
   return s_now;
 }
 
-static void set_now(mu_time_t now) {
+static void set_now(mu_time_abs_t now) {
   s_now = now;
 }
 

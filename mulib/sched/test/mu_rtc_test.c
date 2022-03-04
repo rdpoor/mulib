@@ -43,10 +43,10 @@
 // public code
 
 void mu_rtc_test() {
-  mu_time_t t1;
-  mu_time_t t2;
+  mu_time_abs_t t1;
+  mu_time_abs_t t2;
 
-  mu_duration_t dt1;
+  mu_time_rel_t dt1;
   mu_duration_ms_t dm1;
 
   t1 = mu_rtc_now();   // an arbitrary time

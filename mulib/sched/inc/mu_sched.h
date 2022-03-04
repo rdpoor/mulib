@@ -30,8 +30,8 @@ mu_task can be scheduled to run at some point in the future through the
 following calls:
 
     mu_sched_err_t mu_sched_now(mu_task_t *task);
-    mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at);
-    mu_sched_err_t mu_sched_in(mu_task_t *task, mu_duration_t in);
+    mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_abs_t at);
+    mu_sched_err_t mu_sched_in(mu_task_t *task, mu_time_rel_t in);
 
 Each of these functions add a task to the scheduler's queue.  Attempting to
 schedule a task that is already scheduled will return an error code.
@@ -96,7 +96,7 @@ typedef enum {
 } mu_sched_task_status_t;
 
 // Signature for clock source function.  Returns the current time.
-typedef mu_time_t (*mu_clock_fn)(void);
+typedef mu_time_abs_t (*mu_clock_fn)(void);
 
 /**
  * @brief Signature for a function passed to mu_sched_traverse.
@@ -160,7 +160,7 @@ bool mu_sched_is_empty(void);
 /**
  * @brief Return the scheduler's idea of time according to the clock source.
  */
-mu_time_t mu_sched_get_current_time(void);
+mu_time_abs_t mu_sched_get_current_time(void);
 
 /**
  * @brief Return the task currently being run, or NULL if none.
@@ -202,7 +202,7 @@ mu_sched_err_t mu_sched_now(mu_task_t *task);
  * Note: If the task is currently in the schedule, this will return the error
  * MU_SCHED_ERR_ALREADY_SCHEDULED
  */
-mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at);
+mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_abs_t at);
 
 /**
  * @brief Schedule a task to be run after a given interval.
@@ -210,30 +210,7 @@ mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_t at);
  * Note: If the task is currently in the schedule, this will return the error
  * MU_SCHED_ERR_ALREADY_SCHEDULED
  */
-mu_sched_err_t mu_sched_in(mu_task_t *task, mu_duration_t in);
-
-/**
- * @brief Reschedule the current task to run as soon as possible.
- *
- * Note: If there are other runnable tasks, the task will be scheduled after
- * they have run: they get a chance to run first.
- *
- * @return MU_SCHED_ERR_NOT_FOUND if there is no current task, MU_SCHED_ERR_NONE
- * otherwise.
- */
-mu_sched_err_t mu_sched_reschedule_now(void);
-
-/**
- * @brief Reschedule the current task after the given interval.
- *
- * Note that to avoid drift, this increments the task's time rather than
- * the current time.
- *
- * @param in The interval after which to run the task.
- * @return MU_SCHED_ERR_NOT_FOUND if there is no current task, MU_SCHED_ERR_NONE
- * otherwise.
- */
-mu_sched_err_t mu_sched_reschedule_in(mu_duration_t in);
+mu_sched_err_t mu_sched_in(mu_task_t *task, mu_time_rel_t in);
 
 /**
  * @brief Schedule a task from interrupt level.
@@ -245,7 +222,7 @@ mu_sched_err_t mu_sched_reschedule_in(mu_duration_t in);
  * @return MU_SCHED_ERR_NONE on no error, MU_SCHED_ERR_FULL if the interrupt
  *         queue is full.
  */
-mu_sched_err_t mu_sched_isr_task_now(mu_task_t *task);
+mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
 
 /**
  * @brief Return the status of a task.

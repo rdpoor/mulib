@@ -70,10 +70,10 @@ void mu_event_test() {
   // mu_event_init() returns the event object
   ASSERT(mu_event_init(&s_event1) == &s_event1);
 
-  // mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_t at);
+  // mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_abs_t at);
   ASSERT(mu_event_set_time(&s_event1, 22) == &s_event1);
 
-  // mu_time_t mu_event_get_time(mu_event_t *event);
+  // mu_time_abs_t mu_event_get_time(mu_event_t *event);
   ASSERT(mu_event_get_time(&s_event1) == 22);
 
   reset();

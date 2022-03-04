@@ -62,12 +62,12 @@ mu_event_t *mu_event_reset(mu_event_t *event) {
   return event;
 }
 
-mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_t at) {
+mu_event_t *mu_event_set_time(mu_event_t *event, mu_time_abs_t at) {
   event->at = at;
   return event;
 }
 
-mu_time_t mu_event_get_time(mu_event_t *event) {
+mu_time_abs_t mu_event_get_time(mu_event_t *event) {
   return event->at;
 }
 
@@ -133,8 +133,11 @@ void mu_event_call(mu_event_t *event, void *arg, bool retain) {
 // *****************************************************************************
 // Local (private, static) code
 
-static void *call_task(mu_list_t *list, void *arg) {
+static void *call_task(mu_list_t *list_ref, void *arg) {
+  mu_list_t *list = list_ref->next;
+  if (list != NULL) {
   mu_task_t *task = MU_LIST_CONTAINER(list, mu_task_t, _link);
   mu_task_call(task, arg);
+  }
   return NULL;
 }
