@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2021 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,25 +25,33 @@
 /**
  * @file template.h
  *
- * @brief A short decription of what this file provides
+ * @brief Short description of what this module does
  */
 
 #ifndef _TEMPLATE_H_
 #define _TEMPLATE_H_
 
+// *****************************************************************************
+// Includes
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// *****************************************************************************
+// C++ Compatibility
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// =============================================================================
-// Includes
-
-// =============================================================================
+// *****************************************************************************
 // Public types and definitions
 
-// =============================================================================
+// *****************************************************************************
 // Public declarations
 
+// *****************************************************************************
+// End of file
 
 #ifdef __cplusplus
 }
