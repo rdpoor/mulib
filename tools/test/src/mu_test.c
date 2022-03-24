@@ -22,13 +22,13 @@
  * SOFTWARE.
  */
 
- // =============================================================================
- // includes
+// =============================================================================
+// includes
 
-#include <stdio.h>
-#include <stdbool.h>
-#include "mu_test_utils.h"
 #include "mu_ansi_term.h"
+#include "mu_test_utils.h"
+#include <stdbool.h>
+#include <stdio.h>
 
 // =============================================================================
 // types and definitions
@@ -44,19 +44,19 @@ int mu_list_test();
 int mu_log_test();
 int mu_pstore_test();
 int mu_queue_test();
-int mu_rtc_test();
 int mu_sched_test();
 int mu_sequence_test();
 int mu_spsc_test();
 int mu_str_test();
 int mu_strbuf_test();
+int mu_task_list_test();
 int mu_task_test();
-//int mu_time_test();
+int mu_time_test();
 int mu_timer_test();
 int mu_vect_test();
-//int mu_ansi_term_test();
-//int mu_random_test();
-//int mu_drunken_bishop_test();
+// int mu_ansi_term_test();
+// int mu_random_test();
+// int mu_drunken_bishop_test();
 
 // =============================================================================
 // local storage
@@ -67,8 +67,8 @@ int mu_vect_test();
 int main(void) {
 
   printf("\r\nstarting mu_test...\n");
-
   mu_test_init();
+
   mu_bvec_test();
   mu_cirq_test();
   mu_dlist_test();
@@ -77,29 +77,33 @@ int main(void) {
   mu_log_test();
   mu_pstore_test();
   mu_queue_test();
-  mu_rtc_test();
   mu_sched_test();
   mu_spsc_test();
   mu_str_test();
   mu_strbuf_test();
+  mu_task_list_test();
   mu_task_test();
-  // mu_time_test();
+  mu_test_init();
+  mu_time_test();
   // mu_timer_test();
   mu_vect_test();
   // extras
-  //mu_ansi_term_test();
-  //mu_random_test();
-  //mu_drunken_bishop_test();
+  // mu_ansi_term_test();
+  // mu_random_test();
+  // mu_drunken_bishop_test();
 
   bool hadErrors = mu_test_error_count() > 0;
 
   printf("completed mu_test.\n");
-  mu_ansi_term_set_colors(hadErrors ? MU_ANSI_TERM_BRIGHT_RED : MU_ANSI_TERM_BRIGHT_GREEN, MU_ANSI_TERM_DEFAULT_COLOR);
+  mu_ansi_term_set_colors(hadErrors ? MU_ANSI_TERM_BRIGHT_RED
+                                    : MU_ANSI_TERM_BRIGHT_GREEN,
+                          MU_ANSI_TERM_DEFAULT_COLOR);
   printf("%d error%s in %d test%s\r\n",
          mu_test_error_count(),
          mu_test_error_count() == 1 ? "" : "s",
          mu_test_count(),
          mu_test_count() == 1 ? "" : "s");
   mu_ansi_term_reset();
-  return mu_test_error_count();  // return error code 0 on success
+
+  return mu_test_error_count(); // return error code 0 on success
 }

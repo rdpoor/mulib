@@ -44,6 +44,7 @@ static int s_error_count;
 // public code
 
 void mu_test_init(void) {
+  s_test_count = 0;
   s_error_count = 0;
 }
 

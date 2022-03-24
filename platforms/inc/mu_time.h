@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,57 +22,64 @@
  * SOFTWARE.
  */
 
+/**
+ * @file mu_time.h
+ *
+ * @brief Platform-specific support for absolute and relative time.
+ */
+
 #ifndef _MU_TIME_H_
 #define _MU_TIME_H_
 
-#ifdef __cplusplus
-extern "C";
-#endif
+// *****************************************************************************
+// Includes
 
-// =============================================================================
-// includes
-
-#include "mu_config.h"
 #include <stdint.h>
 #include <stdbool.h>
 
-// =============================================================================
-// types and definitions
+// *****************************************************************************
+// C++ Compatibility
 
-#define MS_PER_SECOND (1000L)
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/**
- * Define mu_time_t, mu_duration_t, mu_duration_ms_t as required by your platform-
- * specific mu_time.h
- */
-typedef uint32_t mu_time_t;        // absolute number of ticks since startup (with rollover)
-typedef int32_t mu_duration_t;     // relative number of ticks
-typedef int32_t mu_duration_ms_t;
+// *****************************************************************************
+// Public types and definitions
 
-// =============================================================================
-// declarations
+typedef uint32_t mu_time_abs_t;
+typedef int32_t mu_time_rel_t;
+
+#define MU_TIME_MAX_DT 0x80000000
+
+// *****************************************************************************
+// Public declarations
+
+void mu_time_init(void);
 
 /**
  * @brief Add a time and a duration.
  *
- * `mu_time_offset` adds a time and a duration to produce a new time object.
+ * `mu_time_offset` adds an absolute time and a relative time to produce a new
+ * absolute time.
  *
  * @param t1 a time object
  * @param dt a duration object
  * @return t1 offset by dt
  */
-mu_time_t mu_time_offset(mu_time_t t1, mu_duration_t dt);
+mu_time_abs_t mu_time_offset(mu_time_abs_t t, mu_time_rel_t dt);
 
 /**
  * @brief Take the difference between two time objects
  *
- * `mu_time_difference` subtracts t2 from t1 to produce a duration object.
+ * `mu_time_difference` subtracts absolute time t2 from absolute time t1 to
+ * produce a relative time.
  *
  * @param t1 A time object
  * @param t2 A time object
- * @return (t1-t2) as a duration object
+ * @return (t1-t2) as a relative time
  */
-mu_duration_t mu_time_difference(mu_time_t t1, mu_time_t t2);
+mu_time_rel_t mu_time_difference(mu_time_abs_t t1, mu_time_abs_t t2);
 
 /**
  * @brief Return true if t1 is strictly before t2
@@ -84,7 +91,7 @@ mu_duration_t mu_time_difference(mu_time_t t1, mu_time_t t2);
  * @param t2 A time object
  * @return true if t1 is strictly before t2, false otherwise.
  */
-bool mu_time_precedes(mu_time_t t1, mu_time_t t2);
+bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2);
 
 /**
  * @brief Return true if t1 is equal to t2
@@ -93,7 +100,7 @@ bool mu_time_precedes(mu_time_t t1, mu_time_t t2);
  * @param t2 A time object
  * @return true if t1 equals t2, false otherwise.
  */
-bool mu_time_equals(mu_time_t t1, mu_time_t t2);
+bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2);
 
 /**
  * @brief Return true if t1 is strictly after t2
@@ -105,40 +112,40 @@ bool mu_time_equals(mu_time_t t1, mu_time_t t2);
  * @param t2 A time object
  * @return true if t1 is strictly after t2, false otherwise.
  */
-bool mu_time_follows(mu_time_t t1, mu_time_t t2);
+bool mu_time_follows(mu_time_abs_t t1, mu_time_abs_t t2);
 
 /**
- * @brief Convert a duration to milliseconds.
+ * @brief Convert a mu_time_rel_t to milliseconds;
  *
- * @param dt A duration object
- * @return The duration in seconds
+ * @param dt A relative time object
+ * @return dt converted to milliseconds
  */
-mu_duration_ms_t mu_time_duration_to_ms(mu_duration_t dt);
+int mu_time_rel_to_ms(mu_time_rel_t dt);
 
 /**
- * @brief Convert milliseconds to a duration
+ * @brief Convert milliseconds to a mu_time_rel_t
  *
- * @param ms The duration in milliseconds
- * @return A duration object
+ * @param ms A relative time in milliseconds
+ * @return milliseconds converted to mu_time_rel_t
  */
-mu_duration_t mu_time_ms_to_duration(mu_duration_ms_t ms);
+mu_time_rel_t mu_time_ms_to_rel(int ms);
 
 #ifdef MU_FLOAT
 /**
  * @brief Convert a duration to seconds.
  *
- * @param dt A duration object
- * @return The duration in seconds
+ * @param dt A relative time
+ * @return dt converted to seconds
  */
-MU_FLOAT mu_time_duration_to_s(mu_duration_t dt);
+MU_FLOAT mu_time_rel_to_s(mu_time_rel_t dt);
 
 /**
  * @brief Convert seconds to a duration.
  *
- * @param s The duration in seconds
- * @return A duration object
+ * @param s A relative time in seconds
+ * @return seconds converted to mu_time_rel_t
  */
-mu_duration_t mu_time_s_to_duration(MU_FLOAT s);
+mu_time_rel_t mu_time_s_to_rel(MU_FLOAT s);
 #endif
 
 #ifdef __cplusplus

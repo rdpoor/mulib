@@ -22,14 +22,14 @@ void *alarm_thread(void* vargp);
 // =============================================================================
 // local storage
 
-static volatile mu_time_t s_rtc_ticks;
-//static mu_time_t s_safe_ticks;
+static volatile mu_time_abs_t s_rtc_ticks;
+//static mu_time_abs_t s_safe_ticks;
 //static mu_rtc_alarm_cb_t s_rtc_cb;
 
 static mu_rtc_alarm_cb_t s_rtc_alarm_cb = 0;
 //volatile static uint16_t s_rtc_hi;
 //static uint16_t s_match_count_hi;
-static mu_time_t s_match_count = 0;
+static mu_time_abs_t s_match_count = 0;
 
 static pthread_t alarm_thread_id = 0;
 
@@ -53,14 +53,14 @@ void mu_rtc_init(void) {
 /**
  * @brief Get the current time.
  */
-mu_time_t mu_rtc_now(void) {
+mu_time_abs_t mu_rtc_now(void) {
   struct timespec now;
   clock_gettime(CLOCK_REALTIME, &now);
   return ((now.tv_sec - boot_time.tv_sec) * NANOSECS_PER_S + (now.tv_nsec - boot_time.tv_nsec)) / NANOSECS_PER_MS;
 }
 
-void mu_rtc_busy_wait(mu_duration_t ticks) {
-  mu_time_t until  = mu_time_offset(mu_rtc_now(), ticks);
+void mu_rtc_busy_wait(mu_time_rel_t ticks) {
+  mu_time_abs_t until  = mu_time_offset(mu_rtc_now(), ticks);
   while (mu_time_precedes(mu_rtc_now(), until)) {
     asm(" nop");
     // buzz...
@@ -70,7 +70,7 @@ void mu_rtc_busy_wait(mu_duration_t ticks) {
 /**
  * @brief Set the time at which the RTC should trigger a callback.
  */
-void mu_rtc_set_alarm(mu_time_t count) {
+void mu_rtc_set_alarm(mu_time_abs_t count) {
   s_match_count = count;
   if(!s_rtc_alarm_cb) {
     printf("Warning -- mu_rtc_set_alarm with no callback yet set\n");
@@ -81,7 +81,7 @@ void mu_rtc_set_alarm(mu_time_t count) {
 /**
  * @brief Get the time at which the RTC should trigger a callback.
  */
-mu_time_t mu_rtc_get_alarm(void) {
+mu_time_abs_t mu_rtc_get_alarm(void) {
   //return (uint32_t)s_match_count_hi << 16 | RTC.COMP;
   return s_match_count;
 }
@@ -123,8 +123,3 @@ void *alarm_thread(void* vargp)
     s_rtc_alarm_cb();
     return NULL;
 }
-
-
-
-
-
