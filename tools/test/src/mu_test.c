@@ -36,6 +36,7 @@
 // =============================================================================
 // private declarations
 
+int mu_access_mgr_test();
 int mu_bvec_test();
 int mu_cirq_test();
 int mu_dlist_test();
@@ -69,6 +70,7 @@ int main(void) {
   printf("\r\nstarting mu_test...\n");
   mu_test_init();
 
+  mu_access_mgr_test();
   mu_bvec_test();
   mu_cirq_test();
   mu_dlist_test();

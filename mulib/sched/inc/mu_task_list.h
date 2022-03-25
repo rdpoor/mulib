@@ -15,8 +15,8 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO task_list SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO task_list SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
@@ -48,7 +48,7 @@ extern "C" {
  */
 
 typedef struct {
-  mu_queue_t tasks;   // a LIFO list of tasks
+  mu_queue_t tasks; // a LIFO list of tasks
 } mu_task_list_t;
 
 // *****************************************************************************
@@ -74,8 +74,7 @@ bool mu_task_list_is_empty(mu_task_list_t *task_list);
  *
  * The task will be invoked after other tasks.
  */
-mu_task_t *mu_task_list_append_task(mu_task_list_t *task_list,
-                                         mu_task_t *task);
+mu_task_t *mu_task_list_append_task(mu_task_list_t *task_list, mu_task_t *task);
 
 /**
  * @brief Add a task at the head of the task_list queued.
@@ -83,7 +82,7 @@ mu_task_t *mu_task_list_append_task(mu_task_list_t *task_list,
  * The task will be invoked before other tasks.
  */
 mu_task_t *mu_task_list_prepend_task(mu_task_list_t *task_list,
-                                          mu_task_t *task);
+                                     mu_task_t *task);
 
 /**
  * @brief Remove a task from an task_list.
