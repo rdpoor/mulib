@@ -85,7 +85,6 @@ int main(void) {
   mu_strbuf_test();
   mu_task_list_test();
   mu_task_test();
-  mu_test_init();
   mu_time_test();
   // mu_timer_test();
   mu_vect_test();
