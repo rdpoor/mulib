@@ -43,6 +43,7 @@ int mu_dlist_test();
 int mu_event_test();
 int mu_list_test();
 int mu_log_test();
+int mu_periodic_test();
 int mu_pstore_test();
 int mu_queue_test();
 int mu_sched_test();
@@ -77,6 +78,7 @@ int main(void) {
   mu_event_test();
   mu_list_test();
   mu_log_test();
+  mu_periodic_test();
   mu_pstore_test();
   mu_queue_test();
   mu_sched_test();
