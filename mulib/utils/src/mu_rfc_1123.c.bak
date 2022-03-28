@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021 Klatu Networks, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -79,7 +79,7 @@
 // =============================================================================
 // Local (forward) declarations
 
-// tokens is a densely packed string of tokens, where each token is token_len
+// tokens is a denseely packed string of tokens, where each token is token_len
 // characters long.  If s equals the Nth token, set dst to N (by reference)
 // and return s incremented by token_len.  else return NULL
 static const char *parse_tokens(const char *s,

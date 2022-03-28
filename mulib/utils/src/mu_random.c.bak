@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021 Klatu Networks, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,51 +22,57 @@
  * SOFTWARE.
  */
 
-// =============================================================================
-// includes
+/**
+ * Random number generator using a permuted congruential generator (PCG)
+ * https://en.wikipedia.org/wiki/Permuted_congruential_generator
+ */
 
-#include "mu_strbuf.h"
-#include "mu_test_utils.h"
+// =============================================================================
+// Includes
+
+#include "mu_random.h"
 #include <stdint.h>
-#include <string.h>
 
 // =============================================================================
-// private types and definitions
-
-#define ELEMENT_COUNT 10
-
-// =============================================================================
-// private declarations
+// Local types and definitions
+#define INITIAL_RANDOM_STATE (0x4d595df4d0f33173)
 
 // =============================================================================
-// local storage
+// Local (forward) declarations
+
+static uint32_t rotr32(uint32_t x, unsigned r);
 
 // =============================================================================
-// public code
+// Local storage
+static uint64_t state = INITIAL_RANDOM_STATE;
+static uint64_t const multiplier = 6364136223846793005u;
+static uint64_t const increment = 1442695040888963407u;
 
-void mu_strbuf_test() {
-  // allocate read_only and read/write string buffers, with pointers...
-  mu_strbuf_t strbuf_ro;
-  mu_strbuf_t strbuf_wr;
-  mu_strbuf_t *s_ro = &strbuf_ro;
-  mu_strbuf_t *s_wr = &strbuf_wr;
-  // allocate some C-strings for testing.
-  const char cstr_ro[] = "the quick brown fox jumps over the lazy dog.";
-  uint8_t cstr_wr[ELEMENT_COUNT];
+// =============================================================================
+// Public code
 
-  ASSERT(mu_strbuf_init_ro(s_ro, (const uint8_t *)cstr_ro, strlen(cstr_ro)) ==
-         s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
-
-  ASSERT(mu_strbuf_init_wr(s_wr, cstr_wr, ELEMENT_COUNT) == s_wr);
-  ASSERT(mu_strbuf_capacity(s_wr) == ELEMENT_COUNT);
-  ASSERT(mu_strbuf_wdata(s_wr) == cstr_wr);
-
-  ASSERT(mu_strbuf_init_from_cstr(s_ro, cstr_ro) == s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
+uint32_t mu_random(void) {
+  uint64_t x = state;
+  unsigned count = (unsigned)(x >> 59); // 59 = 64 - 5
+  state = x * multiplier + increment;
+  x ^= x >> 18;                              // 18 = (64 - (32 - 5))/2
+  return rotr32((uint32_t)(x >> 27), count); // 27 = 32 - 5
 }
 
+uint32_t mu_random_range(uint32_t min, uint32_t max) {
+  return min + (mu_random() % (max - min));
+}
+
+void mu_random_seed(uint32_t seed) {
+  state = seed + increment;
+  (void)mu_random();
+}
+
+void mu_random_reset() { state = INITIAL_RANDOM_STATE; }
+
 // =============================================================================
-// private code
+// Local (static) code
+
+static uint32_t rotr32(uint32_t x, unsigned r) {
+  return x >> r | x << (-r & 31);
+}

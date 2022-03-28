@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021 Klatu Networks, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,44 +22,63 @@
  * SOFTWARE.
  */
 
-#ifndef _MU_TIMER_H_
-#define _MU_TIMER_H_
+#ifndef _MU_RANDOM_H_
+#define _MU_RANDOM_H_
 
 #ifdef __cplusplus
-extern "C";
+extern "C" {
 #endif
 
 // =============================================================================
-// includes
+// Includes
 
-#include "mu_task.h"
-#include "mu_time.h"
-#include <stdbool.h>
+#include <stdint.h>
 
 // =============================================================================
-// types and definitions
-
-typedef struct {
-  mu_task_t timer_task;
-  mu_task_t *target_task;
-  mu_time_rel_t interval;
-} mu_timer_t;
+// Types and definitions
 
 // =============================================================================
-// declarations
+// Declarations
 
-mu_timer_t *mu_timer_one_shot(mu_timer_t *timer, mu_task_t *target_task);
+/**
+ * @brief Return a pseudo-random integer between 0 and 2^31 - 1
+ *
+ * @return A pseudo random integer.
+ */
+uint32_t mu_random(void);
 
-mu_timer_t *mu_timer_periodic(mu_timer_t *timer, mu_task_t *target_task);
+/**
+ * @brief Return a random integer between min (inclusive) and max (exclusive).
+ *
+ * @param min The minimum (inclusive) value to return.
+ * @param max The maximum (exclusive) value to return.
+ * @return A pseudo random integer between min (inclusive) and max (exclusive).
+ */
+uint32_t mu_random_range(uint32_t min, uint32_t max);
 
-mu_timer_t *mu_timer_start(mu_timer_t *timer, mu_time_rel_t interval);
+/**
+ * @brief Set the pseudo random number generator seed.
+ *
+ * @param seed A 32-bit integer to use as the seed.
+ */
+void mu_random_seed(uint32_t seed);
 
-mu_timer_t *mu_timer_stop(mu_timer_t *timer);
+/**
+ * @brief Reset the RNG to its initial state.
+ *
+ */
+void mu_random_reset();
 
-bool mu_timer_is_running(mu_timer_t *timer);
+/**
+ * @brief Return an unsigned long hash value from string
+ * djb2 algorithim taken from http://www.cse.yorku.ca/~oz/hash.html
+ * @param str A null-terminated string pointer
+ * @return an unsigned long hash integer.
+ */
+uint64_t mu_hash_from_string(unsigned char *str);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // #ifndef _MU_TIMER_H_
+#endif /* #ifndef _MU_RANDOM_H_ */
