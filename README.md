@@ -30,7 +30,7 @@ space over safety.  In general, `mulib` trusts that you're passing valid
 parameters and that your code implements argument validation where needed.
 * **Single-threaded design.** Much of `mulib`'s small code footprint and
 low-overhead is attributed to its single thread / multiple task design.
-See [About Single-Threaded Schedulers](./docs/about_single_threaded_schedulers.md)
+See [Run To Completion Schedulers](./docs/RunToCompletion.md)
 for the reasons -- and implications -- behind this choice.
 * **Power-aware scheduling.** `mulib`'s architecture for handling interrupts 
 and scheduling make it easy to create low-power embedded applications. 
