@@ -4,9 +4,7 @@
 `mulib` a highly performant, compact and reliable framework for building complex
 applications in resource-constrained embedded systems.  
 
-[jump!](#porting_mulib)
-
-`mulib`'s modules include:
+`mulib`'s growing list of modules include:
 * `mu_sched`: A fast and lithe run-to-completion (single threaded) scheduler,
 which also supports safe, efficient linkage from interrupt to foreground levels.
 * `mu_task`: Support for deferred execution
@@ -30,10 +28,12 @@ in the mu_examples repository.
 * **Fast and Trusting.** `mulib` favors maximizing speed and minimizing code
 space over safety.  In general, `mulib` trusts that you're passing valid
 parameters and that your code implements argument validation where needed.
-* **Single-threaded scheduler.** Much of `mulib`'s small code footprint and
-low-overhead is attributed to its single-threaded, run to completion scheduler.
+* **Single-threaded design.** Much of `mulib`'s small code footprint and
+low-overhead is attributed to its single thread / multiple task design.
 See [About Single-Threaded Schedulers](./docs/about_single_threaded_schedulers.md)
 for the reasons -- and implications -- behind this choice.
+* **Power-aware scheduling.** `mulib`'s architecture for handling interrupts 
+and scheduling make it easy to create low-power embedded applications. 
 * **Low threshold, high ceiling.** A suite of well-documented code examples
 guide you from the simplest "blink an LED" demo to complex multi-tasking
 applications.
@@ -64,7 +64,6 @@ Work In Progress: link to https://github.com/rdpoor/mulib_examples
 
 Work In Progress: link to https://github.com/rdpoor/mulib_examples/platforms,
 which will be a repository for /platform directories for various platforms.
-
 
 ## Port `mulib` to a new processor or platform.<a name="porting_mulib"></a>
 
