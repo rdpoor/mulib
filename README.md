@@ -47,26 +47,26 @@ over "MEW-lib": cows, not kittens.)
 
 Click on one of the links, depending on what you're looking for:
 
-* [**Browse the `mulib` code examples.**](#browse_examples)
+* [**Browse the `mulib` tutorial code.**](#browse_tutorials)
 * [**Run a `mulib` example application.**](#running_examples)
-* [**Create a `mulib`-based application.**](#create_project)
+* [**Create a `mulib`-based application.**](#create_a_project)
 * [**Port `mulib` to a new processor or platform.**](#porting_mulib)
 
-## Browse the `mulib` code examples.<a name="browse_examples"></a>
+## Browse the `mulib` code examples.<a name="browse_tutorials"></a>
 
-Work In Progress: link to https://github.com/rdpoor/mulib_examples
+Work In Progress: link to https://github.com/rdpoor/mulib-examples/tree/main/tutorials
 
 ## Run a `mulib` example application.<a name="running_examples"></a>
 
-Work In Progress: link to https://github.com/rdpoor/mulib_examples
+Work In Progress: link to https://github.com/rdpoor/mulib-examples
 
 ## Create a `mulib`-based application.<a name="create_a_project"></a>
 
-Work In Progress: link to https://github.com/rdpoor/mulib_examples/platforms,
+Work In Progress: link to https://github.com/rdpoor/mulib-examples/platforms,
 which will be a repository for /platform directories for various platforms.
 
 ## Port `mulib` to a new processor or platform.<a name="porting_mulib"></a>
 
-Work In Progress: link to https://github.com/rdpoor/mulib_examples/platforms,
+Work In Progress: link to https://github.com/rdpoor/mulib-examples/porting,
 suggest copying an existing platform and modifying it and/or using the template
 files.
