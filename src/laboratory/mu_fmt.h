@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,55 +22,62 @@
  * SOFTWARE.
  */
 
+/**
+ * @file mu_fmt.h
+ *
+ * @brief sprintf-like formatter for mu_str and C-style strings.
+ *
+ * Note: see mu_printf() for emitting printed strings to stdout or other sinks.
+ */
+
+#ifndef _MU_FMT_H_
+#define _MU_FMT_H_
+
 // *****************************************************************************
 // Includes
 
-#include "mu_task.h"
-
-#include "mu_list.h"
-#include "mu_task_list.h"
-#include <stddef.h>
+#include "mu_str.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 // *****************************************************************************
-// Private types and definitions
+// C++ Compatibility
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // *****************************************************************************
-// Private declarations
+// Public types and definitions
 
 // *****************************************************************************
-// Local storage
+// Public declarations
+
+size_t mu_fmt_parse_int(mu_str *s, int *val, int radix);
+size_t mu_fmt_render_int(mu_str *s, int val, int radix);
+
+size_t mu_fmt_parse_uint(mu_str *s, unsigned int *val, int radix);
+size_t mu_fmt_render_uint(mu_str *s, unsigned int val, int radix);
+
+size_t mu_fmt_parse_bool(mu_str *s, bool *val);
+size_t mu_fmt_render_bool(mu_str *s, bool val);
+
+size_t mu_fmt_parse_token(mu_str *s, mu_pvect *tokens, int *index);
+size_t mu_fmt_render_token(mu_str *s, mu_pvect *tokens, int index);
+
+#if defined(MU_CONFIG_HAS_FLOAT)
+size_t mu_fmt_parse_float(mu_str *s, float *val);
+size_t mu_fmt_parse_float(mu_str *s, float *val);
+#endif
+
+size_t mu_fmt_parse(mu_str_s *s, const char *fmt, ...);  // scanf-like?
+size_t mu_fmt_render(mu_str_s *s, const char *fmt, ...); // printf-like
 
 // *****************************************************************************
-// Public code
+// End of file
 
-mu_task_t *mu_task_init(mu_task_t *task, 
-                        mu_task_fn fn, 
-                        void *ctx, 
-                        const char *task_name) {
-  (void)task_name;  // will be used when MU_CONFIG_PROFILING_TASKS is defined
-
-  task->fn = fn;
-  task->ctx = ctx;
-  mu_list_init(&task->_link);
-  task->_task_list = NULL;
-  return task;
+#ifdef __cplusplus
 }
+#endif
 
-mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
-
-void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
-
-void mu_task_call(mu_task_t *task, void *arg) {
-  if (task != NULL) { // allow null task => no-op
-    task->fn(task->ctx, arg);
-  }
-}
-
-mu_list_t *mu_task_get_link(mu_task_t *task) { return &task->_link; }
-
-struct _mu_task_list *mu_task_get_task_list(mu_task_t *task) {
-  return task->_task_list;
-}
-
-// *****************************************************************************
-// Private functions
+#endif /* #ifndef _MU_FMT_H_ */

@@ -25,16 +25,11 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_periodic.h"
+#include "mu_platform.h"
 
-#include "mu_sched.h"
-#include "mu_task.h"
-#include "mu_time.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#include <stdio.h>
 
 // *****************************************************************************
 // Private types and definitions
@@ -45,61 +40,65 @@
 // *****************************************************************************
 // Private (forward) declarations
 
-static void timer_fn(void *ctx, void *arg);
-
 // *****************************************************************************
 // Public code
 
-mu_periodic_t *mu_periodic_init(mu_periodic_t *timer) {
-  mu_task_init(&timer->_task, timer_fn, timer, "Timer");
-  timer->_target_task = 0;
-  timer->_period = 0;
+void mu_time_init(void) {}
 
-  return timer;
+mu_time_abs_t mu_time_now(void) { return 0; }
+
+mu_time_abs_t mu_time_offset(mu_time_abs_t t, mu_time_rel_t dt) {
+  (void)dt;
+  return t;
 }
 
-bool mu_periodic_start(mu_periodic_t *timer,
-                       mu_time_rel_t period,
-                       mu_task_t *target_task) {
-  if (mu_periodic_is_running(timer)) {
-    return false;
-  }
-  mu_time_abs_t now = mu_sched_get_clock_source()(); // whoo!
-  timer->_target_task = target_task;
-  timer->_period = period;
-  timer->_trigger_at = mu_time_offset(now, period);
-  // invoke the target task now, and reschedule after period elapses
-  mu_task_call(target_task, NULL);
-  mu_sched_at(&timer->_task, timer->_trigger_at);
-
-  return true;
+mu_time_rel_t mu_time_difference(mu_time_abs_t t1, mu_time_abs_t t2) {
+  (void)t1;
+  (void)t2;
+  return 0;
 }
 
-bool mu_periodic_stop(mu_periodic_t *timer) {
-  if (!mu_periodic_is_running(timer)) {
-    return false;
-  }
-  mu_sched_remove_task(&timer->_task);
-  timer->_period = 0; // signifies that the timer is stopped.
-  return true;
+bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2) {
+  (void)t1;
+  (void)t2;
+  return false;
 }
 
-bool mu_periodic_is_running(mu_periodic_t *timer) {
-  return timer->_period != 0;
+bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2) {
+  (void)t1;
+  (void)t2;
+  return false;
 }
+
+bool mu_time_follows(mu_time_abs_t t1, mu_time_abs_t t2) {
+  (void)t1;
+  (void)t2;
+  return false;
+}
+
+int mu_time_rel_to_ms(mu_time_rel_t dt) {
+  (void)dt;
+  return 0;
+}
+
+mu_time_rel_t mu_time_ms_to_rel(int ms) {
+  (void)ms;
+  return 0;
+}
+
+#ifdef MU_PLATFORM_HAS_FLOAT
+
+MU_FLOAT mu_time_rel_to_s(mu_time_rel_t dt) {
+  (void)dt;
+  return 0.0;
+}
+
+mu_time_rel_t mu_time_s_to_rel(MU_FLOAT s) {
+  (void s);
+  return 0;
+}
+
+#endif
 
 // *****************************************************************************
 // Private (static) code
-
-static void timer_fn(void *ctx, void *arg) {
-  mu_periodic_t *timer = (mu_periodic_t *)ctx;
-  (void)arg;
-
-  // called periodically by the scheduler
-  if (mu_periodic_is_running(timer)) {
-    // invoke target task, update trigger time and reschedule...
-    mu_task_call(timer->_target_task, NULL);
-    timer->_trigger_at = mu_time_offset(timer->_trigger_at, timer->_period);
-    mu_sched_at(&timer->_task, timer->_trigger_at);
-  }
-}

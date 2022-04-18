@@ -69,7 +69,10 @@ typedef struct {
 /**
  * @brief Initialize a task object with its function and context.
  */
-mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn, void *ctx);
+mu_task_t *mu_task_init(mu_task_t *task, 
+                        mu_task_fn fn, 
+                        void *ctx, 
+                        const char *task_name);
 
 /**
  * @brief Return the function of this task.

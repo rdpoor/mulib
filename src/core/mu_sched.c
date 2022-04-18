@@ -31,7 +31,6 @@
 #include "mu_sched.h"
 
 #include "mu_event.h"
-#include "mu_rtc.h"
 #include "mu_spsc.h"
 #include "mu_task.h"
 #include "mu_time.h"
@@ -112,7 +111,7 @@ static mu_sched_t s_sched;
 void mu_sched_init(void) {
   memset(&s_sched, 0, sizeof(s_sched)); //
   mu_event_init(&s_sched.current_event);
-  s_sched.clock_fn = mu_rtc_now;
+  s_sched.clock_fn = mu_time_now;
   mu_spsc_init(&s_sched.irq_spsc, s_sched.irq_tasks, MU_SCHED_MAX_IRQ_TASKS);
 }
 
