@@ -35,7 +35,7 @@
 // Includes
 
 #include "mu_task.h"
-#include "mu_task_list.h"
+#include "mu_pqueue.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -54,11 +54,13 @@ typedef enum {
   MU_ACCESS_MGR_ERR_BAD_PARAM,
   MU_ACCESS_MGR_ERR_TASK_UNAVAILABLE,
   MU_ACCESS_MGR_ERR_NOT_PENDING,
+  MU_ACCESS_MGR_ERR_ALREADY_PENDING,
+  MU_ACCESS_MGR_ERR_ALREADY_OWNER,
 } mu_access_mgr_err_t;
 
 typedef struct {
   mu_task_t *owner;       // task that owns the resource now
-  mu_task_list_t pending; // tasks waiting to be granted ownership
+  mu_pqueue_t pending;    // a queue of tasks waiting to be granted ownership
 } mu_access_mgr_t;
 
 // *****************************************************************************
@@ -67,7 +69,9 @@ typedef struct {
 /**
  * @brief Initialize the access manager.
  */
-mu_access_mgr_t *mu_access_mgr_init(mu_access_mgr_t *mgr);
+ mu_access_mgr_t *mu_access_mgr_init(mu_access_mgr_t *mgr,
+                                     void *qstorage,
+                                     size_t capacity);
 
 /**
  * @brief Reset the access manager.
