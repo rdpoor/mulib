@@ -1,4 +1,4 @@
-MU_PLATFORM/**
+/**
  * MIT License
  *
  * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
@@ -23,22 +23,18 @@ MU_PLATFORM/**
  */
 
 /**
- * @file mu_platform.h
- *
- * @brief Platform specific definitions and declarations required by mulib.
- *
- * If you are porting mulib to a specific platform, create the required
- * definitions and declarations in mu_platform.h and implementations in
- * mu_platform.c.  If you are using mulib in your project, you must find (or
- & create) the appropriate mu_platform files for your platform.
+* @file mu_time.h
+*
+* @brief Platform specific declarations for mulib time functions.
  */
 
-#ifndef _MU_PLATFORM_H_
-#define _MU_PLATFORM_H_
+#ifndef _MU_TIME_H_
+#define _MU_TIME_H_
 
 // *****************************************************************************
 // Includes
 
+#inlclude "mu_config.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -59,26 +55,6 @@ extern "C" {
 // two absolute times.  Note that this may be negative.
 // typedef int32_t mu_time_rel_t;
 
-// Required: define the maximum relative time.  Note that this will be used to
-// distinguish between a long time in the future and a long time in the past.
-// define MU_PLATFORM_MAX_TIME_REL INT32_MAX
-
-// Optional: un-comment this if your platform supports floating point operations
-// #define MU_PLATFORM_HAS_FLOAT
-
-// Optional: Define the number of events that may be scheduled (with different
-// times) in mu_sched.  Leave commented to accept the default.
-// #define MU_PLATFORM_MAX_EVENTS <n>
-
-// Optional: Uncomment the following to generate profiling functions for mu_task
-// and mu_sched, at the expense of larger storage and slightly slower executiion
-// times.
-// define MU_PLATFORM_PROFILING_TASKS
-
-// Optional: If implementing power management, the minimum time the system will
-// sleep for.
-// #define MU_PLATFORM_SLEEP_TIME_MIN mu_time_ms_to_rel(1)
-
 // *****************************************************************************
 // Public declarations
 
@@ -92,9 +68,6 @@ void mu_time_init(void);
  *
  * NOTE: If you plan to implement low-power sleep, the timer used for this
  * function must continue to run in sleep mode.
- *
- * Note: mulib library functions properly handle mu_time_abs_t rolling over as
- * long as the relative time is less than MU_PLATFORM_MAX_TIME_REL
  *
  * @return The current absolute time.
  */

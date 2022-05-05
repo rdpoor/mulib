@@ -45,6 +45,8 @@ static size_t str_capacity(const mu_str_t *str);
 
 static uint8_t str_append(mu_str_t *dst, const uint8_t *src, size_t count);
 
+// static char *print_mu_str(mu_str_t *str);
+
 // =============================================================================
 // local storage
 
@@ -112,10 +114,14 @@ mu_str_t *mu_str_slice(mu_str_t *dst, const mu_str_t *src, int start, int end) {
   if (s1 > len) {
     s1 = len;
   }
-  // TODO: what is the proper test here (e1 is unsigned)
-//  if (e1 < 0) {
-//    e1 = 0;
-//  }
+
+  // If (len + end) is positive then clamp as expected.
+  // If (len + end) is negative then e1 will be "huge", and the clamp will
+  //  also work.
+  if (e1 > len) {
+    e1 = len;
+  }
+
   if (s1 > e1) {
     s1 = e1;
   }
@@ -256,16 +262,20 @@ int mu_str_find(mu_str_t *str, char *substring) {
 }
 
 mu_str_t *mu_str_trim_left(mu_str_t *str, bool (*predicate)(char ch)) {
+  // printf("trim_left: str = `%s`, s=%ld\n", print_mu_str(str), str->s);
   while ((str->s < str->e) && predicate(mu_strbuf_rdata(str->buf)[str->s])) {
     str->s += 1;
+    // printf("    str = `%s`, s=%ld\n", print_mu_str(str), str->s);
   }
   return str;
 }
 
 mu_str_t *mu_str_trim_right(mu_str_t *str, bool (*predicate)(char ch)) {
+  // printf("trim_right: str = `%s`, e=%ld\n", print_mu_str(str), str->e);
   while ((str->s < str->e) &&
          predicate(mu_strbuf_rdata(str->buf)[str->e - 1])) {
     str->e -= 1;
+    // printf("    str = `%s`, e=%ld\n", print_mu_str(str), str->e);
   }
   return str;
 }
@@ -290,3 +300,11 @@ static uint8_t str_append(mu_str_t *dst, const uint8_t *src, size_t count) {
   mu_str_increment_end(dst, count);
   return count;
 }
+
+// debugging -- NOTE: returned value gets overwritten at next call
+// static char *print_mu_str(mu_str_t *str) {
+//   static char buf[50];
+//   memset(buf, '\0', sizeof(buf));
+//   memcpy(buf, mu_str_ref_rd(str), mu_str_available_rd(str));
+//   return buf;
+// }
