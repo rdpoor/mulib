@@ -112,10 +112,14 @@ mu_str_t *mu_str_slice(mu_str_t *dst, const mu_str_t *src, int start, int end) {
   if (s1 > len) {
     s1 = len;
   }
-  // TODO: what is the proper test here (e1 is unsigned)
-//  if (e1 < 0) {
-//    e1 = 0;
-//  }
+
+  // If (len + end) is positive then clamp as expected.
+  // If (len + end) is negative then e1 will be "huge", and the clamp will
+  //  also work.
+  if (e1 > len) {
+    e1 = len;
+  }
+
   if (s1 > e1) {
     s1 = e1;
   }
