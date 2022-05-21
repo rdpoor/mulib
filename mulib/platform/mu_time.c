@@ -25,8 +25,8 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_platform.h"
-
+#include "mu_config.h"
+#include "mu_time.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
