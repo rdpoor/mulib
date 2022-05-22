@@ -30,6 +30,7 @@
 
 #include "mu_sched.h"
 
+#include "mu_config.h"
 #include "mu_spsc.h"
 #include "mu_task.h"
 #include "mu_time.h"

@@ -73,10 +73,6 @@ extern "C" {
 // =============================================================================
 // types and definitions
 
-#ifndef MU_SCHED_MAX_DEFERRED_TASKS
-#define MU_SCHED_MAX_DEFERRED_TASKS 30
-#endif
-
 typedef enum {
   MU_SCHED_ERR_NONE,
   MU_SCHED_ERR_ILLEGAL_ARG,
