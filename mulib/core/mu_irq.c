@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,49 +25,50 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_task.h"
-
 #include "mu_irq.h"
+
+#include "mu_spsc.h"
+#include "mu_task.h"
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // Private types and definitions
 
-// *****************************************************************************
-// Private declarations
+#ifndef MU_IRQ_MAX_TASKS
+#define MU_IRQ_MAX_TASKS 8 // must be a power of two!
+#endif
 
 // *****************************************************************************
-// Local storage
+// Private (static) storage
+
+static mu_spsc_item_t s_irq_tasks[MU_IRQ_MAX_TASKS];
+static mu_spsc_t s_irq_spsc;
+
+// *****************************************************************************
+// Private (forward) declarations
 
 // *****************************************************************************
 // Public code
 
-mu_task_t *mu_task_init(mu_task_t *task,
-                        mu_task_fn fn,
-                        void *ctx,
-                        const char *task_name) {
-  // (void)task_name;  // will be used when MU_CONFIG_PROFILING_TASKS is defined
+void mu_irq_init(void) {
+  mu_spsc_init(&s_irq_spsc, s_irq_tasks, MU_IRQ_MAX_TASKS);
+}
 
-  task->fn = fn;
-  task->ctx = ctx;
-  task->name = task_name;
+mu_task_t *mu_irq_queue_task(mu_task_t *task) {
+  if (mu_spsc_put(&s_irq_spsc, task) == MU_SPSC_ERR_FULL) {
+    return NULL;
+  }
   return task;
 }
 
-mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
-
-void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
-
-void mu_task_call(mu_task_t *task, void *arg) {
-  mu_irq_process_irqs();    // first invoke any queued IRQ tasks
-  mu_task_call_(task, arg); // invoke this task
-}
-
-void mu_task_call_(mu_task_t *task, void *arg) {
-  if (task != NULL) { // Allow a NULL task to be treated as a no-op
-    task->fn(task->ctx, arg);
+void mu_irq_process_irqs(void) {
+  mu_spsc_item_t item;
+  while (mu_spsc_get(&s_irq_spsc, &item) == MU_SPSC_ERR_NONE) {
+      mu_task_call((mu_task_t *)item, NULL);
   }
 }
 
 // *****************************************************************************
-// Private functions
+// Private (static) code

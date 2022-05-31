@@ -31,7 +31,7 @@
 #include "mu_sched.h"
 
 #include "mu_config.h"
-#include "mu_spsc.h"
+#include "mu_irq.h"
 #include "mu_task.h"
 #include "mu_time.h"
 #include <stdbool.h>
@@ -47,37 +47,21 @@
 #define MU_SCHED_MAX_DEFERRED_TASKS 30
 #endif
 
-#ifndef MU_SCHED_MAX_IRQ_TASKS
-#define MU_SCHED_MAX_IRQ_TASKS 8 // must be a power of two!
-#endif
-
 typedef struct {
   mu_task_t *current_task;  // the task currently being processed.
   mu_clock_fn clock_fn;     // the function to call to get the current time.
   mu_task_t *idle_task;     // the task to run when nothing else is runnable.
   mu_sched_event_t events[MU_SCHED_MAX_DEFERRED_TASKS]; // the actual schedule.
   size_t event_count;       // index of next available event
-  mu_spsc_item_t irq_tasks[MU_SCHED_MAX_IRQ_TASKS];
-  mu_spsc_t irq_spsc;
 } mu_sched_t;
 
 // *****************************************************************************
 // Local (private, static) forward declarations
 
 /**
- * @brief Transfer tasks from the IRQ queue to the main schedule.
- */
-static void process_irq_tasks(void);
-
-/**
  * @brief Schedule the given task at the given time.
  */
 static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_abs_t at);
-
-/**
- * @brief Debugging: print contents of schedule
- */
-static void print_sched(void);
 
 // *****************************************************************************
 // Local (private, static) storage
@@ -91,28 +75,21 @@ void mu_sched_init(void) {
   s_sched.current_task = NULL;
   s_sched.event_count = 0;
   s_sched.clock_fn = mu_time_now;
-  mu_spsc_init(&s_sched.irq_spsc, s_sched.irq_tasks, MU_SCHED_MAX_IRQ_TASKS);
 }
 
 void mu_sched_reset(void) {
   s_sched.event_count = 0;
-  mu_spsc_reset(&s_sched.irq_spsc);
 }
 
 mu_sched_err_t mu_sched_step(void) {
   mu_sched_event_t *event;
   mu_time_abs_t now = mu_sched_get_current_time();
 
-  process_irq_tasks();
+  mu_irq_process_irqs();    // first invoke any queued IRQ tasks
   event = mu_sched_peek_next_event();
   if (event && !mu_time_follows(event->at, now)) {
-    // time has arrived!
+    // A scheduled event's time has arrived.
     s_sched.event_count -= 1;
-    // printf("\n%9ld: (%d in sched) Running %s",
-    //        now,
-    //        s_sched.event_count,
-    //        event->task->name);
-    print_sched();
     s_sched.current_task = event->task;
     mu_task_call(event->task, NULL);
     s_sched.current_task = NULL;
@@ -180,13 +157,6 @@ mu_sched_err_t mu_sched_in(mu_task_t *task, mu_time_rel_t in) {
   return sched_aux(task, at);
 }
 
-mu_sched_err_t mu_sched_from_isr(mu_task_t *task) {
-  if (mu_spsc_put(&s_sched.irq_spsc, task) == MU_SPSC_ERR_FULL) {
-    return MU_SCHED_ERR_FULL;
-  }
-  return MU_SCHED_ERR_NONE;
-}
-
 void *mu_sched_visit_deferred_events(mu_sched_visit_event_fn user_fn, void *arg) {
   size_t i = s_sched.event_count;
 
@@ -208,28 +178,17 @@ void *mu_sched_visit_immediate_tasks(mu_sched_visit_task_fn user_fn, void *arg) 
 // *****************************************************************************
 // Local (private, static) code
 
-static void process_irq_tasks(void) {
-  mu_spsc_item_t item;
-  // Transfer events from irq task list to main schedule
-  while (mu_spsc_get(&s_sched.irq_spsc, &item) == MU_SPSC_ERR_NONE) {
-      mu_sched_now((mu_task_t *)item);
-  }
-}
-
 static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_abs_t at) {
   mu_sched_event_t *event;
 
   if (s_sched.event_count == MU_SCHED_MAX_DEFERRED_TASKS) {
-    // printf("\n%09ld: Cannot schedule %s: schedule is full",
-    //        mu_time_now(),
-    //        task->name);
     return MU_SCHED_ERR_FULL;
-}
+  }
 
   // perform a linear search to find the insertion point
   size_t i = s_sched.event_count;
   while (i > 0) {
-    event = &s_sched.events[i-1];
+    event = &s_sched.events[i - 1];
     // Strict ordering: if a task already is scheduled for 'at', schedule this
     // new event to follow it.
     if (mu_time_follows(event->at, at)) {
@@ -251,26 +210,5 @@ static mu_sched_err_t sched_aux(mu_task_t *task, mu_time_abs_t at) {
   event->at = at;
   event->task = task;
   s_sched.event_count += 1;
-  // printf("\n%9ld: (%d in sched) Schedule %s at %ld",
-  //        mu_time_now(),
-  //        s_sched.event_count,
-  //        event->task->name,
-  //        at);
-  print_sched();
   return MU_SCHED_ERR_NONE;
-}
-
-// debugging
-static void print_sched(void) {
-  // printf("\nAt %9ld:", mu_time_now());
-  //
-  // if (s_sched.event_count == 0) {
-  //   printf("\n  schedule is empty");
-  //   return;
-  // }
-  //
-  // for (size_t i=0; i<s_sched.event_count; i++) {
-  //   mu_sched_event_t *event = &s_sched.events[i];
-  //   printf("\n[%02d] %9ld: %s", i, event->at, event->task->name);
-  // }
 }

@@ -61,9 +61,9 @@ typedef struct {
 /**
  * @brief Initialize a task object with its function and context.
  */
-mu_task_t *mu_task_init(mu_task_t *task, 
-                        mu_task_fn fn, 
-                        void *ctx, 
+mu_task_t *mu_task_init(mu_task_t *task,
+                        mu_task_fn fn,
+                        void *ctx,
                         const char *task_name);
 
 /**
@@ -82,6 +82,11 @@ void *mu_task_get_ctx(mu_task_t *task);
  * Note: for convenience task may be null, in which case this is a no-op.
  */
 void mu_task_call(mu_task_t *task, void *arg);
+
+/**
+ * @brief Invoke a deferred task, bypassing any IRQ queued tasks.
+ */
+void mu_task_call_(mu_task_t *task, void *arg);
 
 #ifdef __cplusplus
 }

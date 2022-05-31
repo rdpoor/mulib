@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,52 +22,56 @@
  * SOFTWARE.
  */
 
+/**
+ * @file template.h
+ *
+ * @brief Short description of what this module does
+ */
+
+#ifndef _MU_IRQ_H_
+#define _MU_IRQ_H_
+
 // *****************************************************************************
 // Includes
 
 #include "mu_task.h"
-
-#include "mu_irq.h"
-#include <stddef.h>
-
-// *****************************************************************************
-// Private types and definitions
+#include <stdint.h>
+#include <stdbool.h>
 
 // *****************************************************************************
-// Private declarations
+// C++ Compatibility
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // *****************************************************************************
-// Local storage
+// Public types and definitions
 
 // *****************************************************************************
-// Public code
+// Public declarations
 
-mu_task_t *mu_task_init(mu_task_t *task,
-                        mu_task_fn fn,
-                        void *ctx,
-                        const char *task_name) {
-  // (void)task_name;  // will be used when MU_CONFIG_PROFILING_TASKS is defined
+/**
+ * @brief Initialize the Interrupt Request module.
+ */
+void mu_irq_init(void);
 
-  task->fn = fn;
-  task->ctx = ctx;
-  task->name = task_name;
-  return task;
+/**
+ * @brief Queue a task from interrupt level.  It will be processed at the next
+ * call to mu_irq_process_irs().
+ */
+mu_task_t *mu_irq_queue_task(mu_task_t *task);
+
+/**
+ * @brief Run any tasks that have been queued from interrupt level.
+ */
+void mu_irq_process_irqs(void);
+
+// *****************************************************************************
+// End of file
+
+#ifdef __cplusplus
 }
+#endif
 
-mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
-
-void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
-
-void mu_task_call(mu_task_t *task, void *arg) {
-  mu_irq_process_irqs();    // first invoke any queued IRQ tasks
-  mu_task_call_(task, arg); // invoke this task
-}
-
-void mu_task_call_(mu_task_t *task, void *arg) {
-  if (task != NULL) { // Allow a NULL task to be treated as a no-op
-    task->fn(task->ctx, arg);
-  }
-}
-
-// *****************************************************************************
-// Private functions
+#endif /* #ifndef _MU_IRQ_H_ */
