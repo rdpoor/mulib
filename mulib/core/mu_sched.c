@@ -95,7 +95,7 @@ mu_sched_err_t mu_sched_step(void) {
     s_sched.current_task = NULL;
 
   } else if (s_sched.idle_task != NULL) {
-    // No event i sready to run -- run the idle task if provided.
+    // No event is ready to run -- run the idle task if provided.
     mu_task_call(s_sched.idle_task, NULL);
   }
   return MU_SCHED_ERR_NONE;

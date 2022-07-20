@@ -23,9 +23,9 @@
  */
 
 /**
- * @file template.h
+ * @file mu_irq.h
  *
- * @brief Short description of what this module does
+ * @brief Schedule a task from interrupt level
  */
 
 #ifndef _MU_IRQ_H_
