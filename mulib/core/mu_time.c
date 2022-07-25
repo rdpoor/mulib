@@ -25,6 +25,9 @@
 // *****************************************************************************
 // Includes
 
+#include "mu_time.h"
+
+#include "mu_stdbsp.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

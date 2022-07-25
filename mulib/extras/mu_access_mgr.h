@@ -34,8 +34,7 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_task.h"
-#include "mu_pqueue.h"
+#include "mulib.h"
 #include <stdbool.h>
 #include <stdint.h>
 

@@ -27,7 +27,7 @@
 
 #include "mu_access_mgr.h"
 
-#include "mu_pqueue.h"
+#include "../core/mu_pqueue.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

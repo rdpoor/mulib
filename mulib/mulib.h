@@ -22,57 +22,50 @@
  * SOFTWARE.
  */
 
+/**
+ * @file mulib.h
+ *
+ * @brief Include all of the mulib header file.
+ */
+
+#ifndef _MULIB_H_
+#define _MULIB_H_
+
 // *****************************************************************************
 // Includes
 
-#include "mu_irq.h"
-
-#include "mu_spsc.h"
-#include "mu_task.h"
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "core/mu_irq.h"
+#include "core/mu_list.h"
+#include "core/mu_macros.h"
+#include "core/mu_periodic.h"
+#include "core/mu_pqueue.h"
+#include "core/mu_queue.h"
+#include "core/mu_sched.h"
+#include "core/mu_spsc.h"
+#include "core/mu_str.h"
+#include "core/mu_strbuf.h"
+#include "core/mu_task.h"
+#include "core/mu_time.h"
+#include "extras/mu_access_mgr.h"
 
 // *****************************************************************************
-// Private types and definitions
+// C++ Compatibility
 
-#ifndef MU_IRQ_MAX_TASKS
-#define MU_IRQ_MAX_TASKS 8 // must be a power of two!
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#if (((MU_IRQ_MAX_TASKS - 1) & MU_IRQ_MAX_TASKS) != 0)
-#error MU_IRQ_MAX_TASKS must be a power of two
+// *****************************************************************************
+// Public types and definitions
+
+// *****************************************************************************
+// Public declarations
+
+// *****************************************************************************
+// End of file
+
+#ifdef __cplusplus
+}
 #endif
 
-// *****************************************************************************
-// Private (static) storage
-
-static mu_spsc_item_t s_irq_tasks[MU_IRQ_MAX_TASKS];
-static mu_spsc_t s_irq_spsc;
-
-// *****************************************************************************
-// Private (forward) declarations
-
-// *****************************************************************************
-// Public code
-
-void mu_irq_init(void) {
-  mu_spsc_init(&s_irq_spsc, s_irq_tasks, MU_IRQ_MAX_TASKS);
-}
-
-mu_task_t *mu_irq_queue_task(mu_task_t *task) {
-  if (mu_spsc_put(&s_irq_spsc, task) == MU_SPSC_ERR_FULL) {
-    return NULL;
-  }
-  return task;
-}
-
-void mu_irq_process_irqs(void) {
-  mu_spsc_item_t item;
-  while (mu_spsc_get(&s_irq_spsc, &item) == MU_SPSC_ERR_NONE) {
-      mu_task_call((mu_task_t *)item, NULL);
-  }
-}
-
-// *****************************************************************************
-// Private (static) code
+#endif /* #ifndef _MULIB_H_ */
