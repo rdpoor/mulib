@@ -28,8 +28,8 @@
  * @brief Manage access to a shared resource
  */
 
-#ifndef _ACCESS_MGR_H_
-#define _ACCESS_MGR_H_
+#ifndef _MU_ACCESS_MGR_H_
+#define _MU_ACCESS_MGR_H_
 
 // *****************************************************************************
 // Includes
@@ -119,4 +119,4 @@ bool mu_access_mgr_has_ownership(mu_access_mgr_t *mgr, mu_task_t *task);
 }
 #endif
 
-#endif /* #ifndef _ACCESS_MGR_H_ */
+#endif /* #ifndef _MU_ACCESS_MGR_H_ */
