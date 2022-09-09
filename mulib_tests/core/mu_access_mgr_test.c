@@ -32,6 +32,8 @@
 #include "mu_task.h"
 #include "mu_test_utils.h"
 
+#error mu_access_mgr_test must be updated for new init() signature
+
 // *****************************************************************************
 // Local (private) types and definitions
 

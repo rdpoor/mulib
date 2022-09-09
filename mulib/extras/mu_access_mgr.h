@@ -34,7 +34,8 @@
 // *****************************************************************************
 // Includes
 
-#include "mulib.h"
+#include "../core/mu_pqueue.h"
+#include "../core/mu_task.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -59,7 +60,7 @@ typedef enum {
 
 typedef struct {
   mu_task_t *owner;       // task that owns the resource now
-  mu_pqueue_t pending;    // a queue of tasks waiting to be granted ownership
+  mu_pqueue_t *pending;   // a queue of tasks waiting to be granted ownership
 } mu_access_mgr_t;
 
 // *****************************************************************************
@@ -69,8 +70,7 @@ typedef struct {
  * @brief Initialize the access manager.
  */
  mu_access_mgr_t *mu_access_mgr_init(mu_access_mgr_t *mgr,
-                                     void *qstorage,
-                                     size_t capacity);
+                                     mu_pqueue_t *pending);
 
 /**
  * @brief Reset the access manager.
