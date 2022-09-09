@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// =============================================================================
+// *****************************************************************************
 // Includes
 
 #include "mu_srec.h"
@@ -31,7 +31,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// =============================================================================
+// *****************************************************************************
 // Private types and definitions
 
 #define HEADER_PREAMBLE "S0"
@@ -42,7 +42,7 @@ typedef struct {
   uint8_t addr_chars;
 } srec_descriptor_t;
 
-// =============================================================================
+// *****************************************************************************
 // Private (static) storage
 
 static const srec_descriptor_t s_srec16 = {
@@ -63,7 +63,7 @@ static const srec_descriptor_t s_srec32 = {
     .addr_chars = 8,
 };
 
-// =============================================================================
+// *****************************************************************************
 // Private (forward) declarations
 
 /**
@@ -75,7 +75,7 @@ static const srec_descriptor_t s_srec32 = {
  */
 static void hex_print(uint32_t val, char *buf, uint8_t width);
 
-// =============================================================================
+// *****************************************************************************
 // Public code
 
 srec_handle_t *srec_init(srec_handle_t *handle,
@@ -117,7 +117,7 @@ void srec_write_data(srec_handle_t *handle,
 void srec_write_termination(srec_handle_t *handle, size_t addr);
 
 
-// =============================================================================
+// *****************************************************************************
 // Private (static) code
 
 static void hex_printer(uint32_t val, char *buf, uint8_t width) {

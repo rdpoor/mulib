@@ -29,13 +29,13 @@
 extern "C" {
 #endif
 
-// =============================================================================
+// *****************************************************************************
 // includes
 
 #include <stdint.h>
 #include <stdbool.h>
 
-// =============================================================================
+// *****************************************************************************
 // types and definitions
 
 #define MU_FLOAT float
@@ -57,7 +57,7 @@ typedef struct {
   i_ching_line lines[7]; // 7th line seems to speak to the special case when all 6 lines are changing (old)
 } i_ching_hexagram;
 
-// =============================================================================
+// *****************************************************************************
 // declarations
 int hexagram_number_from_user_lines(char *user_lines);
 char *change_user_lines(char *user_lines);

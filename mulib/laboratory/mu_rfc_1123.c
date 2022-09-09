@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// =============================================================================
+// *****************************************************************************
 // Includes
 
 #include "mu_rfc_1123.h"
@@ -33,7 +33,7 @@
 #include <string.h>
 #include <time.h>
 
-// =============================================================================
+// *****************************************************************************
 // Local types and definitions
 
 #define TM_YEAR_OFFSET 1900
@@ -76,7 +76,7 @@
 #define TM_FIELD_LARGE int16_t
 #endif
 
-// =============================================================================
+// *****************************************************************************
 // Local (forward) declarations
 
 // tokens is a densely packed string of tokens, where each token is token_len
@@ -103,13 +103,13 @@ static const char *parse_int_large(const char *s,
 // return NULL if s does not match literal.
 static const char *skip_literal(const char *s, const char *literal);
 
-// =============================================================================
+// *****************************************************************************
 // Local storage
 
 static const char *const s_months = "JanFebMarAprMayJunJulAugSepOctNovDec";
 static const char *const s_days = "SunMonTueWedThuFriSat";
 
-// =============================================================================
+// *****************************************************************************
 // Public code
 
 const char *mu_rfc_1123_str_to_tm(const char *s, struct tm *tm) {
@@ -161,7 +161,7 @@ char *mu_rfc_1123_tm_to_str(const struct tm *tm, char *s, int maxlen) {
   return s;
 }
 
-// =============================================================================
+// *****************************************************************************
 // Local (static) code
 
 static const char *parse_tokens(const char *s,
@@ -220,7 +220,7 @@ static const char *skip_literal(const char *s, const char *literal) {
   }
 }
 
-// =============================================================================
+// *****************************************************************************
 // cc -g -Wall -Wextra -Werror -DTEST_MU_RFC_1123 -o test_mu_rfc_1123
 // mu_rfc_1123.c
 //   ./test_mu_rfc_1123

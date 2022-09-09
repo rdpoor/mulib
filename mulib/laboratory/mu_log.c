@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// =============================================================================
+// *****************************************************************************
 // includes
 
 #include "mu_log.h"
@@ -34,7 +34,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-// =============================================================================
+// *****************************************************************************
 // private types and definitions
 
 typedef struct {
@@ -42,7 +42,7 @@ typedef struct {
   mu_log_level_t threshold;
 } subscriber_t;
 
-// =============================================================================
+// *****************************************************************************
 // private declarations
 
 /**
@@ -63,7 +63,7 @@ static void *function_matches(void *a, void *b);
  */
 static void *broadcast(void *subscriber, void *arg);
 
-// =============================================================================
+// *****************************************************************************
 // local storage
 
 static mu_vect_t s_subscribers;
@@ -75,7 +75,7 @@ static char s_message[MU_LOG_MAX_MESSAGE_LENGTH];
 #define DEFINE_MU_LOG_LEVEL(level, name) name,
 const char *const s_level_names[] = {EXPAND_MU_LOG_LEVELS};
 
-// =============================================================================
+// *****************************************************************************
 // user-visible code
 
 void mu_log_init() {
@@ -123,7 +123,7 @@ void mu_log_message(mu_log_level_t severity, const char *fmt, ...) {
   mu_vect_traverse(&s_subscribers, broadcast, &severity);
 }
 
-// =============================================================================
+// *****************************************************************************
 // private code
 
 static void *function_matches(void *a, void *b) {

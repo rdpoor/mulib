@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// =============================================================================
+// *****************************************************************************
 // includes
 
 #include "mu_test_utils.h"
@@ -31,7 +31,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// =============================================================================
+// *****************************************************************************
 // private types and definitions
 
 #define VECT_CAPACITY 4
@@ -41,7 +41,7 @@ typedef struct {
   uint8_t val;
 } test_element_t;
 
-// =============================================================================
+// *****************************************************************************
 // private declarations
 
 static bool elements_are_equal(test_element_t *e1, test_element_t *e2);
@@ -49,7 +49,7 @@ static int sort_up(void *a, void *b);
 static int sort_dn(void *a, void *b);
 static void *ids_match(void *e, void *arg);
 
-// =============================================================================
+// *****************************************************************************
 // local storage
 
 static test_element_t s_elements[VECT_CAPACITY];
@@ -60,7 +60,7 @@ static test_element_t s_element3 = {.id = 'c', .val = 7};
 static test_element_t s_element4 = {.id = 'd', .val = 6};
 static test_element_t s_element5 = {.id = 'e', .val = 5};
 
-// =============================================================================
+// *****************************************************************************
 // public code
 
 void mu_vect_test() {
@@ -258,7 +258,7 @@ void mu_vect_test() {
   ASSERT(mu_vect_contains(v, ids_match, &s_element1) == true);
 }
 
-// =============================================================================
+// *****************************************************************************
 // private code
 
 static bool elements_are_equal(test_element_t *e1, test_element_t *e2) {

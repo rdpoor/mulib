@@ -27,7 +27,7 @@
  * Content from Oblique Strategies created by Brian Eno and Peter Schmidt
  */
 
-// =============================================================================
+// *****************************************************************************
 // Includes
 
 #include "hexagrams.h"
@@ -41,13 +41,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-// =============================================================================
+// *****************************************************************************
 // Local types and definitions
 
 
 #define VERSION "1.02"
 
-// =============================================================================
+// *****************************************************************************
 // Local (forward) declarations
 
 static void button_cb(uint8_t button_id, bool button_is_pressed);
@@ -59,14 +59,14 @@ static void print_emphasized(char *wut);
 static void present_reading_for_lines(char *user_lines);
 static void print_hexagram_info(int hexagram_number);
 
-// =============================================================================
+// *****************************************************************************
 // Local storage
 
 static bool user_hit_something = false;
 static char _most_recent_character;
 static char user_lines[7];
 
-// =============================================================================
+// *****************************************************************************
 // Public code
 
 /**
@@ -106,7 +106,7 @@ void i_ching_step() {
 }
 
 
-// =============================================================================
+// *****************************************************************************
 // Local (static) code
 
 static void button_cb(uint8_t button_id, bool button_is_pressed) {

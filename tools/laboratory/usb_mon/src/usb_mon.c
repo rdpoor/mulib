@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// =============================================================================
+// *****************************************************************************
 // Includes
 
 #include "usb_mon.h"
@@ -41,7 +41,7 @@
 #include <mu_ansi_term.h>
 #include "mu_platform.h"
 
-// =============================================================================
+// *****************************************************************************
 // Local types and definitions
 
 #define VERSION "0.3"
@@ -74,7 +74,7 @@ typedef struct {
 #define MAX_DEVS 200
 #define RECORD_SEPARATOR '^'
 
-// =============================================================================
+// *****************************************************************************
 // Local (forward) declarations
 
 static void task_fn(void *ctx, void *arg);
@@ -88,7 +88,7 @@ static int buf_index_of_substr(mu_str_t *haystack, char *needle);
 static int mu_str_index_reverse(mu_str_t *str, uint8_t byte);
 static void mu_str_trim_char(mu_str_t *str, uint8_t byte);
 
-// =============================================================================
+// *****************************************************************************
 // Local storage
 
 static ctx_t s_ctx;
@@ -105,7 +105,7 @@ static char s_cstr_buf[MAX_CSTR_LENGTH];
 static int usb_dev_cnt = 0;
 static usb_dev_t s_usb_devs[MAX_DEVS] = {};
 
-// =============================================================================
+// *****************************************************************************
 // Public code
 
 void usb_mon_init(void) {
@@ -133,7 +133,7 @@ void usb_mon_step(void) {
   mu_sched_step();
 }
 
-// =============================================================================
+// *****************************************************************************
 // Local (private) code
 
 // task_fn is invoked whenever usb_mon's task is triggered.  

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// =============================================================================
+// *****************************************************************************
 // Includes
 
 #include "mu_ansi_term.h"
@@ -35,7 +35,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-// =============================================================================
+// *****************************************************************************
 // Local types and definitions
 #define DEFAULT_TERM_NCOLS 80
 #define DEFAULT_TERM_NROWS 24
@@ -50,7 +50,7 @@
 #include <signal.h>
 #endif
 
-// =============================================================================
+// *****************************************************************************
 // Local storage
 
 static mu_ansi_term_color_t s_fg_color;
@@ -67,7 +67,7 @@ static const uint8_t s_bg_colormap[] = {DEFINE_ANSI_TERM_COLORS};
 static int term_cols = DEFAULT_TERM_NCOLS;
 static int term_rows = DEFAULT_TERM_NROWS;
 
-// =============================================================================
+// *****************************************************************************
 // Local (forward) declarations
 
 static bool has_ansi_term();
@@ -76,7 +76,7 @@ static uint8_t map_fg_color(mu_ansi_term_color_t color);
 static uint8_t map_bg_color(mu_ansi_term_color_t color);
 static void read_ttysize();
 
-// =============================================================================
+// *****************************************************************************
 // Public code
 
 void mu_ansi_term_init(void) {
@@ -263,7 +263,7 @@ void mu_ansi_term_get_colors(mu_ansi_term_color_t *fg,
   *bg = s_bg_color;
 }
 
-// =============================================================================
+// *****************************************************************************
 // Local (static) code
 
 static bool has_ansi_term() {

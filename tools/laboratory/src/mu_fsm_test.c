@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// =============================================================================
+// *****************************************************************************
 // includes
 
 #include "mu_test_utils.h"
@@ -30,7 +30,7 @@
 #include "mu_task.h"
 #include <string.h>
 
-// =============================================================================
+// *****************************************************************************
 // private types and definitions
 
 // Define a simple task context for testing.
@@ -46,7 +46,7 @@ typedef struct {
   DEFINE_FSM_STATE(TASK_A_STATE_ERROR, task_a_state_error)                     \
   DEFINE_FSM_STATE(TASK_A_STATE_SUCCESS, task_a_state_success)
 
-// =============================================================================
+// *****************************************************************************
 // private declarations
 
 static void task_a_notify(void *receiver, void *sender);
@@ -64,7 +64,7 @@ DEFINE_FSM_STATES
 #define DEFINE_FSM_STATE(_name, _fn) _name,
 typedef enum { DEFINE_FSM_STATES } task_a_state_t;
 
-// =============================================================================
+// *****************************************************************************
 // local storage
 
 static task_a_t s_task_a;
@@ -88,7 +88,7 @@ static const char *s_task_a_state_names[] = {DEFINE_FSM_STATES};
 static const size_t TASK_A_STATE_MAX =
     sizeof(s_task_a_state_fns) / sizeof(mu_fsm_state_fn_t);
 
-// =============================================================================
+// *****************************************************************************
 // public code
 
 void mu_fsm_test() {
@@ -117,7 +117,7 @@ void mu_fsm_test() {
   ASSERT(strcmp("unknown state", mu_fsm_state_name(&self->fsm, 5)) == 0);
 }
 
-// =============================================================================
+// *****************************************************************************
 // private code
 
 static void reset(void) {
