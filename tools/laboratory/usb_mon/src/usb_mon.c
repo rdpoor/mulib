@@ -116,7 +116,7 @@ void usb_mon_init(void) {
   os_type = OS_TYPE_LINUX;
   #endif
 
-  mu_sched_init();
+  mu_sched_defer_forit();
   mu_ansi_term_init();
 
   // initialize the mu_task to associate function (task_fn) with context (s_ctx)

@@ -70,7 +70,7 @@ bool mu_periodic_start(mu_periodic_t *timer,
   timer->_trigger_at = mu_time_offset(now, period);
   // invoke the target task now, and reschedule after period elapses
   mu_task_call(target_task, NULL);
-  mu_sched_at(&timer->_task, timer->_trigger_at);
+  mu_sched_defer_until(&timer->_task, timer->_trigger_at);
 
   return true;
 }
@@ -79,7 +79,7 @@ bool mu_periodic_stop(mu_periodic_t *timer) {
   if (!mu_periodic_is_running(timer)) {
     return false;
   }
-  mu_sched_remove_task(&timer->_task);
+  mu_sched_remove_deferred_task(&timer->_task);
   timer->_period = 0; // signifies that the timer is stopped.
   return true;
 }
@@ -100,6 +100,6 @@ static void timer_fn(void *ctx, void *arg) {
     // invoke target task, update trigger time and reschedule...
     mu_task_call(timer->_target_task, NULL);
     timer->_trigger_at = mu_time_offset(timer->_trigger_at, timer->_period);
-    mu_sched_at(&timer->_task, timer->_trigger_at);
+    mu_sched_defer_until(&timer->_task, timer->_trigger_at);
   }
 }

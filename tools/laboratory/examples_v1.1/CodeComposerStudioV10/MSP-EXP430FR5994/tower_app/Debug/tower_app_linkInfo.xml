@@ -1082,7 +1082,7 @@
          <input_file_ref idref="fl-91"/>
       </object_component>
       <object_component id="oc-862">
-         <name>.text:mu_sched_init</name>
+         <name>.text:mu_sched_defer_forit</name>
          <load_address>0x10cbc</load_address>
          <run_address>0x10cbc</run_address>
          <size>0x62</size>
@@ -17027,7 +17027,7 @@
          <object_component_ref idref="oc-88c"/>
       </symbol>
       <symbol id="sm-aa8">
-         <name>mu_sched_init</name>
+         <name>mu_sched_defer_forit</name>
          <value>0x10cbc</value>
          <object_component_ref idref="oc-862"/>
       </symbol>

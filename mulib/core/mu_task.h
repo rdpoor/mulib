@@ -28,8 +28,6 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_list.h"
-
 // *****************************************************************************
 // C++ compatibility
 
@@ -82,11 +80,6 @@ void *mu_task_get_ctx(mu_task_t *task);
  * Note: for convenience task may be null, in which case this is a no-op.
  */
 void mu_task_call(mu_task_t *task, void *arg);
-
-/**
- * @brief Invoke a deferred task, bypassing any IRQ queued tasks.
- */
-void mu_task_call_(mu_task_t *task, void *arg);
 
 #ifdef __cplusplus
 }

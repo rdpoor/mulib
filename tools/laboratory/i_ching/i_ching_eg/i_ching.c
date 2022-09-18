@@ -74,7 +74,7 @@ static char user_lines[7];
  */
 void i_ching_init() {
   mu_platform_init();
-  mu_sched_init();
+  mu_sched_defer_forit();
   mu_ansi_term_init();
 
   mu_button_io_set_callback(button_cb);

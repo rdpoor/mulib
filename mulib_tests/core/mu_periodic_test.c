@@ -112,7 +112,7 @@ void mu_periodic_test() {
 
 static void reset(void) {
   mu_periodic_init(&s_periodic);
-  mu_sched_init();
+  mu_sched_defer_forit();
   mu_sched_set_clock_source(get_test_time);
   set_test_time(0);
   mu_task_init(&s_task1, task_fn, &s_task1_ctx);

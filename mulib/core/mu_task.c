@@ -27,7 +27,6 @@
 
 #include "mu_task.h"
 
-#include "mu_irq.h"
 #include <stddef.h>
 
 // *****************************************************************************
@@ -59,12 +58,7 @@ mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
 void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
 
 void mu_task_call(mu_task_t *task, void *arg) {
-  mu_irq_process_irqs();    // first invoke any queued IRQ tasks
-  mu_task_call_(task, arg); // invoke this task
-}
-
-void mu_task_call_(mu_task_t *task, void *arg) {
-  if (task != NULL) { // Allow a NULL task to be treated as a no-op
+  if (task != NULL) {          // A NULL task is treated as a no-op
     task->fn(task->ctx, arg);
   }
 }

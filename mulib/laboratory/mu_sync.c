@@ -92,7 +92,7 @@ mu_sync_err_t mu_sync_wait(mu_sync_t *sync,
                            mu_time_rel_t timeout_in) {
     if (timeout_in != 0) {
         mu_task_init(&sync->task, sync_timeout, sync, "Sync Timeout");
-        if (mu_sched_in(&sync->task, timeout_in) == MU_SCHED_ERR_FULL) {
+        if (mu_sched_defer_for(&sync->task, timeout_in) == MU_SCHED_ERR_FULL) {
             return MU_SYNC_ERR_SCHED_FULL;
         }
     }
