@@ -25,7 +25,7 @@
 /**
 * @file mu_time.h
 *
-* @brief Platform specific declarations for mulib time functions.
+* @brief POSIX specific declarations for mulib time functions.
  */
 
 #ifndef _MU_TIME_H_
@@ -34,9 +34,12 @@
 // *****************************************************************************
 // Includes
 
-#inlclude "mu_config.h"
+#include "mu_time.h"
+
+#include "mu_config.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 
 // *****************************************************************************
 // C++ Compatibility
@@ -48,12 +51,17 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
+#define MU_TIME_TICKS_PER_SECOND CLOCKS_PER_SEC
+
 // Required: define a data type to hold absolute time.
-// typedef uint32_t mu_time_abs_t;
+typedef clock_t mu_time_abs_t;
 
 // Required: define a data type to hold relative time, i.e. an interval between
 // two absolute times.  Note that this may be negative.
-// typedef int32_t mu_time_rel_t;
+typedef clock_t mu_time_rel_t;
+
+
+#define MU_TIME_REL_MAX ((1LU << ((sizeof(clock_t) * 8) - 1LU)) - 1LU)
 
 // *****************************************************************************
 // Public declarations
@@ -65,9 +73,6 @@ void mu_time_init(void);
 
 /**
  * @brief Get the current time.
- *
- * NOTE: If you plan to implement low-power sleep, the timer used for this
- * function must continue to run in sleep mode.
  *
  * @return The current absolute time.
  */

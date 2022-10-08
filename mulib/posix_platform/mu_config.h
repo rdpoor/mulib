@@ -50,7 +50,7 @@ extern "C" {
 // Public types and definitions
 
 // Optional: un-comment this if your config supports floating point operations
-// #define MU_CONFIG_HAS_FLOAT
+#define MU_CONFIG_HAS_FLOAT
 
 // Optional: Define the number of events that may be scheduled in mu_sched.
 // Leave commented to accept the default.

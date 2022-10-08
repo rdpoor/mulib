@@ -30,6 +30,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <time.h>
 
 // *****************************************************************************
 // Private types and definitions
@@ -45,57 +46,44 @@
 
 void mu_time_init(void) {}
 
-mu_time_abs_t mu_time_now(void) { return 0; }
+mu_time_abs_t mu_time_now(void) { return clock(); }
 
 mu_time_abs_t mu_time_offset(mu_time_abs_t t, mu_time_rel_t dt) {
-  (void)dt;
-  return t;
+  return t + dt;
 }
 
 mu_time_rel_t mu_time_difference(mu_time_abs_t t1, mu_time_abs_t t2) {
-  (void)t1;
-  (void)t2;
-  return 0;
+  return t1 - t2;
 }
 
 bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2) {
-  (void)t1;
-  (void)t2;
-  return false;
+  return (t1 - t2) > MU_TIME_REL_MAX;
 }
 
-bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2) {
-  (void)t1;
-  (void)t2;
-  return false;
-}
+bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2) { return t1 == t2; }
 
 bool mu_time_follows(mu_time_abs_t t1, mu_time_abs_t t2) {
-  (void)t1;
-  (void)t2;
-  return false;
+  return (t1 - t2) < MU_TIME_REL_MAX;
 }
 
 int mu_time_rel_to_ms(mu_time_rel_t dt) {
-  (void)dt;
-  return 0;
+  // TODO: reinstate integer rounding fn
+  return (dt * 1000UL) / MU_TIME_TICKS_PER_SECOND;
 }
 
 mu_time_rel_t mu_time_ms_to_rel(int ms) {
-  (void)ms;
-  return 0;
+  // TODO: reinstate integer rounding fn
+  return ms * MU_TIME_TICKS_PER_SECOND / 1000UL;
 }
 
 #ifdef MU_PLATFORM_HAS_FLOAT
 
-MU_FLOAT mu_time_rel_to_s(mu_time_rel_t dt) {
-  (void)dt;
-  return 0.0;
+mu_time_seconds_t mu_time_rel_to_s(mu_time_rel_t dt) {
+  return dt / (mu_time_seconds_t)MU_TIME_TICKS_PER_SECOND;
 }
 
-mu_time_rel_t mu_time_s_to_rel(MU_FLOAT s) {
-  (void s);
-  return 0;
+mu_time_seconds_t mu_time_s_to_rel(MU_FLOAT s) {
+  return s * MU_TIME_TICKS_PER_SECOND;
 }
 
 #endif
