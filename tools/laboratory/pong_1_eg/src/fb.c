@@ -30,17 +30,17 @@
 #include "extras/mu_ansi_term.h"
 
 #include <stdint.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 // *****************************************************************************
 // Local types and definitions
 
 typedef struct {
-  char *backing_store;
-  char *display_store;
-  uint8_t width;
-  uint8_t height;
+    char *backing_store;
+    char *display_store;
+    uint8_t width;
+    uint8_t height;
 } fb_t;
 
 // *****************************************************************************
@@ -54,58 +54,56 @@ static fb_t s_fb = {.width = 0, .height = 0};
 // *****************************************************************************
 // Public code
 
-void fb_init(int width,
-             int height,
-             char *backing_store,
-             char *display_store) {
-  s_fb.width = width;
-  s_fb.height = height;
-  s_fb.backing_store = backing_store;
-  s_fb.display_store = display_store;
+void fb_init(int width, int height, char *backing_store, char *display_store) {
+    s_fb.width = width;
+    s_fb.height = height;
+    s_fb.backing_store = backing_store;
+    s_fb.display_store = display_store;
 }
 
 void fb_erase(void) {
-  mu_ansi_term_home();
-  mu_ansi_term_clear_screen();
-  memset(s_fb.backing_store, ' ', s_fb.width * s_fb.height);
-  memset(s_fb.display_store, ' ', s_fb.width * s_fb.height);
+    mu_ansi_term_home();
+    mu_ansi_term_clear_screen();
+    memset(s_fb.backing_store, ' ', s_fb.width * s_fb.height);
+    memset(s_fb.display_store, ' ', s_fb.width * s_fb.height);
 }
 
 void fb_clear(void) {
-  memset(s_fb.backing_store, ' ', s_fb.width * s_fb.height);
+    memset(s_fb.backing_store, ' ', s_fb.width * s_fb.height);
 }
 
 void fb_clear_to_end_of_line(char *pos) {
-  int len_to_end, st;
-  st = (pos - s_fb.backing_store) % s_fb.width;
-  len_to_end = s_fb.width - st;
-  memset(pos, ' ', len_to_end);
+    int len_to_end, st;
+    st = (pos - s_fb.backing_store) % s_fb.width;
+    len_to_end = s_fb.width - st;
+    memset(pos, ' ', len_to_end);
 }
 
 char *fb_row_ref(int row_number) {
-  if(!s_fb.width) return 0; // detect uninitialized state
-  return &s_fb.backing_store[s_fb.width * row_number];
+    if (!s_fb.width)
+        return 0; // detect uninitialized state
+    return &s_fb.backing_store[s_fb.width * row_number];
 }
 
 void fb_draw(int x, int y, char ch) {
-  // [x=0, y=0] is at bottom left
-  s_fb.backing_store[x + (s_fb.height - y - 1) * s_fb.width] = ch;
+    // [x=0, y=0] is at bottom left
+    s_fb.backing_store[x + (s_fb.height - y - 1) * s_fb.width] = ch;
 }
 
 void fb_flush(void) {
-  int idx = 0;
-  for (uint8_t y = 0; y < s_fb.height; y++) {
-    for (uint8_t x=0; x< s_fb.width; x++) {
-      char ch = s_fb.backing_store[idx];
-      if (ch != s_fb.display_store[idx]) {
-        mu_ansi_term_set_cursor_position(y, x);
-        putchar(ch);
-        s_fb.display_store[idx] = ch;
-      }
-      idx++;
+    int idx = 0;
+    for (uint8_t y = 0; y < s_fb.height; y++) {
+        for (uint8_t x = 0; x < s_fb.width; x++) {
+            char ch = s_fb.backing_store[idx];
+            if (ch != s_fb.display_store[idx]) {
+                mu_ansi_term_set_cursor_position(y, x);
+                putchar(ch);
+                s_fb.display_store[idx] = ch;
+            }
+            idx++;
+        }
     }
-  }
-  mu_ansi_term_home();
+    mu_ansi_term_home();
 }
 
 // *****************************************************************************

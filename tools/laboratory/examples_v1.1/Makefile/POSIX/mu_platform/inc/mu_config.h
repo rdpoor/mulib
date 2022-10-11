@@ -37,8 +37,12 @@ extern "C" {
 // *****************************************************************************
 // types and definitions
 
-#define MU_DISABLE_INTERRUPTS() do {} while(0)
-#define MU_ENABLE_INTERRUPTS() do {} while(0)
+#define MU_DISABLE_INTERRUPTS()                                                \
+    do {                                                                       \
+    } while (0)
+#define MU_ENABLE_INTERRUPTS()                                                 \
+    do {                                                                       \
+    } while (0)
 
 #define MU_LOG_ENABLED 1
 // #define MU_TASK_PROFILING
@@ -58,14 +62,12 @@ extern "C" {
 // #define MU_FLOAT float
 #define MU_FLOAT double
 
-
 // *****************************************************************************
 // Everything below this line is deduced from the settings above this line.
 
 #define MU_WITH_INTERRUPTS_DISABLED(_body)                                     \
-  MU_DISABLE_INTERRUPTS();                                                     \
-  _body                                                                        \
-  MU_ENABLE_INTERRUPTS();
+    MU_DISABLE_INTERRUPTS();                                                   \
+    _body MU_ENABLE_INTERRUPTS();
 
 #ifndef ASSERT
 //#define ASSERT(expr) do {} while(0)
@@ -79,19 +81,16 @@ extern "C" {
 #endif
 
 #ifdef MU_FLOAT
-  #define MU_HAS_FLOAT (1)
+#define MU_HAS_FLOAT (1)
 #else
-  #define MU_HAS_FLOAT (0)
+#define MU_HAS_FLOAT (0)
 #endif
 
 #if defined(MU_FLOAT) && ((MU_FLOAT == float) || (MU_FLOAT == double))
-  typedef MU_FLOAT mu_float_t;
+typedef MU_FLOAT mu_float_t;
 #else
-  #error MU_FLOAT must be either float or double
+#error MU_FLOAT must be either float or double
 #endif
-
-
-
 
 // *****************************************************************************
 // declarations

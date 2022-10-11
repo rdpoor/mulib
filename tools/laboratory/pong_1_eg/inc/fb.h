@@ -49,10 +49,7 @@ extern "C" {
 /**
  * @brief Initialize the frame buffer with backing store and display store.
  */
-void fb_init(int width,
-             int height,
-             char *backing_store,
-             char *display_store);
+void fb_init(int width, int height, char *backing_store, char *display_store);
 
 /**
  * @brief erase the screen and reset the backing store.
@@ -63,7 +60,6 @@ void fb_erase(void);
  * @brief Clear the frame buffer backing store.
  */
 void fb_clear(void);
-
 
 /**
  * @brief Clear from some internal point to the end of that line

@@ -33,9 +33,8 @@ extern "C";
 // includes
 
 #include "mu_config.h"
-#include <stdint.h>
 #include <stdbool.h>
-
+#include <stdint.h>
 
 // *****************************************************************************
 // types and definitions
@@ -44,7 +43,6 @@ extern "C";
 typedef uint32_t mu_time_t;
 typedef int32_t mu_duration_t;
 typedef int32_t mu_duration_ms_t;
-
 
 // *****************************************************************************
 // declarations

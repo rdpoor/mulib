@@ -26,11 +26,11 @@
 // Includes
 
 #include "mu_platform.h"
+#include "mu_ansi_term.h"
 #include "mu_button_io.h"
+#include "mu_kbd_io.h"
 #include "mu_led_io.h"
 #include "mu_rtc.h"
-#include "mu_ansi_term.h"
-#include "mu_kbd_io.h"
 #include "mu_signal.h"
 
 // *****************************************************************************
@@ -39,7 +39,6 @@
 // *****************************************************************************
 // Private (forward) declarations
 
-
 // *****************************************************************************
 // Local storage
 
@@ -47,15 +46,13 @@
 // Public code
 
 void mu_platform_init(void) {
-  mu_button_io_init();
-  mu_led_io_init();
-  mu_rtc_init();
-  mu_ansi_term_init();
-  mu_kbd_io_init();
-  mu_signal_init();
+    mu_button_io_init();
+    mu_led_io_init();
+    mu_rtc_init();
+    mu_ansi_term_init();
+    mu_kbd_io_init();
+    mu_signal_init();
 }
 
 // *****************************************************************************
 // Local (static) code
-
-

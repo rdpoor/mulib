@@ -54,27 +54,25 @@ static mu_stddemo_button_cb s_button_cb;
 // Public code
 
 void mu_button_io_set_callback(mu_stddemo_button_cb button_cb) {
-  s_button_cb = button_cb;
+    s_button_cb = button_cb;
 
-  gpio_pin_config_t led_config = {
-      kGPIO_DigitalOutput,
-      0,
-  };
-  GPIO_PinInit(BOARD_LED_GPIO, BOARD_LED_GPIO_PIN, &led_config);
-
+    gpio_pin_config_t led_config = {
+        kGPIO_DigitalOutput,
+        0,
+    };
+    GPIO_PinInit(BOARD_LED_GPIO, BOARD_LED_GPIO_PIN, &led_config);
 }
 
 /**
  * @brief Set the demo LED on or off.
  */
 void mu_led_io_set(bool on) {
-  if (on) {
-    GPIO_PortClear(BOARD_LED_GPIO, 1U << BOARD_LED_GPIO_PIN);
-  } else {
-    GPIO_PortSet(BOARD_LED_GPIO, 1U << BOARD_LED_GPIO_PIN);
-  }
+    if (on) {
+        GPIO_PortClear(BOARD_LED_GPIO, 1U << BOARD_LED_GPIO_PIN);
+    } else {
+        GPIO_PortSet(BOARD_LED_GPIO, 1U << BOARD_LED_GPIO_PIN);
+    }
 }
-
 
 // *****************************************************************************
 // Local (static) code

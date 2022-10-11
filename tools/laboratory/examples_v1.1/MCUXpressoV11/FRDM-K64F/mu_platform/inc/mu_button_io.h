@@ -53,7 +53,7 @@ extern "C" {
 // types and definitions
 
 // The canonical button used in example code.
-#define MU_BUTTON_0   0
+#define MU_BUTTON_0 0
 
 // Signature of the button callback function
 typedef void (*mu_button_io_callback_t)(uint8_t button_id, bool pressed);

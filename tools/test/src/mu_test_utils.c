@@ -44,31 +44,25 @@ static int s_error_count;
 // public code
 
 void mu_test_init(void) {
-  s_test_count = 0;
-  s_error_count = 0;
+    s_test_count = 0;
+    s_error_count = 0;
 }
 
-int mu_test_count(void) {
-  return s_test_count;
-}
+int mu_test_count(void) { return s_test_count; }
 
-int mu_test_error_count(void) {
-  return s_error_count;
-}
+int mu_test_error_count(void) { return s_error_count; }
 
-void mu_test_assert(const bool condition,
-                    const char *const expr,
-                    const char *const file,
-                    const int line) {
-  s_test_count += 1;
-  if (!condition) {
-    printf("\rAssertion '%s' failed at %s:%d\n", expr, file, line);
-    fflush(stdout);
-    s_error_count += 1;
+void mu_test_assert(const bool condition, const char *const expr,
+                    const char *const file, const int line) {
+    s_test_count += 1;
+    if (!condition) {
+        printf("\rAssertion '%s' failed at %s:%d\n", expr, file, line);
+        fflush(stdout);
+        s_error_count += 1;
 #ifdef UNIT_TEST_BREAK_ON_ERROR
-    __asm("BKPT #0");
+        __asm("BKPT #0");
 #endif
-  }
+    }
 }
 
 // *****************************************************************************

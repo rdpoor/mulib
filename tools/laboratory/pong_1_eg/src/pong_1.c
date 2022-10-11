@@ -32,8 +32,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <mulib.h>
 #include "mu_platform.h"
+#include <mulib.h>
 
 // *****************************************************************************
 // Local types and definitions
@@ -46,9 +46,9 @@
 // context is passed in as an argument and gives task_fn all of the
 // information it needs to run the task.
 typedef struct {
-  mu_task_t task;
-  mu_duration_t frame_period;
-  bool led_is_on;
+    mu_task_t task;
+    mu_duration_t frame_period;
+    bool led_is_on;
 } ctx_t;
 
 // *****************************************************************************
@@ -65,27 +65,27 @@ static ctx_t s_ctx;
 // Public code
 
 void morse_1_init(void) {
-  mulib_init();
-  mu_platform_init();
-  mu_ansi_term_clear_screen();
-  // initialize the mu_task to associate function (task_fn) with context (s_ctx)
-  mu_task_init(&s_ctx.task, task_fn, &s_ctx, "Pong 1");
+    mulib_init();
+    mu_platform_init();
+    mu_ansi_term_clear_screen();
+    // initialize the mu_task to associate function (task_fn) with context
+    // (s_ctx)
+    mu_task_init(&s_ctx.task, task_fn, &s_ctx, "Pong 1");
 
-  // Initialize the context's initial state
-  s_ctx.frame_period = MU_TIME_MS_TO_DURATION(FRAME_PERIOD_MS);
+    // Initialize the context's initial state
+    s_ctx.frame_period = MU_TIME_MS_TO_DURATION(FRAME_PERIOD_MS);
 
-  // register call to reset the terminal when we exit
-  atexit(mu_ansi_term_reset);
+    // register call to reset the terminal when we exit
+    atexit(mu_ansi_term_reset);
 
-  // Make the first call to the scheduler to start things off.  The task_fn will
-  // reschedule itself upon completion.
-  mu_sched_task_now(&s_ctx.task);
+    // Make the first call to the scheduler to start things off.  The task_fn
+    // will reschedule itself upon completion.
+    mu_sched_task_now(&s_ctx.task);
 }
 
-
 void morse_1_step(void) {
-  // Just run the scheduler
-  mu_sched_step();
+    // Just run the scheduler
+    mu_sched_step();
 }
 
 // *****************************************************************************
@@ -99,9 +99,9 @@ void morse_1_step(void) {
 // for off_time.
 //
 static void task_fn(void *ctx, void *arg) {
-  // Recast the void * argument to a morse_1 ctx_t * argument.
-  ctx_t *self = (ctx_t *)ctx;
-  (void)arg;  // unused
+    // Recast the void * argument to a morse_1 ctx_t * argument.
+    ctx_t *self = (ctx_t *)ctx;
+    (void)arg; // unused
 
-  mu_sched_reschedule_in(s_ctx.frame_period);
+    mu_sched_reschedule_in(s_ctx.frame_period);
 }

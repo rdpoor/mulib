@@ -37,8 +37,12 @@ extern "C" {
 // *****************************************************************************
 // types and definitions
 
-#define MU_DISABLE_INTERRUPTS() do {} while(0)
-#define MU_ENABLE_INTERRUPTS() do {} while(0)
+#define MU_DISABLE_INTERRUPTS()                                                \
+    do {                                                                       \
+    } while (0)
+#define MU_ENABLE_INTERRUPTS()                                                 \
+    do {                                                                       \
+    } while (0)
 
 /**
  * Uncomment if you want logging enabled.
@@ -68,9 +72,8 @@ extern "C" {
 // Everything below this line is deduced from the settings above this line.
 
 #define MU_WITH_INTERRUPTS_DISABLED(_body)                                     \
-  MU_DISABLE_INTERRUPTS();                                                     \
-  _body                                                                        \
-  MU_ENABLE_INTERRUPTS();
+    MU_DISABLE_INTERRUPTS();                                                   \
+    _body MU_ENABLE_INTERRUPTS();
 
 // already defined in utils/utils_assert.h
 // #ifndef ASSERT
@@ -84,13 +87,13 @@ extern "C" {
 #endif
 
 #ifdef MU_FLOAT
-  #define MU_HAS_FLOAT (1)
+#define MU_HAS_FLOAT (1)
 #else
-  #define MU_HAS_FLOAT (0)
+#define MU_HAS_FLOAT (0)
 #endif
 
 #if defined(MU_FLOAT)
-  typedef MU_FLOAT mu_float_t;
+typedef MU_FLOAT mu_float_t;
 #endif
 
 // *****************************************************************************

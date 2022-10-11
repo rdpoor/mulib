@@ -6,14 +6,15 @@
  * To compile and run the in-file unit tests, make sure that the mulib directory
  * is available and at the same level as mulib-test.  In a terminal wndow, type:
  *
- *  cc -Wall -g -I.. -I../../../mulib/src/platform -o mu_time mu_time.c && ./mu_time && rm ./mu_time
+ *  cc -Wall -g -I.. -I../../../mulib/src/platform -o mu_time mu_time.c &&
+ * ./mu_time && rm ./mu_time
  *
  * R. D. Poor <rdpoor@gmail.com>
  */
 
-#include "mu_config.h"     // must come first
-#include "mu_time.h"       // included from mulib/src/platform/
-#include "mu_rtc.h"       // included from mulib/src/platform/
+#include "mu_time.h"   // included from mulib/src/platform/
+#include "mu_config.h" // must come first
+#include "mu_rtc.h"    // included from mulib/src/platform/
 #include <stdio.h>
 
 /**
@@ -21,11 +22,9 @@
  * functions are called.
  */
 
-
 void mu_time_init(void) {
-  // no initialization required
+    // no initialization required
 }
-
 
 /**
  * @brief Add a time and a duration.
@@ -36,9 +35,7 @@ void mu_time_init(void) {
  * @param dt a duration object
  * @return t1 offset by dt
  */
-mu_time_t mu_time_offset(mu_time_t t1, mu_duration_t dt) {
-  return t1 + dt;
-}
+mu_time_t mu_time_offset(mu_time_t t1, mu_duration_t dt) { return t1 + dt; }
 
 /**
  * @brief Take the difference between two time objects
@@ -49,9 +46,7 @@ mu_time_t mu_time_offset(mu_time_t t1, mu_duration_t dt) {
  * @param t2 A time object
  * @return (t1-t2) as a duration object
  */
-mu_duration_t mu_time_difference(mu_time_t t1, mu_time_t t2) {
-  return t1 - t2;
-}
+mu_duration_t mu_time_difference(mu_time_t t1, mu_time_t t2) { return t1 - t2; }
 
 /**
  * @brief Return true if t1 is strictly before t2
@@ -63,9 +58,7 @@ mu_duration_t mu_time_difference(mu_time_t t1, mu_time_t t2) {
  * @param t2 A time object
  * @return true if t1 is strictly before t2, false otherwise.
  */
-bool mu_time_precedes(mu_time_t t1, mu_time_t t2) {
-  return t1 < t2;
-}
+bool mu_time_precedes(mu_time_t t1, mu_time_t t2) { return t1 < t2; }
 
 /**
  * @brief Return true if t1 is equal to t2
@@ -74,9 +67,7 @@ bool mu_time_precedes(mu_time_t t1, mu_time_t t2) {
  * @param t2 A time object
  * @return true if t1 equals t2, false otherwise.
  */
-bool mu_time_equals(mu_time_t t1, mu_time_t t2) {
-  return t1 == t2;
-}
+bool mu_time_equals(mu_time_t t1, mu_time_t t2) { return t1 == t2; }
 
 /**
  * @brief Return true if t1 is strictly after t2
@@ -88,9 +79,7 @@ bool mu_time_equals(mu_time_t t1, mu_time_t t2) {
  * @param t2 A time object
  * @return true if t1 is strictly after t2, false otherwise.
  */
-bool mu_time_follows(mu_time_t t1, mu_time_t t2) {
-  return t1 > t2;
-}
+bool mu_time_follows(mu_time_t t1, mu_time_t t2) { return t1 > t2; }
 
 /**
  * @brief Convert a duration to milliseconds.
@@ -99,7 +88,7 @@ bool mu_time_follows(mu_time_t t1, mu_time_t t2) {
  * @return The duration in seconds
  */
 mu_duration_ms_t mu_time_duration_to_ms(mu_duration_t dt) {
-  return dt * 1000.0;
+    return dt * 1000.0;
 }
 
 /**
@@ -109,8 +98,8 @@ mu_duration_ms_t mu_time_duration_to_ms(mu_duration_t dt) {
  * @return A duration object
  */
 mu_duration_t mu_time_ms_to_duration(mu_duration_ms_t ms) {
-  printf("ms %d\n",ms);
-  return ms / 1000.0;
+    printf("ms %d\n", ms);
+    return ms / 1000.0;
 }
 
 #ifdef MU_FLOAT
@@ -120,9 +109,7 @@ mu_duration_t mu_time_ms_to_duration(mu_duration_ms_t ms) {
  * @param dt A duration object
  * @return The duration in seconds
  */
-MU_FLOAT mu_time_duration_to_s(mu_duration_t dt) {
-  return dt;
-}
+MU_FLOAT mu_time_duration_to_s(mu_duration_t dt) { return dt; }
 
 /**
  * @brief Convert seconds to a duration.
@@ -130,14 +117,8 @@ MU_FLOAT mu_time_duration_to_s(mu_duration_t dt) {
  * @param s The duration in seconds
  * @return A duration object
  */
-mu_duration_t mu_time_s_to_duration(MU_FLOAT s) {
-  return s;
-}
+mu_duration_t mu_time_s_to_duration(MU_FLOAT s) { return s; }
 #endif
-
-
-
-
 
 #if 0
 #define assert(n)

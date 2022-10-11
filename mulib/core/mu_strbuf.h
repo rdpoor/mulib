@@ -39,22 +39,20 @@ extern "C" {
 // Types and definitions
 
 typedef struct {
-  union {
-    const uint8_t *rdata; // readonly storage
-    uint8_t *wdata;       // writeable storage
-  };
-  size_t capacity;
+    union {
+        const uint8_t *rdata; // readonly storage
+        uint8_t *wdata;       // writeable storage
+    };
+    size_t capacity;
 } mu_strbuf_t;
 
 // *****************************************************************************
 // Declarations
 
-mu_strbuf_t *mu_strbuf_init_ro(mu_strbuf_t *buf,
-                               const uint8_t *const rdata,
+mu_strbuf_t *mu_strbuf_init_ro(mu_strbuf_t *buf, const uint8_t *const rdata,
                                size_t capacity);
 
-mu_strbuf_t *mu_strbuf_init_wr(mu_strbuf_t *buf,
-                               uint8_t *wdata,
+mu_strbuf_t *mu_strbuf_init_wr(mu_strbuf_t *buf, uint8_t *wdata,
                                size_t capacity);
 
 mu_strbuf_t *mu_strbuf_init_from_cstr(mu_strbuf_t *buf, const char *const cstr);

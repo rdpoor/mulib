@@ -4,18 +4,17 @@
  * main.c
  */
 
-#include <stdio.h>
 #include <stdbool.h>
-#include <unistd.h> 
+#include <stdio.h>
+#include <unistd.h>
 
 bool verbose_flag = false;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     int opt = 0;
 
     while ((opt = getopt(argc, argv, "v")) != -1) {
-        switch(opt) {
+        switch (opt) {
         case 'v':
             verbose_flag = true;
             break;
@@ -23,7 +22,7 @@ int main(int argc, char *argv[])
     }
 
     usb_mon_init(); // this will hang until a key press ir button press appens
-    while(1) {
+    while (1) {
         usb_mon_step();
     }
 }

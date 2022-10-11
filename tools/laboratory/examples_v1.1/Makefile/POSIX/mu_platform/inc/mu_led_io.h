@@ -48,7 +48,7 @@ extern "C" {
 // types and definitions
 
 // The canonical LED used in example code.
-#define MU_LED_0   0
+#define MU_LED_0 0
 
 // *****************************************************************************
 // declarations

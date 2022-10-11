@@ -58,10 +58,10 @@ extern "C" {
 // Public types and definitions
 
 typedef struct {
-  mu_task_t _task;
-  mu_task_t *_target_task;
-  mu_time_rel_t _period;
-  mu_time_abs_t _trigger_at;
+    mu_task_t _task;
+    mu_task_t *_target_task;
+    mu_time_rel_t _period;
+    mu_time_abs_t _trigger_at;
 } mu_periodic_t;
 
 // *****************************************************************************
@@ -85,8 +85,7 @@ mu_periodic_t *mu_periodic_init(mu_periodic_t *timer);
  * @param target_task The task to be triggered.
  * @return true if the timer started, false if it was already running.
  */
-bool mu_periodic_start(mu_periodic_t *timer,
-                       mu_time_rel_t period,
+bool mu_periodic_start(mu_periodic_t *timer, mu_time_rel_t period,
                        mu_task_t *target_task);
 
 /**

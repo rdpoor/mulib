@@ -51,55 +51,54 @@ static void timer_fn(void *ctx, void *arg);
 // Public code
 
 mu_periodic_t *mu_periodic_init(mu_periodic_t *timer) {
-  mu_task_init(&timer->_task, timer_fn, timer, "Timer");
-  timer->_target_task = 0;
-  timer->_period = 0;
+    mu_task_init(&timer->_task, timer_fn, timer, "Timer");
+    timer->_target_task = 0;
+    timer->_period = 0;
 
-  return timer;
+    return timer;
 }
 
-bool mu_periodic_start(mu_periodic_t *timer,
-                       mu_time_rel_t period,
+bool mu_periodic_start(mu_periodic_t *timer, mu_time_rel_t period,
                        mu_task_t *target_task) {
-  if (mu_periodic_is_running(timer)) {
-    return false;
-  }
-  mu_time_abs_t now = mu_sched_get_clock_source()(); // whoo!
-  timer->_target_task = target_task;
-  timer->_period = period;
-  timer->_trigger_at = mu_time_offset(now, period);
-  // invoke the target task now, and reschedule after period elapses
-  mu_task_call(target_task, NULL);
-  mu_sched_defer_until(&timer->_task, timer->_trigger_at);
+    if (mu_periodic_is_running(timer)) {
+        return false;
+    }
+    mu_time_abs_t now = mu_sched_get_clock_source()(); // whoo!
+    timer->_target_task = target_task;
+    timer->_period = period;
+    timer->_trigger_at = mu_time_offset(now, period);
+    // invoke the target task now, and reschedule after period elapses
+    mu_task_call(target_task, NULL);
+    mu_sched_defer_until(&timer->_task, timer->_trigger_at);
 
-  return true;
+    return true;
 }
 
 bool mu_periodic_stop(mu_periodic_t *timer) {
-  if (!mu_periodic_is_running(timer)) {
-    return false;
-  }
-  mu_sched_remove_deferred_task(&timer->_task);
-  timer->_period = 0; // signifies that the timer is stopped.
-  return true;
+    if (!mu_periodic_is_running(timer)) {
+        return false;
+    }
+    mu_sched_remove_deferred_task(&timer->_task);
+    timer->_period = 0; // signifies that the timer is stopped.
+    return true;
 }
 
 bool mu_periodic_is_running(mu_periodic_t *timer) {
-  return timer->_period != 0;
+    return timer->_period != 0;
 }
 
 // *****************************************************************************
 // Private (static) code
 
 static void timer_fn(void *ctx, void *arg) {
-  mu_periodic_t *timer = (mu_periodic_t *)ctx;
-  (void)arg;
+    mu_periodic_t *timer = (mu_periodic_t *)ctx;
+    (void)arg;
 
-  // called periodically by the scheduler
-  if (mu_periodic_is_running(timer)) {
-    // invoke target task, update trigger time and reschedule...
-    mu_task_call(timer->_target_task, NULL);
-    timer->_trigger_at = mu_time_offset(timer->_trigger_at, timer->_period);
-    mu_sched_defer_until(&timer->_task, timer->_trigger_at);
-  }
+    // called periodically by the scheduler
+    if (mu_periodic_is_running(timer)) {
+        // invoke target task, update trigger time and reschedule...
+        mu_task_call(timer->_target_task, NULL);
+        timer->_trigger_at = mu_time_offset(timer->_trigger_at, timer->_period);
+        mu_sched_defer_until(&timer->_task, timer->_trigger_at);
+    }
 }

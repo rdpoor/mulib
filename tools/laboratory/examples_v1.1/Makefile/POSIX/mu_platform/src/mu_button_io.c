@@ -27,9 +27,9 @@
 
 #include "mu_button_io.h"
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // Local types and definitions
@@ -45,24 +45,20 @@ static mu_button_io_callback_t s_button_cb;
 // *****************************************************************************
 // Public code
 
-void mu_button_io_init(void) {
-  s_button_cb = NULL;
-}
+void mu_button_io_init(void) { s_button_cb = NULL; }
 
-void mu_button_io_set_callback(mu_button_io_callback_t cb) {
-  s_button_cb = cb;
-}
+void mu_button_io_set_callback(mu_button_io_callback_t cb) { s_button_cb = cb; }
 
 bool mu_button_io_get_button(uint8_t button_id) {
-  (void)button_id;
-  //return !USER_BUTTON_get_level();
-  return false;
+    (void)button_id;
+    // return !USER_BUTTON_get_level();
+    return false;
 }
 
 void mu_button_io_on_change(void) {
-  if (s_button_cb) {
-    s_button_cb(MU_BUTTON_0, mu_button_io_get_button(MU_BUTTON_0));
-  }
+    if (s_button_cb) {
+        s_button_cb(MU_BUTTON_0, mu_button_io_get_button(MU_BUTTON_0));
+    }
 }
 // *****************************************************************************
 // Local (static) code

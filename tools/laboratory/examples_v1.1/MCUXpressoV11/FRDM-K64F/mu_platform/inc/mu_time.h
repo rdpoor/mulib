@@ -33,8 +33,8 @@ extern "C";
 // includes
 
 #include "mu_config.h"
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // types and definitions
@@ -42,11 +42,12 @@ extern "C";
 #define MS_PER_SECOND (1000L)
 
 /**
- * Define mu_time_t, mu_duration_t, mu_duration_ms_t as required by your platform-
- * specific mu_time.h
+ * Define mu_time_t, mu_duration_t, mu_duration_ms_t as required by your
+ * platform- specific mu_time.h
  */
-typedef uint32_t mu_time_t;        // absolute number of ticks since startup (with rollover)
-typedef int32_t mu_duration_t;     // relative number of ticks
+typedef uint32_t
+    mu_time_t; // absolute number of ticks since startup (with rollover)
+typedef int32_t mu_duration_t; // relative number of ticks
 typedef int32_t mu_duration_ms_t;
 
 // *****************************************************************************

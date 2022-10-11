@@ -33,8 +33,8 @@ extern "C";
 // includes
 
 #include "mu_time.h"
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // types and definitions
@@ -43,7 +43,8 @@ extern "C";
 
 // *****************************************************************************
 
-#define MU_TIME_MS_TO_DURATION(ms) ((mu_duration_t)((((ms)*MS_PER_SECOND))/RTC_FREQUENCY))
+#define MU_TIME_MS_TO_DURATION(ms)                                             \
+    ((mu_duration_t)((((ms)*MS_PER_SECOND)) / RTC_FREQUENCY))
 
 typedef void (*mu_rtc_callback_t)(void);
 

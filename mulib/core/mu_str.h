@@ -43,9 +43,9 @@ extern "C" {
 #define MU_STR_NOT_FOUND SIZE_MAX
 
 typedef struct {
-  const mu_strbuf_t *buf; // reference to underlying buffer
-  size_t s;               // index of next byte to be read, or start of string
-  size_t e;               // index of next byte to be written, or end of string
+    const mu_strbuf_t *buf; // reference to underlying buffer
+    size_t s;               // index of next byte to be read, or start of string
+    size_t e; // index of next byte to be written, or end of string
 } mu_str_t;
 
 // *****************************************************************************

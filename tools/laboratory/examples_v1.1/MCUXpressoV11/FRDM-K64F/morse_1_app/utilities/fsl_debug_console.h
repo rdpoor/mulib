@@ -5,18 +5,21 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Debug console shall provide input and output functions to scan and print formatted data.
- * o Support a format specifier for PRINTF follows this prototype "%[flags][width][.precision][length]specifier"
+ * Debug console shall provide input and output functions to scan and print
+ * formatted data. o Support a format specifier for PRINTF follows this
+ * prototype "%[flags][width][.precision][length]specifier"
  *   - [flags] :'-', '+', '#', ' ', '0'
  *   - [width]:  number (0,1...)
  *   - [.precision]: number (0,1...)
  *   - [length]: do not support
  *   - [specifier]: 'd', 'i', 'f', 'F', 'x', 'X', 'o', 'p', 'u', 'c', 's', 'n'
- * o Support a format specifier for SCANF follows this prototype " %[*][width][length]specifier"
+ * o Support a format specifier for SCANF follows this prototype "
+ * %[*][width][length]specifier"
  *   - [*]: is supported.
  *   - [width]: number (0,1...)
  *   - [length]: 'h', 'hh', 'l','ll','L'. ignore ('j','z','t')
- *   - [specifier]: 'd', 'i', 'u', 'f', 'F', 'e', 'E', 'g', 'G', 'a', 'A', 'o', 'c', 's'
+ *   - [specifier]: 'd', 'i', 'u', 'f', 'F', 'e', 'E', 'g', 'G', 'a', 'A', 'o',
+ * 'c', 's'
  */
 
 #ifndef _FSL_DEBUGCONSOLE_H_
@@ -34,9 +37,11 @@
  ******************************************************************************/
 
 /*! @brief Definition select redirect toolchain printf, scanf to uart or not. */
-#define DEBUGCONSOLE_REDIRECT_TO_TOOLCHAIN 0U /*!< Select toolchain printf and scanf. */
-#define DEBUGCONSOLE_REDIRECT_TO_SDK       1U /*!< Select SDK version printf, scanf. */
-#define DEBUGCONSOLE_DISABLE               2U /*!< Disable debugconsole function. */
+#define DEBUGCONSOLE_REDIRECT_TO_TOOLCHAIN                                     \
+    0U /*!< Select toolchain printf and scanf. */
+#define DEBUGCONSOLE_REDIRECT_TO_SDK                                           \
+    1U                          /*!< Select SDK version printf, scanf. */
+#define DEBUGCONSOLE_DISABLE 2U /*!< Disable debugconsole function. */
 
 /*! @brief Definition to select sdk or toolchain printf, scanf. */
 #ifndef SDK_DEBUGCONSOLE
@@ -69,30 +74,33 @@
 
 /*! @brief Definition to select redirect toolchain printf, scanf to uart or not.
  *
- *  if SDK_DEBUGCONSOLE defined to 0,it represents select toolchain printf, scanf.
- *  if SDK_DEBUGCONSOLE defined to 1,it represents select SDK version printf, scanf.
- *  if SDK_DEBUGCONSOLE defined to 2,it represents disable debugconsole function.
+ *  if SDK_DEBUGCONSOLE defined to 0,it represents select toolchain printf,
+ * scanf. if SDK_DEBUGCONSOLE defined to 1,it represents select SDK version
+ * printf, scanf. if SDK_DEBUGCONSOLE defined to 2,it represents disable
+ * debugconsole function.
  */
 #if SDK_DEBUGCONSOLE == DEBUGCONSOLE_DISABLE /* Disable debug console */
 #define PRINTF
 #define SCANF
 #define PUTCHAR
 #define GETCHAR
-#elif SDK_DEBUGCONSOLE == DEBUGCONSOLE_REDIRECT_TO_SDK /* Select printf, scanf, putchar, getchar of SDK version. */
-#define PRINTF  DbgConsole_Printf
-#define SCANF   DbgConsole_Scanf
+#elif SDK_DEBUGCONSOLE ==                                                      \
+    DEBUGCONSOLE_REDIRECT_TO_SDK /* Select printf, scanf, putchar, getchar of  \
+                                    SDK version. */
+#define PRINTF DbgConsole_Printf
+#define SCANF DbgConsole_Scanf
 #define PUTCHAR DbgConsole_Putchar
 #define GETCHAR DbgConsole_Getchar
-#elif SDK_DEBUGCONSOLE == \
-    DEBUGCONSOLE_REDIRECT_TO_TOOLCHAIN /* Select printf, scanf, putchar, getchar of toolchain. \ */
-#define PRINTF  printf
-#define SCANF   scanf
+#elif SDK_DEBUGCONSOLE ==                                                      \
+    DEBUGCONSOLE_REDIRECT_TO_TOOLCHAIN /* Select printf, scanf, putchar,       \
+                                          getchar of toolchain. \ */
+#define PRINTF printf
+#define SCANF scanf
 #define PUTCHAR putchar
 #define GETCHAR getchar
 #endif /* SDK_DEBUGCONSOLE */
 
-typedef enum _serial_port_type
-{
+typedef enum _serial_port_type {
     kSerialPort_None = 0U, /*!< Serial port is none */
     kSerialPort_Uart = 1U, /*!< Serial port UART */
 } serial_port_type_t;
@@ -108,23 +116,25 @@ extern "C" {
 /*! @name Initialization*/
 /* @{ */
 
-#if ((SDK_DEBUGCONSOLE == DEBUGCONSOLE_REDIRECT_TO_SDK) || defined(SDK_DEBUGCONSOLE_UART))
+#if ((SDK_DEBUGCONSOLE == DEBUGCONSOLE_REDIRECT_TO_SDK) ||                     \
+     defined(SDK_DEBUGCONSOLE_UART))
 /*!
  * @brief Initializes the peripheral used for debug messages.
  *
- * Call this function to enable debug log messages to be output via the specified peripheral,
- * frequency of peripheral source clock, and base address at the specified baud rate.
- * After this function has returned, stdout and stdin are connected to the selected peripheral.
+ * Call this function to enable debug log messages to be output via the
+ * specified peripheral, frequency of peripheral source clock, and base address
+ * at the specified baud rate. After this function has returned, stdout and
+ * stdin are connected to the selected peripheral.
  *
- * @param instance      The instance of the module.If the device is kSerialPort_Uart,
- *                      the instance is UART peripheral instance. The UART hardware peripheral
- *                      type is determined by UART adapter. For example, if the instance is 1,
- *                      if the lpuart_adapter.c is added to the current project, the UART periheral
- *                      is LPUART1.
- *                      If the uart_adapter.c is added to the current project, the UART periheral
- *                      is UART1.
+ * @param instance      The instance of the module.If the device is
+ * kSerialPort_Uart, the instance is UART peripheral instance. The UART hardware
+ * peripheral type is determined by UART adapter. For example, if the instance
+ * is 1, if the lpuart_adapter.c is added to the current project, the UART
+ * periheral is LPUART1. If the uart_adapter.c is added to the current project,
+ * the UART periheral is UART1.
  * @param baudRate      The desired baud rate in bits per second.
- * @param device        Low level device type for the debug console, can be one of the following.
+ * @param device        Low level device type for the debug console, can be one
+ * of the following.
  *                      @arg kSerialPort_Uart.
  * @param clkSrcFreq    Frequency of peripheral source clock.
  *
@@ -132,13 +142,14 @@ extern "C" {
  * @retval kStatus_Success          Execution successfully
  * @retval kStatus_Fail             Execution failure
  */
-status_t DbgConsole_Init(uint8_t instance, uint32_t baudRate, serial_port_type_t device, uint32_t clkSrcFreq);
+status_t DbgConsole_Init(uint8_t instance, uint32_t baudRate,
+                         serial_port_type_t device, uint32_t clkSrcFreq);
 
 /*!
  * @brief De-initializes the peripheral used for debug messages.
  *
- * Call this function to disable debug log messages to be output via the specified peripheral
- * base address and at the specified baud rate.
+ * Call this function to disable debug log messages to be output via the
+ * specified peripheral base address and at the specified baud rate.
  *
  * @return Indicates whether de-initialization was successful or not.
  */
@@ -146,14 +157,12 @@ status_t DbgConsole_Deinit(void);
 
 #else
 /*!
- * Use an error to replace the DbgConsole_Init when SDK_DEBUGCONSOLE is not DEBUGCONSOLE_REDIRECT_TO_SDK and
- * SDK_DEBUGCONSOLE_UART is not defined.
+ * Use an error to replace the DbgConsole_Init when SDK_DEBUGCONSOLE is not
+ * DEBUGCONSOLE_REDIRECT_TO_SDK and SDK_DEBUGCONSOLE_UART is not defined.
  */
-static inline status_t DbgConsole_Init(uint8_t instance,
-                                       uint32_t baudRate,
+static inline status_t DbgConsole_Init(uint8_t instance, uint32_t baudRate,
                                        serial_port_type_t device,
-                                       uint32_t clkSrcFreq)
-{
+                                       uint32_t clkSrcFreq) {
     (void)instance;
     (void)baudRate;
     (void)device;
@@ -161,15 +170,15 @@ static inline status_t DbgConsole_Init(uint8_t instance,
     return (status_t)kStatus_Fail;
 }
 /*!
- * Use an error to replace the DbgConsole_Deinit when SDK_DEBUGCONSOLE is not DEBUGCONSOLE_REDIRECT_TO_SDK and
- * SDK_DEBUGCONSOLE_UART is not defined.
+ * Use an error to replace the DbgConsole_Deinit when SDK_DEBUGCONSOLE is not
+ * DEBUGCONSOLE_REDIRECT_TO_SDK and SDK_DEBUGCONSOLE_UART is not defined.
  */
-static inline status_t DbgConsole_Deinit(void)
-{
+static inline status_t DbgConsole_Deinit(void) {
     return (status_t)kStatus_Fail;
 }
 
-#endif /* ((SDK_DEBUGCONSOLE == DEBUGCONSOLE_REDIRECT_TO_SDK) || defined(SDK_DEBUGCONSOLE_UART)) */
+#endif /* ((SDK_DEBUGCONSOLE == DEBUGCONSOLE_REDIRECT_TO_SDK) ||               \
+          defined(SDK_DEBUGCONSOLE_UART)) */
 
 #if SDK_DEBUGCONSOLE
 /*!
@@ -178,7 +187,8 @@ static inline status_t DbgConsole_Deinit(void)
  * Call this function to write a formatted output to the standard output stream.
  *
  * @param   fmt_s Format control string.
- * @return  Returns the number of characters printed or a negative value if an error occurs.
+ * @return  Returns the number of characters printed or a negative value if an
+ * error occurs.
  */
 int DbgConsole_Printf(const char *fmt_s, ...);
 

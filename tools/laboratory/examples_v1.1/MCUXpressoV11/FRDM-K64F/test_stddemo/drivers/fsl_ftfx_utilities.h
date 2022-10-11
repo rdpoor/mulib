@@ -19,7 +19,8 @@
 
 /*! @brief Constructs the version number for drivers. */
 #if !defined(MAKE_VERSION)
-#define MAKE_VERSION(major, minor, bugfix) (((major) << 16) | ((minor) << 8) | (bugfix))
+#define MAKE_VERSION(major, minor, bugfix)                                     \
+    (((major) << 16) | ((minor) << 8) | (bugfix))
 #endif
 
 /*! @brief Constructs a status code value from a group and a code number. */
@@ -29,8 +30,9 @@
 
 /*! @brief Constructs the four character code for the Flash driver API key. */
 #if !defined(FOUR_CHAR_CODE)
-#define FOUR_CHAR_CODE(a, b, c, d) \
-    (((uint32_t)(d) << 24u) | ((uint32_t)(c) << 16u) | ((uint32_t)(b) << 8u) | ((uint32_t)(a)))
+#define FOUR_CHAR_CODE(a, b, c, d)                                             \
+    (((uint32_t)(d) << 24u) | ((uint32_t)(c) << 16u) | ((uint32_t)(b) << 8u) | \
+     ((uint32_t)(a)))
 #endif
 
 /*! @brief Alignment(down) utility. */

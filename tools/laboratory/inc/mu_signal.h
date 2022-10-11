@@ -32,8 +32,8 @@ extern "C" {
 // *****************************************************************************
 // includes
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // types and definitions
@@ -44,11 +44,12 @@ extern "C" {
 // only define if this platform implements <signal.h>
 #define HAS_SIGNAL (1)
 
-
 /**
- * @brief on systems with HAS_SIGNAL, will intercept CTRL-C (SIGINT) and shunt it to exit(0) so that any functions registered with atexit() will run before we quit.  
- * mu_kbd_io uses this to restore termios settings, for example.  Additional signal handling can be inserted in signal_handling_init();
- * 
+ * @brief on systems with HAS_SIGNAL, will intercept CTRL-C (SIGINT) and shunt
+ * it to exit(0) so that any functions registered with atexit() will run before
+ * we quit. mu_kbd_io uses this to restore termios settings, for example.
+ * Additional signal handling can be inserted in signal_handling_init();
+ *
  */
 
 void mu_signal_init(void);

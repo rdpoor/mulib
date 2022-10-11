@@ -29,12 +29,11 @@
 extern "C" {
 #endif
 
- // *****************************************************************************
- // includes
+// *****************************************************************************
+// includes
 
-#include <stdbool.h>
 #include "mu_config.h"
-
+#include <stdbool.h>
 
 // *****************************************************************************
 // types and definitions
@@ -50,10 +49,8 @@ void mu_test_init(void);
 int mu_test_count(void);
 int mu_test_error_count(void);
 
-void mu_test_assert(const bool condition,
-                    const char *const expr,
-                    const char *const file,
-                    const int line);
+void mu_test_assert(const bool condition, const char *const expr,
+                    const char *const file, const int line);
 
 // *****************************************************************************
 // local storage

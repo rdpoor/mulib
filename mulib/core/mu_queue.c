@@ -45,55 +45,55 @@
 // public code
 
 mu_queue_t *mu_queue_init(mu_queue_t *q) {
-  mu_list_init(&q->head);
-  mu_list_init(&q->tail);
-  return q;
+    mu_list_init(&q->head);
+    mu_list_init(&q->tail);
+    return q;
 }
 
 mu_list_t *mu_queue_list(mu_queue_t *q) { return mu_list_rest(&q->head); }
 
 mu_queue_t *mu_queue_append(mu_queue_t *q, mu_list_t *item) {
-  item->next = NULL;
-  if (mu_list_is_empty(&q->tail)) {
-    mu_list_push(&q->head, item);
-  } else {
-    mu_list_push(q->tail.next, item);
-  }
-  q->tail.next = item;
-  return q;
+    item->next = NULL;
+    if (mu_list_is_empty(&q->tail)) {
+        mu_list_push(&q->head, item);
+    } else {
+        mu_list_push(q->tail.next, item);
+    }
+    q->tail.next = item;
+    return q;
 }
 
 mu_queue_t *mu_queue_prepend(mu_queue_t *q, mu_list_t *item) {
-  mu_list_push(&q->head, item);
-  if (mu_list_is_empty(&q->tail)) {
-    q->tail.next = item;
-  }
-  return q;
+    mu_list_push(&q->head, item);
+    if (mu_list_is_empty(&q->tail)) {
+        q->tail.next = item;
+    }
+    return q;
 }
 
 mu_list_t *mu_queue_remove(mu_queue_t *q) {
-  mu_list_t *item = mu_list_pop(&q->head);
-  if (mu_list_is_empty(&q->head)) {
-    q->tail.next = NULL; // removing last item;
-  }
-  return item;
+    mu_list_t *item = mu_list_pop(&q->head);
+    if (mu_list_is_empty(&q->head)) {
+        q->tail.next = NULL; // removing last item;
+    }
+    return item;
 }
 
 mu_list_t *mu_queue_delete(mu_queue_t *q, mu_list_t *item) {
-  return mu_list_delete(&q->head, item);
+    return mu_list_delete(&q->head, item);
 }
 
 bool mu_queue_is_empty(mu_queue_t *q) { return mu_list_is_empty(&q->head); }
 
 mu_queue_t *mu_queue_reset(mu_queue_t *q) {
-  while (!mu_queue_is_empty(q)) {
-    mu_queue_remove(q);
-  }
-  return q;
+    while (!mu_queue_is_empty(q)) {
+        mu_queue_remove(q);
+    }
+    return q;
 }
 
 bool mu_queue_contains(mu_queue_t *q, mu_list_t *item) {
-  return mu_list_contains(&q->head, item);
+    return mu_list_contains(&q->head, item);
 }
 
 int mu_queue_length(mu_queue_t *q) { return mu_list_length(&q->head); }

@@ -78,7 +78,7 @@ extern "C" {
 #endif
 
 #ifndef MU_SCHED_MAX_IRQ_TASKS
-#define MU_SCHED_MAX_IRQ_TASKS 8  // must be a power of two!
+#define MU_SCHED_MAX_IRQ_TASKS 8 // must be a power of two!
 #endif
 
 #ifndef MU_SCHED_MAX_NOW_TASKS
@@ -86,11 +86,11 @@ extern "C" {
 #endif
 
 typedef enum {
-  MU_SCHED_ERR_NONE,
-  MU_SCHED_ERR_ILLEGAL_ARG,
-  MU_SCHED_ERR_EMPTY,
-  MU_SCHED_ERR_FULL,
-  MU_SCHED_ERR_NOT_FOUND,
+    MU_SCHED_ERR_NONE,
+    MU_SCHED_ERR_ILLEGAL_ARG,
+    MU_SCHED_ERR_EMPTY,
+    MU_SCHED_ERR_FULL,
+    MU_SCHED_ERR_NOT_FOUND,
 } mu_sched_err_t;
 
 // Signature for clock source function.  Returns the current time.
@@ -98,8 +98,8 @@ typedef mu_time_abs_t (*mu_clock_fn)(void);
 
 // A mu_sched_deferred_task associates a task and a time.
 typedef struct {
-  mu_time_abs_t at;
-  mu_task_t *task;
+    mu_time_abs_t at;
+    mu_task_t *task;
 } mu_sched_deferred_task_t;
 
 /**
@@ -109,7 +109,8 @@ typedef struct {
  * @param arg A user-supplied argument.
  * @return A NULL value to continue traversing, a non-null value to stop.
  */
-// typedef void *(*mu_sched_visit_event_fn)(mu_sched_deferred_task_t *event, void *arg);
+// typedef void *(*mu_sched_visit_event_fn)(mu_sched_deferred_task_t *event,
+// void *arg);
 
 /**
  * @brief Signature for a function passed to mu_sched_visit_immediate_tasks.
@@ -226,7 +227,8 @@ mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
  * @param arg The value supplied as the second argument to the user fun.
  * @return A non-null value returned by the user function, or NULL otherwise.
  */
-// void *mu_sched_visit_deferred_events(mu_sched_visit_event_fn user_fn, void *arg);
+// void *mu_sched_visit_deferred_events(mu_sched_visit_event_fn user_fn, void
+// *arg);
 
 /**
  * @brief Call a user-supplied function for each immediate task in the schedule.
@@ -242,7 +244,8 @@ mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
  * @param arg The value supplied as the second argument to the user fun.
  * @return A non-null value returned by the user function, or NULL otherwise.
  */
-// void *mu_sched_visit_immediate_tasks(mu_sched_visit_task_fn user_fn, void *arg);
+// void *mu_sched_visit_immediate_tasks(mu_sched_visit_task_fn user_fn, void
+// *arg);
 
 #ifdef __cplusplus
 }

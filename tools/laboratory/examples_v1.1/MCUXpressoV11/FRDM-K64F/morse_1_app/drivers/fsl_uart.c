@@ -18,8 +18,7 @@
 #endif
 
 /* UART transfer state. */
-enum
-{
+enum {
     kUART_TxIdle,         /* TX idle. */
     kUART_TxBusy,         /* TX busy. */
     kUART_RxIdle,         /* RX idle. */
@@ -47,7 +46,8 @@ static bool UART_TransferIsRxRingBufferFull(uart_handle_t *handle);
  * @brief Read RX register using non-blocking method.
  *
  * This function reads data from the TX register directly, upper layer must make
- * sure the RX register is full or TX FIFO has data before calling this function.
+ * sure the RX register is full or TX FIFO has data before calling this
+ * function.
  *
  * @param base UART peripheral base address.
  * @param data Start address of the buffer to store the received data.
@@ -59,17 +59,19 @@ static void UART_ReadNonBlocking(UART_Type *base, uint8_t *data, size_t length);
  * @brief Write to TX register using non-blocking method.
  *
  * This function writes data to the TX register directly, upper layer must make
- * sure the TX register is empty or TX FIFO has empty room before calling this function.
+ * sure the TX register is empty or TX FIFO has empty room before calling this
+ * function.
  *
- * @note This function does not check whether all the data has been sent out to bus,
- * so before disable TX, check kUART_TransmissionCompleteFlag to ensure the TX is
- * finished.
+ * @note This function does not check whether all the data has been sent out to
+ * bus, so before disable TX, check kUART_TransmissionCompleteFlag to ensure the
+ * TX is finished.
  *
  * @param base UART peripheral base address.
  * @param data Start address of the data to write.
  * @param length Size of the buffer to be sent.
  */
-static void UART_WriteNonBlocking(UART_Type *base, const uint8_t *data, size_t length);
+static void UART_WriteNonBlocking(UART_Type *base, const uint8_t *data,
+                                  size_t length);
 
 /*******************************************************************************
  * Variables
@@ -106,7 +108,8 @@ static UART_Type *const s_uartBases[] = UART_BASE_PTRS;
 
 /* Array of UART IRQ number. */
 static const IRQn_Type s_uartIRQ[] = UART_RX_TX_IRQS;
-#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) && FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
+#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) &&                         \
+      FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
 /* Array of UART clock name. */
 static const clock_ip_name_t s_uartClock[] = UART_CLOCKS;
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
@@ -128,16 +131,13 @@ static uart_isr_t s_uartIsr;
  * param base UART peripheral base address.
  * return UART instance.
  */
-uint32_t UART_GetInstance(UART_Type *base)
-{
+uint32_t UART_GetInstance(UART_Type *base) {
     uint32_t instance;
     uint32_t uartArrayCount = (sizeof(s_uartBases) / sizeof(s_uartBases[0]));
 
     /* Find the instance index from base address mappings. */
-    for (instance = 0; instance < uartArrayCount; instance++)
-    {
-        if (s_uartBases[instance] == base)
-        {
+    for (instance = 0; instance < uartArrayCount; instance++) {
+        if (s_uartBases[instance] == base) {
             break;
         }
     }
@@ -153,38 +153,32 @@ uint32_t UART_GetInstance(UART_Type *base)
  * param handle UART handle pointer.
  * return Length of received data in RX ring buffer.
  */
-size_t UART_TransferGetRxRingBufferLength(uart_handle_t *handle)
-{
+size_t UART_TransferGetRxRingBufferLength(uart_handle_t *handle) {
     assert(handle);
 
     size_t size;
     uint16_t rxRingBufferHead = handle->rxRingBufferHead;
     uint16_t rxRingBufferTail = handle->rxRingBufferTail;
 
-    if (rxRingBufferTail > rxRingBufferHead)
-    {
-        size = (size_t)rxRingBufferHead + handle->rxRingBufferSize - (size_t)rxRingBufferTail;
-    }
-    else
-    {
+    if (rxRingBufferTail > rxRingBufferHead) {
+        size = (size_t)rxRingBufferHead + handle->rxRingBufferSize -
+               (size_t)rxRingBufferTail;
+    } else {
         size = (size_t)rxRingBufferHead - (size_t)rxRingBufferTail;
     }
 
     return size;
 }
 
-static bool UART_TransferIsRxRingBufferFull(uart_handle_t *handle)
-{
+static bool UART_TransferIsRxRingBufferFull(uart_handle_t *handle) {
     assert(handle);
 
     bool full;
 
-    if (UART_TransferGetRxRingBufferLength(handle) == (handle->rxRingBufferSize - 1U))
-    {
+    if (UART_TransferGetRxRingBufferLength(handle) ==
+        (handle->rxRingBufferSize - 1U)) {
         full = true;
-    }
-    else
-    {
+    } else {
         full = false;
     }
 
@@ -192,16 +186,15 @@ static bool UART_TransferIsRxRingBufferFull(uart_handle_t *handle)
 }
 
 /*!
- * brief Initializes a UART instance with a user configuration structure and peripheral clock.
+ * brief Initializes a UART instance with a user configuration structure and
+ * peripheral clock.
  *
- * This function configures the UART module with the user-defined settings. The user can configure the configuration
- * structure and also get the default configuration by using the UART_GetDefaultConfig() function.
- * The example below shows how to use this API to configure UART.
- * code
- *  uart_config_t uartConfig;
- *  uartConfig.baudRate_Bps = 115200U;
- *  uartConfig.parityMode = kUART_ParityDisabled;
- *  uartConfig.stopBitCount = kUART_OneStopBit;
+ * This function configures the UART module with the user-defined settings. The
+ * user can configure the configuration structure and also get the default
+ * configuration by using the UART_GetDefaultConfig() function. The example
+ * below shows how to use this API to configure UART. code uart_config_t
+ * uartConfig; uartConfig.baudRate_Bps = 115200U; uartConfig.parityMode =
+ * kUART_ParityDisabled; uartConfig.stopBitCount = kUART_OneStopBit;
  *  uartConfig.txFifoWatermark = 0;
  *  uartConfig.rxFifoWatermark = 1;
  *  UART_Init(UART1, &uartConfig, 20000000U);
@@ -210,30 +203,33 @@ static bool UART_TransferIsRxRingBufferFull(uart_handle_t *handle)
  * param base UART peripheral base address.
  * param config Pointer to the user-defined configuration structure.
  * param srcClock_Hz UART clock source frequency in HZ.
- * retval kStatus_UART_BaudrateNotSupport Baudrate is not support in current clock source.
- * retval kStatus_Success Status UART initialize succeed
+ * retval kStatus_UART_BaudrateNotSupport Baudrate is not support in current
+ * clock source. retval kStatus_Success Status UART initialize succeed
  */
-status_t UART_Init(UART_Type *base, const uart_config_t *config, uint32_t srcClock_Hz)
-{
+status_t UART_Init(UART_Type *base, const uart_config_t *config,
+                   uint32_t srcClock_Hz) {
     assert(config);
     assert(config->baudRate_Bps);
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
-    assert((uint8_t)FSL_FEATURE_UART_FIFO_SIZEn(base) >= config->txFifoWatermark);
-    assert((uint8_t)FSL_FEATURE_UART_FIFO_SIZEn(base) >= config->rxFifoWatermark);
+    assert((uint8_t)FSL_FEATURE_UART_FIFO_SIZEn(base) >=
+           config->txFifoWatermark);
+    assert((uint8_t)FSL_FEATURE_UART_FIFO_SIZEn(base) >=
+           config->rxFifoWatermark);
 #endif
 
-    uint32_t sbr      = 0U;
-    uint8_t temp      = 0U;
+    uint32_t sbr = 0U;
+    uint8_t temp = 0U;
     uint32_t baudDiff = 0U;
 
     /* Calculate the baud rate modulo divisor, sbr*/
     sbr = srcClock_Hz / (config->baudRate_Bps * 16U);
-    /* set sbrTemp to 1 if the sourceClockInHz can not satisfy the desired baud rate */
-    if (sbr == 0U)
-    {
+    /* set sbrTemp to 1 if the sourceClockInHz can not satisfy the desired baud
+     * rate */
+    if (sbr == 0U) {
         sbr = 1U;
     }
-#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) && FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
+#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) &&             \
+    FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
     /* Determine if a fractional divider is needed to fine tune closer to the
      * desired baud, each value of brfa is in 1/32 increments,
      * hence the multiply-by-32. */
@@ -243,30 +239,32 @@ status_t UART_Init(UART_Type *base, const uart_config_t *config, uint32_t srcClo
 
     /* Calculate the baud rate based on the temporary SBR values and BRFA */
     tempBaud = srcClock_Hz * 2U / (sbr * 32U + brfa);
-    baudDiff =
-        (tempBaud > config->baudRate_Bps) ? (tempBaud - config->baudRate_Bps) : (config->baudRate_Bps - tempBaud);
+    baudDiff = (tempBaud > config->baudRate_Bps)
+                   ? (tempBaud - config->baudRate_Bps)
+                   : (config->baudRate_Bps - tempBaud);
 
 #else
     /* Calculate the baud rate based on the temporary SBR values */
     baudDiff = (srcClock_Hz / (sbr * 16U)) - config->baudRate_Bps;
 
     /* Select the better value between sbr and (sbr + 1) */
-    if (baudDiff > (config->baudRate_Bps - (srcClock_Hz / (16U * ((uint32_t)sbr + 1U)))))
-    {
-        baudDiff = config->baudRate_Bps - (srcClock_Hz / (16U * ((uint32_t)sbr + 1U)));
+    if (baudDiff >
+        (config->baudRate_Bps - (srcClock_Hz / (16U * ((uint32_t)sbr + 1U))))) {
+        baudDiff =
+            config->baudRate_Bps - (srcClock_Hz / (16U * ((uint32_t)sbr + 1U)));
         sbr++;
     }
 #endif
 
     /* next, check to see if actual baud rate is within 3% of desired baud rate
      * based on the calculate SBR value */
-    if (baudDiff > ((config->baudRate_Bps / 100U) * 3U))
-    {
+    if (baudDiff > ((config->baudRate_Bps / 100U) * 3U)) {
         /* Unacceptable baud rate difference of more than 3%*/
         return kStatus_UART_BaudrateNotSupport;
     }
 
-#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) && FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
+#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) &&                         \
+      FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
     /* Enable uart clock */
     CLOCK_EnableClock(s_uartClock[UART_GetInstance(base)]);
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
@@ -278,38 +276,40 @@ status_t UART_Init(UART_Type *base, const uart_config_t *config, uint32_t srcClo
     base->BDH = (base->BDH & ~(uint8_t)UART_BDH_SBR_MASK) | (uint8_t)(sbr >> 8);
     base->BDL = (uint8_t)sbr;
 
-#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) && FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
+#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) &&             \
+    FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
     /* Write the brfa value to the register*/
-    base->C4 = (base->C4 & ~(uint8_t)UART_C4_BRFA_MASK) | ((uint8_t)brfa & UART_C4_BRFA_MASK);
+    base->C4 = (base->C4 & ~(uint8_t)UART_C4_BRFA_MASK) |
+               ((uint8_t)brfa & UART_C4_BRFA_MASK);
 #endif
 
     /* Set bit count/parity mode/idle type. */
-    temp = base->C1 &
-           ~((uint8_t)UART_C1_PE_MASK | (uint8_t)UART_C1_PT_MASK | (uint8_t)UART_C1_M_MASK | (uint8_t)UART_C1_ILT_MASK);
+    temp = base->C1 & ~((uint8_t)UART_C1_PE_MASK | (uint8_t)UART_C1_PT_MASK |
+                        (uint8_t)UART_C1_M_MASK | (uint8_t)UART_C1_ILT_MASK);
 
     temp |= UART_C1_ILT(config->idleType);
 
-    if (kUART_ParityDisabled != config->parityMode)
-    {
+    if (kUART_ParityDisabled != config->parityMode) {
         temp |= (UART_C1_M_MASK | (uint8_t)config->parityMode);
     }
 
     base->C1 = temp;
 
-#if defined(FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT) && FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT
+#if defined(FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT) &&                   \
+    FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT
     /* Set stop bit per char */
-    base->BDH = (base->BDH & ~(uint8_t)UART_BDH_SBNS_MASK) | (uint8_t)UART_BDH_SBNS((uint8_t)config->stopBitCount);
+    base->BDH = (base->BDH & ~(uint8_t)UART_BDH_SBNS_MASK) |
+                (uint8_t)UART_BDH_SBNS((uint8_t)config->stopBitCount);
 #endif
 
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
     /* Set tx/rx FIFO watermark
        Note:
-       Take care of the RX FIFO, RX interrupt request only assert when received bytes
-       equal or more than RX water mark, there is potential issue if RX water
-       mark larger than 1.
-       For example, if RX FIFO water mark is 2, upper layer needs 5 bytes and
-       5 bytes are received. the last byte will be saved in FIFO but not trigger
-       RX interrupt because the water mark is 2.
+       Take care of the RX FIFO, RX interrupt request only assert when received
+       bytes equal or more than RX water mark, there is potential issue if RX
+       water mark larger than 1. For example, if RX FIFO water mark is 2, upper
+       layer needs 5 bytes and 5 bytes are received. the last byte will be saved
+       in FIFO but not trigger RX interrupt because the water mark is 2.
      */
     base->TWFIFO = config->txFifoWatermark;
     base->RWFIFO = config->rxFifoWatermark;
@@ -320,14 +320,13 @@ status_t UART_Init(UART_Type *base, const uart_config_t *config, uint32_t srcClo
     /* Flush FIFO */
     base->CFIFO |= (UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK);
 #endif
-#if defined(FSL_FEATURE_UART_HAS_MODEM_SUPPORT) && FSL_FEATURE_UART_HAS_MODEM_SUPPORT
-    if (config->enableRxRTS)
-    {
+#if defined(FSL_FEATURE_UART_HAS_MODEM_SUPPORT) &&                             \
+    FSL_FEATURE_UART_HAS_MODEM_SUPPORT
+    if (config->enableRxRTS) {
         /* Enable receiver RTS(request-to-send) function. */
         base->MODEM |= UART_MODEM_RXRTSE_MASK;
     }
-    if (config->enableTxCTS)
-    {
+    if (config->enableTxCTS) {
         /* Enable transmitter CTS(clear-to-send) function. */
         base->MODEM |= UART_MODEM_TXCTSE_MASK;
     }
@@ -336,13 +335,11 @@ status_t UART_Init(UART_Type *base, const uart_config_t *config, uint32_t srcClo
     /* Enable TX/RX base on configure structure. */
     temp = base->C2;
 
-    if (config->enableTx)
-    {
+    if (config->enableTx) {
         temp |= UART_C2_TE_MASK;
     }
 
-    if (config->enableRx)
-    {
+    if (config->enableRx) {
         temp |= UART_C2_RE_MASK;
     }
 
@@ -354,27 +351,26 @@ status_t UART_Init(UART_Type *base, const uart_config_t *config, uint32_t srcClo
 /*!
  * brief Deinitializes a UART instance.
  *
- * This function waits for TX complete, disables TX and RX, and disables the UART clock.
+ * This function waits for TX complete, disables TX and RX, and disables the
+ * UART clock.
  *
  * param base UART peripheral base address.
  */
-void UART_Deinit(UART_Type *base)
-{
+void UART_Deinit(UART_Type *base) {
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
     /* Wait tx FIFO send out*/
-    while (0U != base->TCFIFO)
-    {
+    while (0U != base->TCFIFO) {
     }
 #endif
     /* Wait last char shoft out */
-    while (0U == (base->S1 & UART_S1_TC_MASK))
-    {
+    while (0U == (base->S1 & UART_S1_TC_MASK)) {
     }
 
     /* Disable the module. */
     base->C2 = 0;
 
-#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) && FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
+#if !(defined(FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL) &&                         \
+      FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL)
     /* Disable uart clock */
     CLOCK_DisableClock(s_uartClock[UART_GetInstance(base)]);
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
@@ -383,9 +379,8 @@ void UART_Deinit(UART_Type *base)
 /*!
  * brief Gets the default configuration structure.
  *
- * This function initializes the UART configuration structure to a default value. The default
- * values are as follows.
- *   uartConfig->baudRate_Bps = 115200U;
+ * This function initializes the UART configuration structure to a default
+ * value. The default values are as follows. uartConfig->baudRate_Bps = 115200U;
  *   uartConfig->bitCountPerChar = kUART_8BitsPerChar;
  *   uartConfig->parityMode = kUART_ParityDisabled;
  *   uartConfig->stopBitCount = kUART_OneStopBit;
@@ -397,23 +392,24 @@ void UART_Deinit(UART_Type *base)
  *
  * param config Pointer to configuration structure.
  */
-void UART_GetDefaultConfig(uart_config_t *config)
-{
+void UART_GetDefaultConfig(uart_config_t *config) {
     assert(config);
 
     /* Initializes the configure structure to zero. */
     (void)memset(config, 0, sizeof(*config));
 
     config->baudRate_Bps = 115200U;
-    config->parityMode   = kUART_ParityDisabled;
-#if defined(FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT) && FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT
+    config->parityMode = kUART_ParityDisabled;
+#if defined(FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT) &&                   \
+    FSL_FEATURE_UART_HAS_STOP_BIT_CONFIG_SUPPORT
     config->stopBitCount = kUART_OneStopBit;
 #endif
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
     config->txFifoWatermark = 0;
     config->rxFifoWatermark = 1;
 #endif
-#if defined(FSL_FEATURE_UART_HAS_MODEM_SUPPORT) && FSL_FEATURE_UART_HAS_MODEM_SUPPORT
+#if defined(FSL_FEATURE_UART_HAS_MODEM_SUPPORT) &&                             \
+    FSL_FEATURE_UART_HAS_MODEM_SUPPORT
     config->enableRxRTS = false;
     config->enableTxCTS = false;
 #endif
@@ -425,34 +421,33 @@ void UART_GetDefaultConfig(uart_config_t *config)
 /*!
  * brief Sets the UART instance baud rate.
  *
- * This function configures the UART module baud rate. This function is used to update
- * the UART module baud rate after the UART module is initialized by the UART_Init.
- * code
- *  UART_SetBaudRate(UART1, 115200U, 20000000U);
- * endcode
+ * This function configures the UART module baud rate. This function is used to
+ * update the UART module baud rate after the UART module is initialized by the
+ * UART_Init. code UART_SetBaudRate(UART1, 115200U, 20000000U); endcode
  *
  * param base UART peripheral base address.
  * param baudRate_Bps UART baudrate to be set.
  * param srcClock_Hz UART clock source frequency in Hz.
- * retval kStatus_UART_BaudrateNotSupport Baudrate is not support in the current clock source.
- * retval kStatus_Success Set baudrate succeeded.
+ * retval kStatus_UART_BaudrateNotSupport Baudrate is not support in the current
+ * clock source. retval kStatus_Success Set baudrate succeeded.
  */
-status_t UART_SetBaudRate(UART_Type *base, uint32_t baudRate_Bps, uint32_t srcClock_Hz)
-{
+status_t UART_SetBaudRate(UART_Type *base, uint32_t baudRate_Bps,
+                          uint32_t srcClock_Hz) {
     assert(baudRate_Bps);
 
-    uint32_t sbr      = 0;
+    uint32_t sbr = 0;
     uint32_t baudDiff = 0;
     uint8_t oldCtrl;
 
     /* Calculate the baud rate modulo divisor, sbr*/
     sbr = srcClock_Hz / (baudRate_Bps * 16U);
-    /* set sbrTemp to 1 if the sourceClockInHz can not satisfy the desired baud rate */
-    if (sbr == 0U)
-    {
+    /* set sbrTemp to 1 if the sourceClockInHz can not satisfy the desired baud
+     * rate */
+    if (sbr == 0U) {
         sbr = 1U;
     }
-#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) && FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
+#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) &&             \
+    FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
     /* Determine if a fractional divider is needed to fine tune closer to the
      * desired baud, each value of brfa is in 1/32 increments,
      * hence the multiply-by-32. */
@@ -462,14 +457,14 @@ status_t UART_SetBaudRate(UART_Type *base, uint32_t baudRate_Bps, uint32_t srcCl
 
     /* Calculate the baud rate based on the temporary SBR values and BRFA */
     tempBaud = (srcClock_Hz * 2U / ((sbr * 32U + brfa)));
-    baudDiff = (tempBaud > baudRate_Bps) ? (tempBaud - baudRate_Bps) : (baudRate_Bps - tempBaud);
+    baudDiff = (tempBaud > baudRate_Bps) ? (tempBaud - baudRate_Bps)
+                                         : (baudRate_Bps - tempBaud);
 #else
     /* Calculate the baud rate based on the temporary SBR values */
     baudDiff = (srcClock_Hz / (sbr * 16U)) - baudRate_Bps;
 
     /* Select the better value between sbr and (sbr + 1) */
-    if (baudDiff > (baudRate_Bps - (srcClock_Hz / (16U * (sbr + 1U)))))
-    {
+    if (baudDiff > (baudRate_Bps - (srcClock_Hz / (16U * (sbr + 1U))))) {
         baudDiff = baudRate_Bps - (srcClock_Hz / (16U * (sbr + 1U)));
         sbr++;
     }
@@ -477,8 +472,7 @@ status_t UART_SetBaudRate(UART_Type *base, uint32_t baudRate_Bps, uint32_t srcCl
 
     /* next, check to see if actual baud rate is within 3% of desired baud rate
      * based on the calculate SBR value */
-    if (baudDiff < ((baudRate_Bps / 100U) * 3U))
-    {
+    if (baudDiff < ((baudRate_Bps / 100U) * 3U)) {
         /* Store C2 before disable Tx and Rx */
         oldCtrl = base->C2;
 
@@ -486,20 +480,21 @@ status_t UART_SetBaudRate(UART_Type *base, uint32_t baudRate_Bps, uint32_t srcCl
         base->C2 &= ~((uint8_t)UART_C2_TE_MASK | (uint8_t)UART_C2_RE_MASK);
 
         /* Write the sbr value to the BDH and BDL registers*/
-        base->BDH = (base->BDH & ~(uint8_t)UART_BDH_SBR_MASK) | (uint8_t)(sbr >> 8);
+        base->BDH =
+            (base->BDH & ~(uint8_t)UART_BDH_SBR_MASK) | (uint8_t)(sbr >> 8);
         base->BDL = (uint8_t)sbr;
 
-#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) && FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
+#if defined(FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT) &&             \
+    FSL_FEATURE_UART_HAS_BAUD_RATE_FINE_ADJUST_SUPPORT
         /* Write the brfa value to the register*/
-        base->C4 = (base->C4 & ~(uint8_t)UART_C4_BRFA_MASK) | ((uint8_t)brfa & (uint8_t)UART_C4_BRFA_MASK);
+        base->C4 = (base->C4 & ~(uint8_t)UART_C4_BRFA_MASK) |
+                   ((uint8_t)brfa & (uint8_t)UART_C4_BRFA_MASK);
 #endif
         /* Restore C2. */
         base->C2 = oldCtrl;
 
         return kStatus_Success;
-    }
-    else
-    {
+    } else {
         /* Unacceptable baud rate difference of more than 3%*/
         return kStatus_UART_BaudrateNotSupport;
     }
@@ -508,40 +503,39 @@ status_t UART_SetBaudRate(UART_Type *base, uint32_t baudRate_Bps, uint32_t srcCl
 /*!
  * brief Enable 9-bit data mode for UART.
  *
- * This function set the 9-bit mode for UART module. The 9th bit is not used for parity thus can be modified by user.
+ * This function set the 9-bit mode for UART module. The 9th bit is not used for
+ * parity thus can be modified by user.
  *
  * param base UART peripheral base address.
  * param enable true to enable, flase to disable.
  */
-void UART_Enable9bitMode(UART_Type *base, bool enable)
-{
+void UART_Enable9bitMode(UART_Type *base, bool enable) {
     assert(base != NULL);
 
     uint8_t temp = 0U;
 
-    if (enable)
-    {
-        /* Set UART_C1_M for 9-bit mode, clear UART_C1_PT and UART_C1_PE to disable parity. */
-        temp = base->C1 & ~((uint8_t)UART_C1_PE_MASK | (uint8_t)UART_C1_PT_MASK | (uint8_t)UART_C1_M_MASK);
+    if (enable) {
+        /* Set UART_C1_M for 9-bit mode, clear UART_C1_PT and UART_C1_PE to
+         * disable parity. */
+        temp = base->C1 & ~((uint8_t)UART_C1_PE_MASK |
+                            (uint8_t)UART_C1_PT_MASK | (uint8_t)UART_C1_M_MASK);
         temp |= (uint8_t)UART_C1_M_MASK;
         base->C1 = temp;
-    }
-    else
-    {
+    } else {
         /* Clear UART_C1_M. */
         base->C1 &= ~(uint8_t)UART_C1_M_MASK;
     }
 }
 
-#if defined(FSL_FEATURE_UART_HAS_ADDRESS_MATCHING) && FSL_FEATURE_UART_HAS_ADDRESS_MATCHING
+#if defined(FSL_FEATURE_UART_HAS_ADDRESS_MATCHING) &&                          \
+    FSL_FEATURE_UART_HAS_ADDRESS_MATCHING
 /*!
  * brief Transmit an address frame in 9-bit data mode.
  *
  * param base UART peripheral base address.
  * param address UART slave address.
  */
-void UART_SendAddress(UART_Type *base, uint8_t address)
-{
+void UART_SendAddress(UART_Type *base, uint8_t address) {
     assert(base != NULL);
 
     /* Set address mark. */
@@ -556,21 +550,22 @@ void UART_SendAddress(UART_Type *base, uint8_t address)
 /*!
  * brief Enables UART interrupts according to the provided mask.
  *
- * This function enables the UART interrupts according to the provided mask. The mask
- * is a logical OR of enumeration members. See ref _uart_interrupt_enable.
- * For example, to enable TX empty interrupt and RX full interrupt, do the following.
- * code
- *     UART_EnableInterrupts(UART1,kUART_TxDataRegEmptyInterruptEnable | kUART_RxDataRegFullInterruptEnable);
- * endcode
+ * This function enables the UART interrupts according to the provided mask. The
+ * mask is a logical OR of enumeration members. See ref _uart_interrupt_enable.
+ * For example, to enable TX empty interrupt and RX full interrupt, do the
+ * following. code
+ *     UART_EnableInterrupts(UART1,kUART_TxDataRegEmptyInterruptEnable |
+ * kUART_RxDataRegFullInterruptEnable); endcode
  *
  * param base UART peripheral base address.
- * param mask The interrupts to enable. Logical OR of ref _uart_interrupt_enable.
+ * param mask The interrupts to enable. Logical OR of ref
+ * _uart_interrupt_enable.
  */
-void UART_EnableInterrupts(UART_Type *base, uint32_t mask)
-{
+void UART_EnableInterrupts(UART_Type *base, uint32_t mask) {
     mask &= (uint32_t)kUART_AllInterruptsEnable;
 
-    /* The interrupt mask is combined by control bits from several register: ((CFIFO<<24) | (C3<<16) | (C2<<8) |(BDH))
+    /* The interrupt mask is combined by control bits from several register:
+     * ((CFIFO<<24) | (C3<<16) | (C2<<8) |(BDH))
      */
     base->BDH |= (uint8_t)mask;
     base->C2 |= (uint8_t)(mask >> 8);
@@ -584,21 +579,22 @@ void UART_EnableInterrupts(UART_Type *base, uint32_t mask)
 /*!
  * brief Disables the UART interrupts according to the provided mask.
  *
- * This function disables the UART interrupts according to the provided mask. The mask
- * is a logical OR of enumeration members. See ref _uart_interrupt_enable.
- * For example, to disable TX empty interrupt and RX full interrupt do the following.
- * code
- *     UART_DisableInterrupts(UART1,kUART_TxDataRegEmptyInterruptEnable | kUART_RxDataRegFullInterruptEnable);
- * endcode
+ * This function disables the UART interrupts according to the provided mask.
+ * The mask is a logical OR of enumeration members. See ref
+ * _uart_interrupt_enable. For example, to disable TX empty interrupt and RX
+ * full interrupt do the following. code
+ *     UART_DisableInterrupts(UART1,kUART_TxDataRegEmptyInterruptEnable |
+ * kUART_RxDataRegFullInterruptEnable); endcode
  *
  * param base UART peripheral base address.
- * param mask The interrupts to disable. Logical OR of ref _uart_interrupt_enable.
+ * param mask The interrupts to disable. Logical OR of ref
+ * _uart_interrupt_enable.
  */
-void UART_DisableInterrupts(UART_Type *base, uint32_t mask)
-{
+void UART_DisableInterrupts(UART_Type *base, uint32_t mask) {
     mask &= (uint32_t)kUART_AllInterruptsEnable;
 
-    /* The interrupt mask is combined by control bits from several register: ((CFIFO<<24) | (C3<<16) | (C2<<8) |(BDH))
+    /* The interrupt mask is combined by control bits from several register:
+     * ((CFIFO<<24) | (C3<<16) | (C2<<8) |(BDH))
      */
     base->BDH &= ~(uint8_t)mask;
     base->C2 &= ~(uint8_t)(mask >> 8);
@@ -612,12 +608,11 @@ void UART_DisableInterrupts(UART_Type *base, uint32_t mask)
 /*!
  * brief Gets the enabled UART interrupts.
  *
- * This function gets the enabled UART interrupts. The enabled interrupts are returned
- * as the logical OR value of the enumerators ref _uart_interrupt_enable. To check
- * a specific interrupts enable status, compare the return value with enumerators
- * in ref _uart_interrupt_enable.
- * For example, to check whether TX empty interrupt is enabled, do the following.
- * code
+ * This function gets the enabled UART interrupts. The enabled interrupts are
+ * returned as the logical OR value of the enumerators ref
+ * _uart_interrupt_enable. To check a specific interrupts enable status, compare
+ * the return value with enumerators in ref _uart_interrupt_enable. For example,
+ * to check whether TX empty interrupt is enabled, do the following. code
  *     uint32_t enabledInterrupts = UART_GetEnabledInterrupts(UART1);
  *
  *     if (kUART_TxDataRegEmptyInterruptEnable & enabledInterrupts)
@@ -627,10 +622,10 @@ void UART_DisableInterrupts(UART_Type *base, uint32_t mask)
  * endcode
  *
  * param base UART peripheral base address.
- * return UART interrupt flags which are logical OR of the enumerators in ref _uart_interrupt_enable.
+ * return UART interrupt flags which are logical OR of the enumerators in ref
+ * _uart_interrupt_enable.
  */
-uint32_t UART_GetEnabledInterrupts(UART_Type *base)
-{
+uint32_t UART_GetEnabledInterrupts(UART_Type *base) {
     uint32_t temp;
 
     temp = (uint32_t)base->BDH;
@@ -647,28 +642,28 @@ uint32_t UART_GetEnabledInterrupts(UART_Type *base)
 /*!
  * brief Gets UART status flags.
  *
- * This function gets all UART status flags. The flags are returned as the logical
- * OR value of the enumerators ref _uart_flags. To check a specific status,
- * compare the return value with enumerators in ref _uart_flags.
- * For example, to check whether the TX is empty, do the following.
- * code
- *     if (kUART_TxDataRegEmptyFlag & UART_GetStatusFlags(UART1))
+ * This function gets all UART status flags. The flags are returned as the
+ * logical OR value of the enumerators ref _uart_flags. To check a specific
+ * status, compare the return value with enumerators in ref _uart_flags. For
+ * example, to check whether the TX is empty, do the following. code if
+ * (kUART_TxDataRegEmptyFlag & UART_GetStatusFlags(UART1))
  *     {
  *         ...
  *     }
  * endcode
  *
  * param base UART peripheral base address.
- * return UART status flags which are ORed by the enumerators in the _uart_flags.
+ * return UART status flags which are ORed by the enumerators in the
+ * _uart_flags.
  */
-uint32_t UART_GetStatusFlags(UART_Type *base)
-{
+uint32_t UART_GetStatusFlags(UART_Type *base) {
     uint32_t status_flag;
 
     status_flag = (uint32_t)base->S1;
     status_flag |= ((uint32_t)(base->S2) << 8);
 
-#if defined(FSL_FEATURE_UART_HAS_EXTENDED_DATA_REGISTER_FLAGS) && FSL_FEATURE_UART_HAS_EXTENDED_DATA_REGISTER_FLAGS
+#if defined(FSL_FEATURE_UART_HAS_EXTENDED_DATA_REGISTER_FLAGS) &&              \
+    FSL_FEATURE_UART_HAS_EXTENDED_DATA_REGISTER_FLAGS
     status_flag |= ((uint32_t)(base->ED) << 16);
 #endif
 
@@ -682,26 +677,27 @@ uint32_t UART_GetStatusFlags(UART_Type *base)
 /*!
  * brief Clears status flags with the provided mask.
  *
- * This function clears UART status flags with a provided mask. An automatically cleared flag
- * can't be cleared by this function.
- * These flags can only be cleared or set by hardware.
- *    kUART_TxDataRegEmptyFlag, kUART_TransmissionCompleteFlag, kUART_RxDataRegFullFlag,
- *    kUART_RxActiveFlag, kUART_NoiseErrorInRxDataRegFlag, kUART_ParityErrorInRxDataRegFlag,
+ * This function clears UART status flags with a provided mask. An automatically
+ * cleared flag can't be cleared by this function. These flags can only be
+ * cleared or set by hardware. kUART_TxDataRegEmptyFlag,
+ * kUART_TransmissionCompleteFlag, kUART_RxDataRegFullFlag, kUART_RxActiveFlag,
+ * kUART_NoiseErrorInRxDataRegFlag, kUART_ParityErrorInRxDataRegFlag,
  *    kUART_TxFifoEmptyFlag,kUART_RxFifoEmptyFlag
- * Note that this API should be called when the Tx/Rx is idle. Otherwise it has no effect.
+ * Note that this API should be called when the Tx/Rx is idle. Otherwise it has
+ * no effect.
  *
  * param base UART peripheral base address.
- * param mask The status flags to be cleared; it is logical OR value of ref _uart_flags.
- * retval kStatus_UART_FlagCannotClearManually The flag can't be cleared by this function but
- *         it is cleared automatically by hardware.
- * retval kStatus_Success Status in the mask is cleared.
+ * param mask The status flags to be cleared; it is logical OR value of ref
+ * _uart_flags. retval kStatus_UART_FlagCannotClearManually The flag can't be
+ * cleared by this function but it is cleared automatically by hardware. retval
+ * kStatus_Success Status in the mask is cleared.
  */
-status_t UART_ClearStatusFlags(UART_Type *base, uint32_t mask)
-{
+status_t UART_ClearStatusFlags(UART_Type *base, uint32_t mask) {
     uint8_t reg = base->S2;
     status_t status;
 
-#if defined(FSL_FEATURE_UART_HAS_LIN_BREAK_DETECT) && FSL_FEATURE_UART_HAS_LIN_BREAK_DETECT
+#if defined(FSL_FEATURE_UART_HAS_LIN_BREAK_DETECT) &&                          \
+    FSL_FEATURE_UART_HAS_LIN_BREAK_DETECT
     reg &= ~((uint8_t)UART_S2_RXEDGIF_MASK | (uint8_t)UART_S2_LBKDIF_MASK);
 #else
     reg &= ~(uint8_t)UART_S2_RXEDGIF_MASK;
@@ -713,15 +709,16 @@ status_t UART_ClearStatusFlags(UART_Type *base, uint32_t mask)
     base->SFIFO = (uint8_t)(mask >> 24);
 #endif
 
-    if ((mask & ((uint32_t)kUART_IdleLineFlag | (uint32_t)kUART_NoiseErrorFlag | (uint32_t)kUART_FramingErrorFlag |
-                 (uint32_t)kUART_ParityErrorFlag | (uint32_t)kUART_RxOverrunFlag)) != 0u)
-    {
+    if ((mask &
+         ((uint32_t)kUART_IdleLineFlag | (uint32_t)kUART_NoiseErrorFlag |
+          (uint32_t)kUART_FramingErrorFlag | (uint32_t)kUART_ParityErrorFlag |
+          (uint32_t)kUART_RxOverrunFlag)) != 0u) {
         /* Read base->S1 and base->D to clear the flags. */
         (void)base->S1;
         (void)base->D;
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
-        /* Read base->D may cause receiver underflow when there are no valid data.
-           Clear receiver underflow flag */
+        /* Read base->D may cause receiver underflow when there are no valid
+           data. Clear receiver underflow flag */
         base->SFIFO = UART_SFIFO_RXUF_MASK;
         /* Flush FIFO data. Otherwise FIFO pointer will be in unknown state. */
         base->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
@@ -729,15 +726,14 @@ status_t UART_ClearStatusFlags(UART_Type *base, uint32_t mask)
     }
 
     /* If some flags still pending. */
-    if ((mask & UART_GetStatusFlags(base)) != 0U)
-    {
-        /* Some flags can only clear or set by the hardware itself, these flags are: kUART_TxDataRegEmptyFlag,
-        kUART_TransmissionCompleteFlag, kUART_RxDataRegFullFlag, kUART_RxActiveFlag, kUART_NoiseErrorInRxDataRegFlag,
-        kUART_ParityErrorInRxDataRegFlag, kUART_TxFifoEmptyFlag, kUART_RxFifoEmptyFlag. */
+    if ((mask & UART_GetStatusFlags(base)) != 0U) {
+        /* Some flags can only clear or set by the hardware itself, these flags
+        are: kUART_TxDataRegEmptyFlag, kUART_TransmissionCompleteFlag,
+        kUART_RxDataRegFullFlag, kUART_RxActiveFlag,
+        kUART_NoiseErrorInRxDataRegFlag, kUART_ParityErrorInRxDataRegFlag,
+        kUART_TxFifoEmptyFlag, kUART_RxFifoEmptyFlag. */
         status = kStatus_UART_FlagCannotClearManually;
-    }
-    else
-    {
+    } else {
         status = kStatus_Success;
     }
 
@@ -747,8 +743,8 @@ status_t UART_ClearStatusFlags(UART_Type *base, uint32_t mask)
 /*!
  * brief Writes to the TX register using a blocking method.
  *
- * This function polls the TX register, waits for the TX register to be empty or for the TX FIFO
- * to have room and writes data to the TX buffer.
+ * This function polls the TX register, waits for the TX register to be empty or
+ * for the TX FIFO to have room and writes data to the TX buffer.
  *
  * param base UART peripheral base address.
  * param data Start address of the data to write.
@@ -756,13 +752,12 @@ status_t UART_ClearStatusFlags(UART_Type *base, uint32_t mask)
  * retval kStatus_UART_Timeout Transmission timed out and was aborted.
  * retval kStatus_Success Successfully wrote all data.
  */
-status_t UART_WriteBlocking(UART_Type *base, const uint8_t *data, size_t length)
-{
+status_t UART_WriteBlocking(UART_Type *base, const uint8_t *data,
+                            size_t length) {
 #if UART_RETRY_TIMES
     uint32_t waitTimes;
 #endif
-    while (0U != length--)
-    {
+    while (0U != length--) {
 #if UART_RETRY_TIMES
         waitTimes = UART_RETRY_TIMES;
         while ((0U == (base->S1 & UART_S1_TDRE_MASK)) && (0U != --waitTimes))
@@ -772,8 +767,7 @@ status_t UART_WriteBlocking(UART_Type *base, const uint8_t *data, size_t length)
         {
         }
 #if UART_RETRY_TIMES
-        if (waitTimes == 0U)
-        {
+        if (waitTimes == 0U) {
             return kStatus_LPUART_Timeout;
         }
 #endif
@@ -790,24 +784,22 @@ status_t UART_WriteBlocking(UART_Type *base, const uint8_t *data, size_t length)
     {
     }
 #if UART_RETRY_TIMES
-    if (waitTimes == 0U)
-    {
+    if (waitTimes == 0U) {
         return kStatus_LPUART_Timeout;
     }
 #endif
     return kStatus_Success;
 }
 
-static void UART_WriteNonBlocking(UART_Type *base, const uint8_t *data, size_t length)
-{
+static void UART_WriteNonBlocking(UART_Type *base, const uint8_t *data,
+                                  size_t length) {
     assert(data);
 
     size_t i;
 
-    /* The Non Blocking write data API assume user have ensured there is enough space in
-    peripheral to write. */
-    for (i = 0; i < length; i++)
-    {
+    /* The Non Blocking write data API assume user have ensured there is enough
+    space in peripheral to write. */
+    for (i = 0; i < length; i++) {
         base->D = data[i];
     }
 }
@@ -815,21 +807,20 @@ static void UART_WriteNonBlocking(UART_Type *base, const uint8_t *data, size_t l
 /*!
  * brief Read RX data register using a blocking method.
  *
- * This function polls the RX register, waits for the RX register to be full or for RX FIFO to
- * have data, and reads data from the TX register.
+ * This function polls the RX register, waits for the RX register to be full or
+ * for RX FIFO to have data, and reads data from the TX register.
  *
  * param base UART peripheral base address.
  * param data Start address of the buffer to store the received data.
  * param length Size of the buffer.
- * retval kStatus_UART_RxHardwareOverrun Receiver overrun occurred while receiving data.
- * retval kStatus_UART_NoiseError A noise error occurred while receiving data.
- * retval kStatus_UART_FramingError A framing error occurred while receiving data.
- * retval kStatus_UART_ParityError A parity error occurred while receiving data.
- * retval kStatus_UART_Timeout Transmission timed out and was aborted.
- * retval kStatus_Success Successfully received all data.
+ * retval kStatus_UART_RxHardwareOverrun Receiver overrun occurred while
+ * receiving data. retval kStatus_UART_NoiseError A noise error occurred while
+ * receiving data. retval kStatus_UART_FramingError A framing error occurred
+ * while receiving data. retval kStatus_UART_ParityError A parity error occurred
+ * while receiving data. retval kStatus_UART_Timeout Transmission timed out and
+ * was aborted. retval kStatus_Success Successfully received all data.
  */
-status_t UART_ReadBlocking(UART_Type *base, uint8_t *data, size_t length)
-{
+status_t UART_ReadBlocking(UART_Type *base, uint8_t *data, size_t length) {
     assert(data != NULL);
 
     status_t status = kStatus_Success;
@@ -838,8 +829,7 @@ status_t UART_ReadBlocking(UART_Type *base, uint8_t *data, size_t length)
     uint32_t waitTimes;
 #endif
 
-    while (length-- != 0U)
-    {
+    while (length-- != 0U) {
 #if UART_RETRY_TIMES
         waitTimes = UART_RETRY_TIMES;
 #endif
@@ -850,55 +840,58 @@ status_t UART_ReadBlocking(UART_Type *base, uint8_t *data, size_t length)
 #endif
         {
 #if UART_RETRY_TIMES
-            if (0U == --waitTimes)
-            {
+            if (0U == --waitTimes) {
                 status = kStatus_LPUART_Timeout;
                 break;
             }
 #endif
             statusFlag = UART_GetStatusFlags(base);
 
-            if (0U != (statusFlag & (uint32_t)kUART_RxOverrunFlag))
-            {
-                status = ((kStatus_Success == UART_ClearStatusFlags(base, (uint32_t)kUART_RxOverrunFlag)) ?
-                              (status_t)(kStatus_UART_RxHardwareOverrun) :
-                              (status_t)(kStatus_UART_FlagCannotClearManually));
-                /* If the OR bit is set all the other error flags are prevented from setting,
-                   no need to check other status flags. */
+            if (0U != (statusFlag & (uint32_t)kUART_RxOverrunFlag)) {
+                status =
+                    ((kStatus_Success ==
+                      UART_ClearStatusFlags(base,
+                                            (uint32_t)kUART_RxOverrunFlag))
+                         ? (status_t)(kStatus_UART_RxHardwareOverrun)
+                         : (status_t)(kStatus_UART_FlagCannotClearManually));
+                /* If the OR bit is set all the other error flags are prevented
+                   from setting, no need to check other status flags. */
                 break;
             }
 
-            if (0U != (statusFlag & (uint32_t)kUART_ParityErrorFlag))
-            {
-                status = ((kStatus_Success == UART_ClearStatusFlags(base, (uint32_t)kUART_ParityErrorFlag)) ?
-                              (status_t)(kStatus_UART_ParityError) :
-                              (status_t)(kStatus_UART_FlagCannotClearManually));
+            if (0U != (statusFlag & (uint32_t)kUART_ParityErrorFlag)) {
+                status =
+                    ((kStatus_Success ==
+                      UART_ClearStatusFlags(base,
+                                            (uint32_t)kUART_ParityErrorFlag))
+                         ? (status_t)(kStatus_UART_ParityError)
+                         : (status_t)(kStatus_UART_FlagCannotClearManually));
             }
 
-            if (0U != (statusFlag & (uint32_t)kUART_FramingErrorFlag))
-            {
-                status = ((kStatus_Success == UART_ClearStatusFlags(base, (uint32_t)kUART_FramingErrorFlag)) ?
-                              (status_t)(kStatus_UART_FramingError) :
-                              (status_t)(kStatus_UART_FlagCannotClearManually));
+            if (0U != (statusFlag & (uint32_t)kUART_FramingErrorFlag)) {
+                status =
+                    ((kStatus_Success ==
+                      UART_ClearStatusFlags(base,
+                                            (uint32_t)kUART_FramingErrorFlag))
+                         ? (status_t)(kStatus_UART_FramingError)
+                         : (status_t)(kStatus_UART_FlagCannotClearManually));
             }
 
-            if (0U != (statusFlag & (uint32_t)kUART_NoiseErrorFlag))
-            {
-                status = ((kStatus_Success == UART_ClearStatusFlags(base, (uint32_t)kUART_NoiseErrorFlag)) ?
-                              (status_t)(kStatus_UART_NoiseError) :
-                              (status_t)(kStatus_UART_FlagCannotClearManually));
+            if (0U != (statusFlag & (uint32_t)kUART_NoiseErrorFlag)) {
+                status =
+                    ((kStatus_Success ==
+                      UART_ClearStatusFlags(base,
+                                            (uint32_t)kUART_NoiseErrorFlag))
+                         ? (status_t)(kStatus_UART_NoiseError)
+                         : (status_t)(kStatus_UART_FlagCannotClearManually));
             }
-            if (kStatus_Success != status)
-            {
+            if (kStatus_Success != status) {
                 break;
             }
         }
-        if (kStatus_Success == status)
-        {
+        if (kStatus_Success == status) {
             *(data++) = base->D;
-        }
-        else
-        {
+        } else {
             break;
         }
     }
@@ -906,16 +899,15 @@ status_t UART_ReadBlocking(UART_Type *base, uint8_t *data, size_t length)
     return status;
 }
 
-static void UART_ReadNonBlocking(UART_Type *base, uint8_t *data, size_t length)
-{
+static void UART_ReadNonBlocking(UART_Type *base, uint8_t *data,
+                                 size_t length) {
     assert(data);
 
     size_t i;
 
-    /* The Non Blocking read data API assume user have ensured there is enough space in
-    peripheral to write. */
-    for (i = 0; i < length; i++)
-    {
+    /* The Non Blocking read data API assume user have ensured there is enough
+    space in peripheral to write. */
+    for (i = 0; i < length; i++) {
         data[i] = base->D;
     }
 }
@@ -932,11 +924,9 @@ static void UART_ReadNonBlocking(UART_Type *base, uint8_t *data, size_t length)
  * param callback The callback function.
  * param userData The parameter of the callback function.
  */
-void UART_TransferCreateHandle(UART_Type *base,
-                               uart_handle_t *handle,
+void UART_TransferCreateHandle(UART_Type *base, uart_handle_t *handle,
                                uart_transfer_callback_t callback,
-                               void *userData)
-{
+                               void *userData) {
     assert(handle);
 
     uint32_t instance;
@@ -955,7 +945,8 @@ void UART_TransferCreateHandle(UART_Type *base,
     /* Get instance from peripheral base address. */
     instance = UART_GetInstance(base);
 
-    /* Save the handle in global variables to support the double weak mechanism. */
+    /* Save the handle in global variables to support the double weak mechanism.
+     */
     s_uartHandle[instance] = handle;
 
     s_uartIsr = UART_TransferHandleIRQ;
@@ -968,36 +959,40 @@ void UART_TransferCreateHandle(UART_Type *base,
  *
  * This function sets up the RX ring buffer to a specific UART handle.
  *
- * When the RX ring buffer is used, data received are stored into the ring buffer even when the
- * user doesn't call the UART_TransferReceiveNonBlocking() API. If data is already received
- * in the ring buffer, the user can get the received data from the ring buffer directly.
+ * When the RX ring buffer is used, data received are stored into the ring
+ * buffer even when the user doesn't call the UART_TransferReceiveNonBlocking()
+ * API. If data is already received in the ring buffer, the user can get the
+ * received data from the ring buffer directly.
  *
- * note When using the RX ring buffer, one byte is reserved for internal use. In other
- * words, if p ringBufferSize is 32, only 31 bytes are used for saving data.
+ * note When using the RX ring buffer, one byte is reserved for internal use. In
+ * other words, if p ringBufferSize is 32, only 31 bytes are used for saving
+ * data.
  *
  * param base UART peripheral base address.
  * param handle UART handle pointer.
- * param ringBuffer Start address of the ring buffer for background receiving. Pass NULL to disable the ring buffer.
- * param ringBufferSize Size of the ring buffer.
+ * param ringBuffer Start address of the ring buffer for background receiving.
+ * Pass NULL to disable the ring buffer. param ringBufferSize Size of the ring
+ * buffer.
  */
-void UART_TransferStartRingBuffer(UART_Type *base, uart_handle_t *handle, uint8_t *ringBuffer, size_t ringBufferSize)
-{
+void UART_TransferStartRingBuffer(UART_Type *base, uart_handle_t *handle,
+                                  uint8_t *ringBuffer, size_t ringBufferSize) {
     assert(handle);
     assert(ringBuffer);
 
     /* Setup the ringbuffer address */
-    handle->rxRingBuffer     = ringBuffer;
+    handle->rxRingBuffer = ringBuffer;
     handle->rxRingBufferSize = ringBufferSize;
     handle->rxRingBufferHead = 0U;
     handle->rxRingBufferTail = 0U;
 
-    /* Enable the interrupt to accept the data when user need the ring buffer. */
-    UART_EnableInterrupts(base, (uint32_t)kUART_RxDataRegFullInterruptEnable |
-                                    (uint32_t)kUART_RxOverrunInterruptEnable |
-                                    (uint32_t)kUART_FramingErrorInterruptEnable);
+    /* Enable the interrupt to accept the data when user need the ring buffer.
+     */
+    UART_EnableInterrupts(base,
+                          (uint32_t)kUART_RxDataRegFullInterruptEnable |
+                              (uint32_t)kUART_RxOverrunInterruptEnable |
+                              (uint32_t)kUART_FramingErrorInterruptEnable);
     /* Enable parity error interrupt when parity mode is enable*/
-    if ((UART_C1_PE_MASK & base->C1) != 0U)
-    {
+    if ((UART_C1_PE_MASK & base->C1) != 0U) {
         UART_EnableInterrupts(base, (uint32_t)kUART_ParityErrorInterruptEnable);
     }
 }
@@ -1010,23 +1005,22 @@ void UART_TransferStartRingBuffer(UART_Type *base, uart_handle_t *handle, uint8_
  * param base UART peripheral base address.
  * param handle UART handle pointer.
  */
-void UART_TransferStopRingBuffer(UART_Type *base, uart_handle_t *handle)
-{
+void UART_TransferStopRingBuffer(UART_Type *base, uart_handle_t *handle) {
     assert(handle);
 
-    if (handle->rxState == (uint8_t)kUART_RxIdle)
-    {
-        UART_DisableInterrupts(base, (uint32_t)kUART_RxDataRegFullInterruptEnable |
-                                         (uint32_t)kUART_RxOverrunInterruptEnable |
-                                         (uint32_t)kUART_FramingErrorInterruptEnable);
+    if (handle->rxState == (uint8_t)kUART_RxIdle) {
+        UART_DisableInterrupts(base,
+                               (uint32_t)kUART_RxDataRegFullInterruptEnable |
+                                   (uint32_t)kUART_RxOverrunInterruptEnable |
+                                   (uint32_t)kUART_FramingErrorInterruptEnable);
         /* Disable parity error interrupt when parity mode is enable*/
-        if ((UART_C1_PE_MASK & base->C1) != 0U)
-        {
-            UART_DisableInterrupts(base, (uint32_t)kUART_ParityErrorInterruptEnable);
+        if ((UART_C1_PE_MASK & base->C1) != 0U) {
+            UART_DisableInterrupts(base,
+                                   (uint32_t)kUART_ParityErrorInterruptEnable);
         }
     }
 
-    handle->rxRingBuffer     = NULL;
+    handle->rxRingBuffer = NULL;
     handle->rxRingBufferSize = 0U;
     handle->rxRingBufferHead = 0U;
     handle->rxRingBufferTail = 0U;
@@ -1035,24 +1029,27 @@ void UART_TransferStopRingBuffer(UART_Type *base, uart_handle_t *handle)
 /*!
  * brief Transmits a buffer of data using the interrupt method.
  *
- * This function sends data using an interrupt method. This is a non-blocking function, which
- * returns directly without waiting for all data to be written to the TX register. When
- * all data is written to the TX register in the ISR, the UART driver calls the callback
- * function and passes the ref kStatus_UART_TxIdle as status parameter.
+ * This function sends data using an interrupt method. This is a non-blocking
+ * function, which returns directly without waiting for all data to be written
+ * to the TX register. When all data is written to the TX register in the ISR,
+ * the UART driver calls the callback function and passes the ref
+ * kStatus_UART_TxIdle as status parameter.
  *
- * note The kStatus_UART_TxIdle is passed to the upper layer when all data is written
- * to the TX register. However, it does not ensure that all data is sent out. Before disabling the TX,
- * check the kUART_TransmissionCompleteFlag to ensure that the TX is finished.
+ * note The kStatus_UART_TxIdle is passed to the upper layer when all data is
+ * written to the TX register. However, it does not ensure that all data is sent
+ * out. Before disabling the TX, check the kUART_TransmissionCompleteFlag to
+ * ensure that the TX is finished.
  *
  * param base UART peripheral base address.
  * param handle UART handle pointer.
  * param xfer UART transfer structure. See  #uart_transfer_t.
  * retval kStatus_Success Successfully start the data transmission.
- * retval kStatus_UART_TxBusy Previous transmission still not finished; data not all written to TX register yet.
- * retval kStatus_InvalidArgument Invalid argument.
+ * retval kStatus_UART_TxBusy Previous transmission still not finished; data not
+ * all written to TX register yet. retval kStatus_InvalidArgument Invalid
+ * argument.
  */
-status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, uart_transfer_t *xfer)
-{
+status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle,
+                                      uart_transfer_t *xfer) {
     assert(handle);
     assert(xfer);
     assert(xfer->dataSize);
@@ -1061,19 +1058,17 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, ua
     status_t status;
 
     /* Return error if current TX busy. */
-    if ((uint8_t)kUART_TxBusy == handle->txState)
-    {
+    if ((uint8_t)kUART_TxBusy == handle->txState) {
         status = kStatus_UART_TxBusy;
-    }
-    else
-    {
-        handle->txData        = xfer->data;
-        handle->txDataSize    = xfer->dataSize;
+    } else {
+        handle->txData = xfer->data;
+        handle->txDataSize = xfer->dataSize;
         handle->txDataSizeAll = xfer->dataSize;
-        handle->txState       = (uint8_t)kUART_TxBusy;
+        handle->txState = (uint8_t)kUART_TxBusy;
 
         /* Enable transmitter interrupt. */
-        UART_EnableInterrupts(base, (uint32_t)kUART_TxDataRegEmptyInterruptEnable);
+        UART_EnableInterrupts(base,
+                              (uint32_t)kUART_TxDataRegEmptyInterruptEnable);
 
         status = kStatus_Success;
     }
@@ -1084,27 +1079,28 @@ status_t UART_TransferSendNonBlocking(UART_Type *base, uart_handle_t *handle, ua
 /*!
  * brief Aborts the interrupt-driven data transmit.
  *
- * This function aborts the interrupt-driven data sending. The user can get the remainBytes to find out
- * how many bytes are not sent out.
+ * This function aborts the interrupt-driven data sending. The user can get the
+ * remainBytes to find out how many bytes are not sent out.
  *
  * param base UART peripheral base address.
  * param handle UART handle pointer.
  */
-void UART_TransferAbortSend(UART_Type *base, uart_handle_t *handle)
-{
+void UART_TransferAbortSend(UART_Type *base, uart_handle_t *handle) {
     assert(handle);
 
     UART_DisableInterrupts(
-        base, (uint32_t)kUART_TxDataRegEmptyInterruptEnable | (uint32_t)kUART_TransmissionCompleteInterruptEnable);
+        base, (uint32_t)kUART_TxDataRegEmptyInterruptEnable |
+                  (uint32_t)kUART_TransmissionCompleteInterruptEnable);
 
     handle->txDataSize = 0;
-    handle->txState    = (uint8_t)kUART_TxIdle;
+    handle->txState = (uint8_t)kUART_TxIdle;
 }
 
 /*!
  * brief Gets the number of bytes sent out to bus.
  *
- * This function gets the number of bytes sent out to bus by using the interrupt method.
+ * This function gets the number of bytes sent out to bus by using the interrupt
+ * method.
  *
  * param base UART peripheral base address.
  * param handle UART handle pointer.
@@ -1113,24 +1109,20 @@ void UART_TransferAbortSend(UART_Type *base, uart_handle_t *handle)
  * retval kStatus_InvalidArgument The parameter is invalid.
  * retval kStatus_Success Get successfully through the parameter \p count;
  */
-status_t UART_TransferGetSendCount(UART_Type *base, uart_handle_t *handle, uint32_t *count)
-{
+status_t UART_TransferGetSendCount(UART_Type *base, uart_handle_t *handle,
+                                   uint32_t *count) {
     assert(handle);
     assert(count);
 
-    if ((uint8_t)kUART_TxIdle == handle->txState)
-    {
+    if ((uint8_t)kUART_TxIdle == handle->txState) {
         return kStatus_NoTransferInProgress;
     }
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
     *count = handle->txDataSizeAll - handle->txDataSize - base->TCFIFO;
 #else
-    if ((base->S1 & (uint8_t)kUART_TxDataRegEmptyFlag) != 0U)
-    {
+    if ((base->S1 & (uint8_t)kUART_TxDataRegEmptyFlag) != 0U) {
         *count = handle->txDataSizeAll - handle->txDataSize;
-    }
-    else
-    {
+    } else {
         *count = handle->txDataSizeAll - handle->txDataSize - 1U;
     }
 #endif /* FSL_FEATURE_UART_HAS_FIFO */
@@ -1141,20 +1133,22 @@ status_t UART_TransferGetSendCount(UART_Type *base, uart_handle_t *handle, uint3
 /*!
  * brief Receives a buffer of data using an interrupt method.
  *
- * This function receives data using an interrupt method. This is a non-blocking function, which
- *  returns without waiting for all data to be received.
- * If the RX ring buffer is used and not empty, the data in the ring buffer is copied and
- * the parameter p receivedBytes shows how many bytes are copied from the ring buffer.
- * After copying, if the data in the ring buffer is not enough to read, the receive
- * request is saved by the UART driver. When the new data arrives, the receive request
- * is serviced first. When all data is received, the UART driver notifies the upper layer
- * through a callback function and passes the status parameter ref kStatus_UART_RxIdle.
- * For example, the upper layer needs 10 bytes but there are only 5 bytes in the ring buffer.
- * The 5 bytes are copied to the xfer->data and this function returns with the
- * parameter p receivedBytes set to 5. For the left 5 bytes, newly arrived data is
- * saved from the xfer->data[5]. When 5 bytes are received, the UART driver notifies the upper layer.
- * If the RX ring buffer is not enabled, this function enables the RX and RX interrupt
- * to receive data to the xfer->data. When all data is received, the upper layer is notified.
+ * This function receives data using an interrupt method. This is a non-blocking
+ * function, which returns without waiting for all data to be received. If the
+ * RX ring buffer is used and not empty, the data in the ring buffer is copied
+ * and the parameter p receivedBytes shows how many bytes are copied from the
+ * ring buffer. After copying, if the data in the ring buffer is not enough to
+ * read, the receive request is saved by the UART driver. When the new data
+ * arrives, the receive request is serviced first. When all data is received,
+ * the UART driver notifies the upper layer through a callback function and
+ * passes the status parameter ref kStatus_UART_RxIdle. For example, the upper
+ * layer needs 10 bytes but there are only 5 bytes in the ring buffer. The 5
+ * bytes are copied to the xfer->data and this function returns with the
+ * parameter p receivedBytes set to 5. For the left 5 bytes, newly arrived data
+ * is saved from the xfer->data[5]. When 5 bytes are received, the UART driver
+ * notifies the upper layer. If the RX ring buffer is not enabled, this function
+ * enables the RX and RX interrupt to receive data to the xfer->data. When all
+ * data is received, the upper layer is notified.
  *
  * param base UART peripheral base address.
  * param handle UART handle pointer.
@@ -1164,11 +1158,9 @@ status_t UART_TransferGetSendCount(UART_Type *base, uart_handle_t *handle, uint3
  * retval kStatus_UART_RxBusy Previous receive request is not finished.
  * retval kStatus_InvalidArgument Invalid argument.
  */
-status_t UART_TransferReceiveNonBlocking(UART_Type *base,
-                                         uart_handle_t *handle,
+status_t UART_TransferReceiveNonBlocking(UART_Type *base, uart_handle_t *handle,
                                          uart_transfer_t *xfer,
-                                         size_t *receivedBytes)
-{
+                                         size_t *receivedBytes) {
     assert(handle);
     assert(xfer);
     assert(xfer->data);
@@ -1184,100 +1176,95 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base,
     size_t bytesCurrentReceived;
 
     /* How to get data:
-       1. If RX ring buffer is not enabled, then save xfer->data and xfer->dataSize
-          to uart handle, enable interrupt to store received data to xfer->data. When
-          all data received, trigger callback.
-       2. If RX ring buffer is enabled and not empty, get data from ring buffer first.
-          If there are enough data in ring buffer, copy them to xfer->data and return.
-          If there are not enough data in ring buffer, copy all of them to xfer->data,
-          save the xfer->data remained empty space to uart handle, receive data
-          to this empty space and trigger callback when finished. */
+       1. If RX ring buffer is not enabled, then save xfer->data and
+       xfer->dataSize to uart handle, enable interrupt to store received data to
+       xfer->data. When all data received, trigger callback.
+       2. If RX ring buffer is enabled and not empty, get data from ring buffer
+       first. If there are enough data in ring buffer, copy them to xfer->data
+       and return. If there are not enough data in ring buffer, copy all of them
+       to xfer->data, save the xfer->data remained empty space to uart handle,
+       receive data to this empty space and trigger callback when finished. */
 
-    if ((uint8_t)kUART_RxBusy == handle->rxState)
-    {
+    if ((uint8_t)kUART_RxBusy == handle->rxState) {
         status = kStatus_UART_RxBusy;
-    }
-    else
-    {
-        bytesToReceive       = xfer->dataSize;
+    } else {
+        bytesToReceive = xfer->dataSize;
         bytesCurrentReceived = 0U;
 
         /* If RX ring buffer is used. */
-        if (handle->rxRingBuffer != NULL)
-        {
+        if (handle->rxRingBuffer != NULL) {
             /* Disable UART RX IRQ, protect ring buffer. */
-            UART_DisableInterrupts(base, (uint32_t)kUART_RxDataRegFullInterruptEnable);
+            UART_DisableInterrupts(
+                base, (uint32_t)kUART_RxDataRegFullInterruptEnable);
 
             /* How many bytes in RX ring buffer currently. */
             bytesToCopy = UART_TransferGetRxRingBufferLength(handle);
 
-            if (bytesToCopy != 0U)
-            {
+            if (bytesToCopy != 0U) {
                 bytesToCopy = MIN(bytesToReceive, bytesToCopy);
 
                 bytesToReceive -= bytesToCopy;
 
                 /* Copy data from ring buffer to user memory. */
-                for (i = 0U; i < bytesToCopy; i++)
-                {
-                    xfer->data[bytesCurrentReceived++] = handle->rxRingBuffer[handle->rxRingBufferTail];
+                for (i = 0U; i < bytesToCopy; i++) {
+                    xfer->data[bytesCurrentReceived++] =
+                        handle->rxRingBuffer[handle->rxRingBufferTail];
 
-                    /* Wrap to 0. Not use modulo (%) because it might be large and slow. */
-                    if ((size_t)handle->rxRingBufferTail + 1U == handle->rxRingBufferSize)
-                    {
+                    /* Wrap to 0. Not use modulo (%) because it might be large
+                     * and slow. */
+                    if ((size_t)handle->rxRingBufferTail + 1U ==
+                        handle->rxRingBufferSize) {
                         handle->rxRingBufferTail = 0U;
-                    }
-                    else
-                    {
+                    } else {
                         handle->rxRingBufferTail++;
                     }
                 }
             }
 
-            /* If ring buffer does not have enough data, still need to read more data. */
-            if (bytesToReceive != 0U)
-            {
+            /* If ring buffer does not have enough data, still need to read more
+             * data. */
+            if (bytesToReceive != 0U) {
                 /* No data in ring buffer, save the request to UART handle. */
-                handle->rxData        = xfer->data + bytesCurrentReceived;
-                handle->rxDataSize    = bytesToReceive;
+                handle->rxData = xfer->data + bytesCurrentReceived;
+                handle->rxDataSize = bytesToReceive;
                 handle->rxDataSizeAll = bytesToReceive;
-                handle->rxState       = (uint8_t)kUART_RxBusy;
+                handle->rxState = (uint8_t)kUART_RxBusy;
             }
 
             /* Enable UART RX IRQ if previously enabled. */
-            UART_EnableInterrupts(base, (uint32_t)kUART_RxDataRegFullInterruptEnable);
+            UART_EnableInterrupts(base,
+                                  (uint32_t)kUART_RxDataRegFullInterruptEnable);
 
             /* Call user callback since all data are received. */
-            if (0U == bytesToReceive)
-            {
-                if (handle->callback != NULL)
-                {
-                    handle->callback(base, handle, kStatus_UART_RxIdle, handle->userData);
+            if (0U == bytesToReceive) {
+                if (handle->callback != NULL) {
+                    handle->callback(base, handle, kStatus_UART_RxIdle,
+                                     handle->userData);
                 }
             }
         }
         /* Ring buffer not used. */
-        else
-        {
-            handle->rxData        = xfer->data + bytesCurrentReceived;
-            handle->rxDataSize    = bytesToReceive;
+        else {
+            handle->rxData = xfer->data + bytesCurrentReceived;
+            handle->rxDataSize = bytesToReceive;
             handle->rxDataSizeAll = bytesToReceive;
-            handle->rxState       = (uint8_t)kUART_RxBusy;
+            handle->rxState = (uint8_t)kUART_RxBusy;
 
             /* Enable RX/Rx overrun/framing error/idle line interrupt. */
             UART_EnableInterrupts(
-                base, (uint32_t)kUART_RxDataRegFullInterruptEnable | (uint32_t)kUART_RxOverrunInterruptEnable |
-                          (uint32_t)kUART_FramingErrorInterruptEnable | (uint32_t)kUART_IdleLineInterruptEnable);
+                base, (uint32_t)kUART_RxDataRegFullInterruptEnable |
+                          (uint32_t)kUART_RxOverrunInterruptEnable |
+                          (uint32_t)kUART_FramingErrorInterruptEnable |
+                          (uint32_t)kUART_IdleLineInterruptEnable);
             /* Enable parity error interrupt when parity mode is enable*/
-            if ((UART_C1_PE_MASK & base->C1) != 0U)
-            {
-                UART_EnableInterrupts(base, (uint32_t)kUART_ParityErrorInterruptEnable);
+            if ((UART_C1_PE_MASK & base->C1) != 0U) {
+                UART_EnableInterrupts(
+                    base, (uint32_t)kUART_ParityErrorInterruptEnable);
             }
         }
 
         /* Return the how many bytes have read. */
-        if (receivedBytes != NULL)
-        {
+        if (receivedBytes != NULL) {
             *receivedBytes = bytesCurrentReceived;
         }
 
@@ -1290,32 +1277,33 @@ status_t UART_TransferReceiveNonBlocking(UART_Type *base,
 /*!
  * brief Aborts the interrupt-driven data receiving.
  *
- * This function aborts the interrupt-driven data receiving. The user can get the remainBytes to know
- * how many bytes are not received yet.
+ * This function aborts the interrupt-driven data receiving. The user can get
+ * the remainBytes to know how many bytes are not received yet.
  *
  * param base UART peripheral base address.
  * param handle UART handle pointer.
  */
-void UART_TransferAbortReceive(UART_Type *base, uart_handle_t *handle)
-{
+void UART_TransferAbortReceive(UART_Type *base, uart_handle_t *handle) {
     assert(handle);
 
-    /* Only abort the receive to handle->rxData, the RX ring buffer is still working. */
-    if (NULL == handle->rxRingBuffer)
-    {
+    /* Only abort the receive to handle->rxData, the RX ring buffer is still
+     * working. */
+    if (NULL == handle->rxRingBuffer) {
         /* Disable RX interrupt. */
-        UART_DisableInterrupts(
-            base, (uint32_t)kUART_RxDataRegFullInterruptEnable | (uint32_t)kUART_RxOverrunInterruptEnable |
-                      (uint32_t)kUART_FramingErrorInterruptEnable | (uint32_t)kUART_IdleLineInterruptEnable);
+        UART_DisableInterrupts(base,
+                               (uint32_t)kUART_RxDataRegFullInterruptEnable |
+                                   (uint32_t)kUART_RxOverrunInterruptEnable |
+                                   (uint32_t)kUART_FramingErrorInterruptEnable |
+                                   (uint32_t)kUART_IdleLineInterruptEnable);
         /* Disable parity error interrupt when parity mode is enable*/
-        if ((UART_C1_PE_MASK & base->C1) != 0U)
-        {
-            UART_DisableInterrupts(base, (uint32_t)kUART_ParityErrorInterruptEnable);
+        if ((UART_C1_PE_MASK & base->C1) != 0U) {
+            UART_DisableInterrupts(base,
+                                   (uint32_t)kUART_ParityErrorInterruptEnable);
         }
     }
 
     handle->rxDataSize = 0U;
-    handle->rxState    = (uint8_t)kUART_RxIdle;
+    handle->rxState = (uint8_t)kUART_RxIdle;
 }
 
 /*!
@@ -1330,18 +1318,16 @@ void UART_TransferAbortReceive(UART_Type *base, uart_handle_t *handle)
  * retval kStatus_InvalidArgument Parameter is invalid.
  * retval kStatus_Success Get successfully through the parameter \p count;
  */
-status_t UART_TransferGetReceiveCount(UART_Type *base, uart_handle_t *handle, uint32_t *count)
-{
+status_t UART_TransferGetReceiveCount(UART_Type *base, uart_handle_t *handle,
+                                      uint32_t *count) {
     assert(handle);
     assert(count);
 
-    if ((uint8_t)kUART_RxIdle == handle->rxState)
-    {
+    if ((uint8_t)kUART_RxIdle == handle->rxState) {
         return kStatus_NoTransferInProgress;
     }
 
-    if (NULL == count)
-    {
+    if (NULL == count) {
         return kStatus_InvalidArgument;
     }
 
@@ -1361,27 +1347,22 @@ status_t UART_TransferGetReceiveCount(UART_Type *base, uart_handle_t *handle, ui
  * retval kStatus_Success Successfully turn on or turn off Tx FIFO.
  * retval kStatus_Fail Fail to turn on or turn off Tx FIFO.
  */
-status_t UART_EnableTxFIFO(UART_Type *base, bool enable)
-{
+status_t UART_EnableTxFIFO(UART_Type *base, bool enable) {
     uint8_t sfifo = 0;
-    uint8_t temp  = 0;
+    uint8_t temp = 0;
 
     sfifo = base->SFIFO;
-    temp  = base->C2 & (UART_C2_RE_MASK | UART_C2_TE_MASK);
+    temp = base->C2 & (UART_C2_RE_MASK | UART_C2_TE_MASK);
     /* The Tx FIFO must be empty */
-    if ((sfifo & UART_SFIFO_TXEMPT_MASK) == UART_SFIFO_TXEMPT_MASK)
-    {
+    if ((sfifo & UART_SFIFO_TXEMPT_MASK) == UART_SFIFO_TXEMPT_MASK) {
         /* Disable UART TX RX before setting */
         base->C2 &= ~((uint8_t)UART_C2_TE_MASK | (uint8_t)UART_C2_RE_MASK);
         /* Flush FIFO */
         base->CFIFO |= (UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK);
 
-        if (enable)
-        {
+        if (enable) {
             base->PFIFO |= (uint8_t)UART_PFIFO_TXFE_MASK;
-        }
-        else
-        {
+        } else {
             base->PFIFO &= ~(uint8_t)UART_PFIFO_TXFE_MASK;
         }
 
@@ -1389,9 +1370,7 @@ status_t UART_EnableTxFIFO(UART_Type *base, bool enable)
         base->CFIFO |= (UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK);
         base->C2 |= temp;
         return kStatus_Success;
-    }
-    else
-    {
+    } else {
         return kStatus_Fail;
     }
 }
@@ -1406,36 +1385,29 @@ status_t UART_EnableTxFIFO(UART_Type *base, bool enable)
  * retval kStatus_Success Successfully turn on or turn off Rx FIFO.
  * retval kStatus_Fail Fail to turn on or turn off Rx FIFO.
  */
-status_t UART_EnableRxFIFO(UART_Type *base, bool enable)
-{
+status_t UART_EnableRxFIFO(UART_Type *base, bool enable) {
     uint8_t sfifo = 0;
-    uint8_t temp  = 0;
+    uint8_t temp = 0;
 
     sfifo = base->SFIFO;
-    temp  = base->C2 & ((uint8_t)UART_C2_RE_MASK | (uint8_t)UART_C2_TE_MASK);
+    temp = base->C2 & ((uint8_t)UART_C2_RE_MASK | (uint8_t)UART_C2_TE_MASK);
     /* The Rx FIFO must be empty */
-    if ((sfifo & UART_SFIFO_RXEMPT_MASK) == UART_SFIFO_RXEMPT_MASK)
-    {
+    if ((sfifo & UART_SFIFO_RXEMPT_MASK) == UART_SFIFO_RXEMPT_MASK) {
         /* Disable UART TX RX before setting */
         base->C2 &= ~((uint8_t)UART_C2_TE_MASK | (uint8_t)UART_C2_RE_MASK);
         /* Flush FIFO */
         base->CFIFO |= (UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK);
 
-        if (enable)
-        {
+        if (enable) {
             base->PFIFO |= (uint8_t)UART_PFIFO_RXFE_MASK;
-        }
-        else
-        {
+        } else {
             base->PFIFO &= ~(uint8_t)UART_PFIFO_RXFE_MASK;
         }
         /* Flush FIFO */
         base->CFIFO |= (UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK);
         base->C2 |= temp;
         return kStatus_Success;
-    }
-    else
-    {
+    } else {
         return kStatus_Fail;
     }
 }
@@ -1449,8 +1421,7 @@ status_t UART_EnableRxFIFO(UART_Type *base, bool enable)
  * param base UART peripheral base address.
  * param handle UART handle pointer.
  */
-void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
-{
+void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle) {
     assert(handle);
 
     uint8_t count;
@@ -1459,11 +1430,10 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
     uint8_t tmpdata;
 
     /* If RX framing error */
-    if (((uint32_t)kUART_FramingErrorFlag & status) != 0U)
-    {
-        /* Read base->D to clear framing error flag, otherwise the RX does not work. */
-        while ((base->S1 & UART_S1_RDRF_MASK) != 0U)
-        {
+    if (((uint32_t)kUART_FramingErrorFlag & status) != 0U) {
+        /* Read base->D to clear framing error flag, otherwise the RX does not
+         * work. */
+        while ((base->S1 & UART_S1_RDRF_MASK) != 0U) {
             (void)base->D;
         }
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
@@ -1471,21 +1441,20 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
         base->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
 #endif
 
-        handle->rxState    = (uint8_t)kUART_RxFramingError;
+        handle->rxState = (uint8_t)kUART_RxFramingError;
         handle->rxDataSize = 0U;
         /* Trigger callback. */
-        if (handle->callback != NULL)
-        {
-            handle->callback(base, handle, kStatus_UART_FramingError, handle->userData);
+        if (handle->callback != NULL) {
+            handle->callback(base, handle, kStatus_UART_FramingError,
+                             handle->userData);
         }
     }
 
     /* If RX parity error */
-    if (((uint32_t)kUART_ParityErrorFlag & status) != 0U)
-    {
-        /* Read base->D to clear parity error flag, otherwise the RX does not work. */
-        while ((base->S1 & UART_S1_RDRF_MASK) != 0U)
-        {
+    if (((uint32_t)kUART_ParityErrorFlag & status) != 0U) {
+        /* Read base->D to clear parity error flag, otherwise the RX does not
+         * work. */
+        while ((base->S1 & UART_S1_RDRF_MASK) != 0U) {
             (void)base->D;
         }
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
@@ -1493,21 +1462,20 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
         base->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
 #endif
 
-        handle->rxState    = (uint8_t)kUART_RxParityError;
+        handle->rxState = (uint8_t)kUART_RxParityError;
         handle->rxDataSize = 0U;
         /* Trigger callback. */
-        if (handle->callback != NULL)
-        {
-            handle->callback(base, handle, kStatus_UART_ParityError, handle->userData);
+        if (handle->callback != NULL) {
+            handle->callback(base, handle, kStatus_UART_ParityError,
+                             handle->userData);
         }
     }
 
     /* If RX overrun. */
-    if (((uint32_t)kUART_RxOverrunFlag & status) != 0U)
-    {
-        /* Read base->D to clear overrun flag, otherwise the RX does not work. */
-        while ((base->S1 & UART_S1_RDRF_MASK) != 0U)
-        {
+    if (((uint32_t)kUART_RxOverrunFlag & status) != 0U) {
+        /* Read base->D to clear overrun flag, otherwise the RX does not work.
+         */
+        while ((base->S1 & UART_S1_RDRF_MASK) != 0U) {
             (void)base->D;
         }
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
@@ -1515,21 +1483,21 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
         base->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
 #endif
         /* Trigger callback. */
-        if (handle->callback != NULL)
-        {
-            handle->callback(base, handle, kStatus_UART_RxHardwareOverrun, handle->userData);
+        if (handle->callback != NULL) {
+            handle->callback(base, handle, kStatus_UART_RxHardwareOverrun,
+                             handle->userData);
         }
     }
 
     /* If IDLE line was detected. */
-    if ((((uint32_t)kUART_IdleLineFlag & status) != 0U) && ((UART_C2_ILIE_MASK & base->C2) != 0U))
-    {
+    if ((((uint32_t)kUART_IdleLineFlag & status) != 0U) &&
+        ((UART_C2_ILIE_MASK & base->C2) != 0U)) {
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
-        /* If still some data in the FIFO, read out these data to user data buffer. */
+        /* If still some data in the FIFO, read out these data to user data
+         * buffer. */
         count = base->RCFIFO;
         /* If handle->rxDataSize is not 0, first save data to handle->rxData. */
-        while ((count != 0U) && (handle->rxDataSize != 0U))
-        {
+        while ((count != 0U) && (handle->rxDataSize != 0U)) {
             tempCount = (uint8_t)MIN(handle->rxDataSize, (uint32_t)count);
 
             /* Using non block API to read the data from the registers. */
@@ -1538,32 +1506,33 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
             handle->rxDataSize -= tempCount;
             count -= tempCount;
 
-            /* If all the data required for upper layer is ready, trigger callback. */
-            if (0U == handle->rxDataSize)
-            {
+            /* If all the data required for upper layer is ready, trigger
+             * callback. */
+            if (0U == handle->rxDataSize) {
                 handle->rxState = (uint8_t)kUART_RxIdle;
 
-                /* Disable RX interrupt/overrun interrupt/fram error/idle line detected interrupt */
-                UART_DisableInterrupts(base, (uint32_t)kUART_RxDataRegFullInterruptEnable |
-                                                 (uint32_t)kUART_RxOverrunInterruptEnable |
-                                                 (uint32_t)kUART_FramingErrorInterruptEnable);
+                /* Disable RX interrupt/overrun interrupt/fram error/idle line
+                 * detected interrupt */
+                UART_DisableInterrupts(
+                    base, (uint32_t)kUART_RxDataRegFullInterruptEnable |
+                              (uint32_t)kUART_RxOverrunInterruptEnable |
+                              (uint32_t)kUART_FramingErrorInterruptEnable);
 
                 /* Disable parity error interrupt when parity mode is enable*/
-                if ((UART_C1_PE_MASK & base->C1) != 0U)
-                {
-                    UART_DisableInterrupts(base, (uint32_t)kUART_ParityErrorInterruptEnable);
+                if ((UART_C1_PE_MASK & base->C1) != 0U) {
+                    UART_DisableInterrupts(
+                        base, (uint32_t)kUART_ParityErrorInterruptEnable);
                 }
 
-                if (handle->callback != NULL)
-                {
-                    handle->callback(base, handle, kStatus_UART_RxIdle, handle->userData);
+                if (handle->callback != NULL) {
+                    handle->callback(base, handle, kStatus_UART_RxIdle,
+                                     handle->userData);
                 }
             }
         }
 #endif
         /* To clear IDLE, read UART status S1 with IDLE set and then read D.*/
-        while ((UART_S1_IDLE_MASK & base->S1) != 0U)
-        {
+        while ((UART_S1_IDLE_MASK & base->S1) != 0U) {
             (void)base->D;
         }
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
@@ -1571,19 +1540,19 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
         base->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
 #endif
         /* If rxDataSize is 0, disable idle line interrupt.*/
-        if (0U == (handle->rxDataSize))
-        {
-            UART_DisableInterrupts(base, (uint32_t)kUART_IdleLineInterruptEnable);
+        if (0U == (handle->rxDataSize)) {
+            UART_DisableInterrupts(base,
+                                   (uint32_t)kUART_IdleLineInterruptEnable);
         }
         /* If callback is not NULL and rxDataSize is not 0. */
-        if ((handle->callback != NULL) && (handle->rxDataSize != 0U))
-        {
-            handle->callback(base, handle, kStatus_UART_IdleLineDetected, handle->userData);
+        if ((handle->callback != NULL) && (handle->rxDataSize != 0U)) {
+            handle->callback(base, handle, kStatus_UART_IdleLineDetected,
+                             handle->userData);
         }
     }
     /* Receive data register full */
-    if ((((uint32_t)kUART_RxDataRegFullFlag & status) != 0U) && ((UART_C2_RIE_MASK & base->C2) != 0U))
-    {
+    if ((((uint32_t)kUART_RxDataRegFullFlag & status) != 0U) &&
+        ((UART_C2_RIE_MASK & base->C2) != 0U)) {
 /* Get the size that can be stored into buffer for this interrupt. */
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
         count = base->RCFIFO;
@@ -1592,8 +1561,7 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
 #endif
 
         /* If handle->rxDataSize is not 0, first save data to handle->rxData. */
-        while ((count != 0U) && (handle->rxDataSize != 0U))
-        {
+        while ((count != 0U) && (handle->rxDataSize != 0U)) {
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
             tempCount = (uint8_t)MIN(handle->rxDataSize, (uint32_t)count);
 #else
@@ -1606,98 +1574,96 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
             handle->rxDataSize -= tempCount;
             count -= tempCount;
 
-            /* If all the data required for upper layer is ready, trigger callback. */
-            if (0U == handle->rxDataSize)
-            {
+            /* If all the data required for upper layer is ready, trigger
+             * callback. */
+            if (0U == handle->rxDataSize) {
                 handle->rxState = (uint8_t)kUART_RxIdle;
 
-                if (handle->callback != NULL)
-                {
-                    handle->callback(base, handle, kStatus_UART_RxIdle, handle->userData);
+                if (handle->callback != NULL) {
+                    handle->callback(base, handle, kStatus_UART_RxIdle,
+                                     handle->userData);
                 }
             }
         }
 
         /* If use RX ring buffer, receive data to ring buffer. */
-        if (handle->rxRingBuffer != NULL)
-        {
-            while (0U != count--)
-            {
-                /* If RX ring buffer is full, trigger callback to notify over run. */
-                if (UART_TransferIsRxRingBufferFull(handle))
-                {
-                    if (handle->callback != NULL)
-                    {
-                        handle->callback(base, handle, kStatus_UART_RxRingBufferOverrun, handle->userData);
+        if (handle->rxRingBuffer != NULL) {
+            while (0U != count--) {
+                /* If RX ring buffer is full, trigger callback to notify over
+                 * run. */
+                if (UART_TransferIsRxRingBufferFull(handle)) {
+                    if (handle->callback != NULL) {
+                        handle->callback(base, handle,
+                                         kStatus_UART_RxRingBufferOverrun,
+                                         handle->userData);
                     }
                 }
 
-                /* If ring buffer is still full after callback function, the oldest data is overridden. */
-                if (UART_TransferIsRxRingBufferFull(handle))
-                {
-                    /* Increase handle->rxRingBufferTail to make room for new data. */
-                    if ((size_t)handle->rxRingBufferTail + 1U == handle->rxRingBufferSize)
-                    {
+                /* If ring buffer is still full after callback function, the
+                 * oldest data is overridden. */
+                if (UART_TransferIsRxRingBufferFull(handle)) {
+                    /* Increase handle->rxRingBufferTail to make room for new
+                     * data. */
+                    if ((size_t)handle->rxRingBufferTail + 1U ==
+                        handle->rxRingBufferSize) {
                         handle->rxRingBufferTail = 0U;
-                    }
-                    else
-                    {
+                    } else {
                         handle->rxRingBufferTail++;
                     }
                 }
 
                 /* Read data. */
-                tmpdata                                        = base->D;
+                tmpdata = base->D;
                 handle->rxRingBuffer[handle->rxRingBufferHead] = tmpdata;
 
                 /* Increase handle->rxRingBufferHead. */
-                if ((size_t)handle->rxRingBufferHead + 1U == handle->rxRingBufferSize)
-                {
+                if ((size_t)handle->rxRingBufferHead + 1U ==
+                    handle->rxRingBufferSize) {
                     handle->rxRingBufferHead = 0U;
-                }
-                else
-                {
+                } else {
                     handle->rxRingBufferHead++;
                 }
             }
         }
 
-        else if (0U == handle->rxDataSize)
-        {
-            /* Disable RX interrupt/overrun interrupt/fram error/idle line detected interrupt */
-            UART_DisableInterrupts(base, (uint32_t)kUART_RxDataRegFullInterruptEnable |
-                                             (uint32_t)kUART_RxOverrunInterruptEnable |
-                                             (uint32_t)kUART_FramingErrorInterruptEnable);
+        else if (0U == handle->rxDataSize) {
+            /* Disable RX interrupt/overrun interrupt/fram error/idle line
+             * detected interrupt */
+            UART_DisableInterrupts(
+                base, (uint32_t)kUART_RxDataRegFullInterruptEnable |
+                          (uint32_t)kUART_RxOverrunInterruptEnable |
+                          (uint32_t)kUART_FramingErrorInterruptEnable);
 
             /* Disable parity error interrupt when parity mode is enable*/
-            if ((UART_C1_PE_MASK & base->C1) != 0U)
-            {
-                UART_DisableInterrupts(base, (uint32_t)kUART_ParityErrorInterruptEnable);
+            if ((UART_C1_PE_MASK & base->C1) != 0U) {
+                UART_DisableInterrupts(
+                    base, (uint32_t)kUART_ParityErrorInterruptEnable);
             }
-        }
-        else
-        {
+        } else {
         }
     }
 
-    /* If framing error or parity error happened, stop the RX interrupt when use no ring buffer */
-    if (((handle->rxState == (uint8_t)kUART_RxFramingError) || (handle->rxState == (uint8_t)kUART_RxParityError)) &&
-        (NULL == handle->rxRingBuffer))
-    {
-        UART_DisableInterrupts(
-            base, (uint32_t)kUART_RxDataRegFullInterruptEnable | (uint32_t)kUART_RxOverrunInterruptEnable |
-                      (uint32_t)kUART_FramingErrorInterruptEnable | (uint32_t)kUART_IdleLineInterruptEnable);
+    /* If framing error or parity error happened, stop the RX interrupt when use
+     * no ring buffer */
+    if (((handle->rxState == (uint8_t)kUART_RxFramingError) ||
+         (handle->rxState == (uint8_t)kUART_RxParityError)) &&
+        (NULL == handle->rxRingBuffer)) {
+        UART_DisableInterrupts(base,
+                               (uint32_t)kUART_RxDataRegFullInterruptEnable |
+                                   (uint32_t)kUART_RxOverrunInterruptEnable |
+                                   (uint32_t)kUART_FramingErrorInterruptEnable |
+                                   (uint32_t)kUART_IdleLineInterruptEnable);
 
         /* Disable parity error interrupt when parity mode is enable*/
-        if ((UART_C1_PE_MASK & base->C1) != 0U)
-        {
-            UART_DisableInterrupts(base, (uint32_t)kUART_ParityErrorInterruptEnable);
+        if ((UART_C1_PE_MASK & base->C1) != 0U) {
+            UART_DisableInterrupts(base,
+                                   (uint32_t)kUART_ParityErrorInterruptEnable);
         }
     }
 
     /* Send data register empty and the interrupt is enabled. */
-    if ((((uint32_t)kUART_TxDataRegEmptyFlag & status) != 0U) && ((base->C2 & UART_C2_TIE_MASK) != 0U))
-    {
+    if ((((uint32_t)kUART_TxDataRegEmptyFlag & status) != 0U) &&
+        ((base->C2 & UART_C2_TIE_MASK) != 0U)) {
 /* Get the bytes that available at this moment. */
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
         count = (uint8_t)FSL_FEATURE_UART_FIFO_SIZEn(base) - base->TCFIFO;
@@ -1705,8 +1671,7 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
         count = 1;
 #endif
 
-        while ((count != 0U) && (handle->txDataSize != 0U))
-        {
+        while ((count != 0U) && (handle->txDataSize != 0U)) {
 #if defined(FSL_FEATURE_UART_HAS_FIFO) && FSL_FEATURE_UART_HAS_FIFO
             tempCount = (uint8_t)MIN(handle->txDataSize, (uint32_t)count);
 #else
@@ -1720,8 +1685,7 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
             count -= tempCount;
 
             /* If all the data are written to data register, TX finished. */
-            if (0U == handle->txDataSize)
-            {
+            if (0U == handle->txDataSize) {
                 /* Disable TX register empty interrupt. */
                 base->C2 = (base->C2 & ~(uint8_t)UART_C2_TIE_MASK);
                 /* Enable transmission complete interrupt. */
@@ -1731,16 +1695,16 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
     }
 
     /* Transmission complete and the interrupt is enabled. */
-    if ((0U != ((uint32_t)kUART_TransmissionCompleteFlag & status)) && (0U != (base->C2 & UART_C2_TCIE_MASK)))
-    {
+    if ((0U != ((uint32_t)kUART_TransmissionCompleteFlag & status)) &&
+        (0U != (base->C2 & UART_C2_TCIE_MASK))) {
         /* Set txState to idle only when all data has been sent out to bus. */
         handle->txState = (uint8_t)kUART_TxIdle;
         /* Disable transmission complete interrupt. */
         base->C2 = (base->C2 & ~(uint8_t)UART_C2_TCIE_MASK);
         /* Trigger callback. */
-        if (handle->callback != NULL)
-        {
-            handle->callback(base, handle, kStatus_UART_TxIdle, handle->userData);
+        if (handle->callback != NULL) {
+            handle->callback(base, handle, kStatus_UART_TxIdle,
+                             handle->userData);
         }
     }
 }
@@ -1753,37 +1717,33 @@ void UART_TransferHandleIRQ(UART_Type *base, uart_handle_t *handle)
  * param base UART peripheral base address.
  * param handle UART handle pointer.
  */
-void UART_TransferHandleErrorIRQ(UART_Type *base, uart_handle_t *handle)
-{
+void UART_TransferHandleErrorIRQ(UART_Type *base, uart_handle_t *handle) {
     /* To be implemented by User. */
 }
 
-#if defined(FSL_FEATURE_UART_HAS_SHARED_IRQ0_IRQ1_IRQ2_IRQ3) && FSL_FEATURE_UART_HAS_SHARED_IRQ0_IRQ1_IRQ2_IRQ3
+#if defined(FSL_FEATURE_UART_HAS_SHARED_IRQ0_IRQ1_IRQ2_IRQ3) &&                \
+    FSL_FEATURE_UART_HAS_SHARED_IRQ0_IRQ1_IRQ2_IRQ3
 void UART0_UART1_UART2_UART3_DriverIRQHandler(void);
-void UART0_UART1_UART2_UART3_DriverIRQHandler(void)
-{
-    for (uint32_t instance = 0U; instance < 4U; instance++)
-    {
-        if (s_uartHandle[instance] != NULL)
-        {
+void UART0_UART1_UART2_UART3_DriverIRQHandler(void) {
+    for (uint32_t instance = 0U; instance < 4U; instance++) {
+        if (s_uartHandle[instance] != NULL) {
             s_uartIsr(s_uartBases[instance], s_uartHandle[instance]);
         }
     }
 }
 #else
 #if defined(UART0)
-#if ((!(defined(FSL_FEATURE_SOC_LPSCI_COUNT))) || \
-     ((defined(FSL_FEATURE_SOC_LPSCI_COUNT)) && (FSL_FEATURE_SOC_LPSCI_COUNT == 0)))
+#if ((!(defined(FSL_FEATURE_SOC_LPSCI_COUNT))) ||                              \
+     ((defined(FSL_FEATURE_SOC_LPSCI_COUNT)) &&                                \
+      (FSL_FEATURE_SOC_LPSCI_COUNT == 0)))
 void UART0_DriverIRQHandler(void);
-void UART0_DriverIRQHandler(void)
-{
+void UART0_DriverIRQHandler(void) {
     s_uartIsr(UART0, s_uartHandle[0]);
     SDK_ISR_EXIT_BARRIER;
 }
 
 void UART0_RX_TX_DriverIRQHandler(void);
-void UART0_RX_TX_DriverIRQHandler(void)
-{
+void UART0_RX_TX_DriverIRQHandler(void) {
     UART0_DriverIRQHandler();
     SDK_ISR_EXIT_BARRIER;
 }
@@ -1792,15 +1752,13 @@ void UART0_RX_TX_DriverIRQHandler(void)
 
 #if defined(UART1)
 void UART1_DriverIRQHandler(void);
-void UART1_DriverIRQHandler(void)
-{
+void UART1_DriverIRQHandler(void) {
     s_uartIsr(UART1, s_uartHandle[1]);
     SDK_ISR_EXIT_BARRIER;
 }
 
 void UART1_RX_TX_DriverIRQHandler(void);
-void UART1_RX_TX_DriverIRQHandler(void)
-{
+void UART1_RX_TX_DriverIRQHandler(void) {
     UART1_DriverIRQHandler();
     SDK_ISR_EXIT_BARRIER;
 }
@@ -1808,15 +1766,13 @@ void UART1_RX_TX_DriverIRQHandler(void)
 
 #if defined(UART2)
 void UART2_DriverIRQHandler(void);
-void UART2_DriverIRQHandler(void)
-{
+void UART2_DriverIRQHandler(void) {
     s_uartIsr(UART2, s_uartHandle[2]);
     SDK_ISR_EXIT_BARRIER;
 }
 
 void UART2_RX_TX_DriverIRQHandler(void);
-void UART2_RX_TX_DriverIRQHandler(void)
-{
+void UART2_RX_TX_DriverIRQHandler(void) {
     UART2_DriverIRQHandler();
     SDK_ISR_EXIT_BARRIER;
 }
@@ -1824,15 +1780,13 @@ void UART2_RX_TX_DriverIRQHandler(void)
 
 #if defined(UART3)
 void UART3_DriverIRQHandler(void);
-void UART3_DriverIRQHandler(void)
-{
+void UART3_DriverIRQHandler(void) {
     s_uartIsr(UART3, s_uartHandle[3]);
     SDK_ISR_EXIT_BARRIER;
 }
 
 void UART3_RX_TX_DriverIRQHandler(void);
-void UART3_RX_TX_DriverIRQHandler(void)
-{
+void UART3_RX_TX_DriverIRQHandler(void) {
     UART3_DriverIRQHandler();
     SDK_ISR_EXIT_BARRIER;
 }
@@ -1841,15 +1795,13 @@ void UART3_RX_TX_DriverIRQHandler(void)
 
 #if defined(UART4)
 void UART4_DriverIRQHandler(void);
-void UART4_DriverIRQHandler(void)
-{
+void UART4_DriverIRQHandler(void) {
     s_uartIsr(UART4, s_uartHandle[4]);
     SDK_ISR_EXIT_BARRIER;
 }
 
 void UART4_RX_TX_DriverIRQHandler(void);
-void UART4_RX_TX_DriverIRQHandler(void)
-{
+void UART4_RX_TX_DriverIRQHandler(void) {
     UART4_DriverIRQHandler();
     SDK_ISR_EXIT_BARRIER;
 }
@@ -1857,15 +1809,13 @@ void UART4_RX_TX_DriverIRQHandler(void)
 
 #if defined(UART5)
 void UART5_DriverIRQHandler(void);
-void UART5_DriverIRQHandler(void)
-{
+void UART5_DriverIRQHandler(void) {
     s_uartIsr(UART5, s_uartHandle[5]);
     SDK_ISR_EXIT_BARRIER;
 }
 
 void UART5_RX_TX_DriverIRQHandler(void);
-void UART5_RX_TX_DriverIRQHandler(void)
-{
+void UART5_RX_TX_DriverIRQHandler(void) {
     UART5_DriverIRQHandler();
     SDK_ISR_EXIT_BARRIER;
 }

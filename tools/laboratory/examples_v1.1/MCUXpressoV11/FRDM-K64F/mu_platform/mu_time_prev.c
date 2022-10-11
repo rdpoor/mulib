@@ -47,12 +47,12 @@ volatile uint32_t s_systick_count;
  * functions are called.
  */
 void mu_time_init(void) {
-  /* Set systick reload value to generate 1ms interrupt */
-  if (SysTick_Config(SystemCoreClock / 1000U)) {
-    while (1) {
-			// SysTick_Config failed
+    /* Set systick reload value to generate 1ms interrupt */
+    if (SysTick_Config(SystemCoreClock / 1000U)) {
+        while (1) {
+            // SysTick_Config failed
+        }
     }
-	}
 }
 
 /**
@@ -124,7 +124,7 @@ bool mu_time_follows(mu_time_t t1, mu_time_t t2) { return t1 > t2; }
  * @return The duration in seconds
  */
 mu_duration_ms_t mu_time_duration_to_ms(mu_duration_t dt) {
-  return (dt * 1000) / SYSTICK_FREQUENCY;
+    return (dt * 1000) / SYSTICK_FREQUENCY;
 }
 
 /**
@@ -134,7 +134,7 @@ mu_duration_ms_t mu_time_duration_to_ms(mu_duration_t dt) {
  * @return A duration object
  */
 mu_duration_t mu_time_ms_to_duration(mu_duration_ms_t ms) {
-  return (ms * SYSTICK_FREQUENCY) / 1000;
+    return (ms * SYSTICK_FREQUENCY) / 1000;
 }
 
 #ifdef MU_FLOAT
@@ -145,7 +145,7 @@ mu_duration_t mu_time_ms_to_duration(mu_duration_ms_t ms) {
  * @return The duration in seconds
  */
 MU_FLOAT mu_time_duration_to_s(mu_duration_t dt) {
-  return dt / (MU_FLOAT)(SYSTICK_FREQUENCY);
+    return dt / (MU_FLOAT)(SYSTICK_FREQUENCY);
 }
 
 /**
@@ -154,14 +154,13 @@ MU_FLOAT mu_time_duration_to_s(mu_duration_t dt) {
  * @param s The duration in seconds
  * @return A duration object
  */
-mu_duration_t mu_time_s_to_duration(MU_FLOAT s) { return s * SYSTICK_FREQUENCY; }
+mu_duration_t mu_time_s_to_duration(MU_FLOAT s) {
+    return s * SYSTICK_FREQUENCY;
+}
 
 #endif
 
 // *****************************************************************************
 // Local code
 
-
-void SysTick_Handler(void) {
-	s_systick_count += 1;
-}
+void SysTick_Handler(void) { s_systick_count += 1; }

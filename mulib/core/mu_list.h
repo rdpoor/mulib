@@ -94,7 +94,7 @@ extern "C" {
 // types and definitions
 
 typedef struct _mu_list {
-  struct _mu_list *next;
+    struct _mu_list *next;
 } mu_list_t;
 
 /**
@@ -119,8 +119,8 @@ typedef void *(*mu_list_traverse_fn)(mu_list_t *list_ref, void *arg);
  * return a pointer to the containing structure.
  */
 #define MU_LIST_CONTAINER(_ptr, _type, _member)                                \
-  ((_type *)((char *)(1 ? (_ptr) : &((_type *)0)->_member) -                   \
-             offsetof(_type, _member)))
+    ((_type *)((char *)(1 ? (_ptr) : &((_type *)0)->_member) -                 \
+               offsetof(_type, _member)))
 
 // *****************************************************************************
 // declarations

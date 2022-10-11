@@ -47,63 +47,65 @@
 
 mu_access_mgr_t *mu_access_mgr_init(mu_access_mgr_t *mgr,
                                     mu_pqueue_t *pending) {
-  mgr->owner = NULL;
-  mgr->pending = pending;
-  return mgr;
+    mgr->owner = NULL;
+    mgr->pending = pending;
+    return mgr;
 }
 
 void mu_access_mgr_reset(mu_access_mgr_t *mgr) {
-  mu_task_t *task;
+    mu_task_t *task;
 
-  mgr->owner = NULL;
-  while ((task = (mu_task_t *)mu_pqueue_get(mgr->pending)) != NULL) {
-    // invoke each pending task.
-    mu_task_call(task, NULL);
-  }
+    mgr->owner = NULL;
+    while ((task = (mu_task_t *)mu_pqueue_get(mgr->pending)) != NULL) {
+        // invoke each pending task.
+        mu_task_call(task, NULL);
+    }
 }
 
 mu_access_mgr_err_t mu_access_mgr_request_ownership(mu_access_mgr_t *mgr,
                                                     mu_task_t *task) {
-  if (mgr->owner == NULL) {
-    // no tasks currently own the resource -- grab it immediately.
-    mgr->owner = task;
-    mu_task_call(task, NULL);
-    return MU_ACCESS_MGR_ERR_NONE;
+    if (mgr->owner == NULL) {
+        // no tasks currently own the resource -- grab it immediately.
+        mgr->owner = task;
+        mu_task_call(task, NULL);
+        return MU_ACCESS_MGR_ERR_NONE;
 
-  } else if (mgr->owner == task) {
-    // task already has exlusive access
-    return MU_ACCESS_MGR_ERR_ALREADY_OWNER;
+    } else if (mgr->owner == task) {
+        // task already has exlusive access
+        return MU_ACCESS_MGR_ERR_ALREADY_OWNER;
 
-  } else if (mu_pqueue_contains(mgr->pending, task)) {
-    // task is already queued for access
-    return MU_ACCESS_MGR_ERR_ALREADY_PENDING;
+    } else if (mu_pqueue_contains(mgr->pending, task)) {
+        // task is already queued for access
+        return MU_ACCESS_MGR_ERR_ALREADY_PENDING;
 
-  } else if (mu_pqueue_put(mgr->pending, task) == NULL) {
-      // could not queue task.
-      return MU_ACCESS_MGR_ERR_TASK_UNAVAILABLE;
+    } else if (mu_pqueue_put(mgr->pending, task) == NULL) {
+        // could not queue task.
+        return MU_ACCESS_MGR_ERR_TASK_UNAVAILABLE;
 
-  } else {
-    // request queued
-    return MU_ACCESS_MGR_ERR_NONE;
+    } else {
+        // request queued
+        return MU_ACCESS_MGR_ERR_NONE;
     }
-  }
+}
 
 mu_access_mgr_err_t mu_access_mgr_release_ownership(mu_access_mgr_t *mgr,
                                                     mu_task_t *task) {
-  if (task == mgr->owner) {
-    // The current owner is releasing ownership: trigger the next task (if any).
-    mgr->owner = (mu_task_t *)mu_pqueue_get(mgr->pending);
-    mu_task_call(mgr->owner, NULL);  // mu_task_call accepts null task argument.
+    if (task == mgr->owner) {
+        // The current owner is releasing ownership: trigger the next task (if
+        // any).
+        mgr->owner = (mu_task_t *)mu_pqueue_get(mgr->pending);
+        mu_task_call(mgr->owner,
+                     NULL); // mu_task_call accepts null task argument.
 
-  } else if (mu_pqueue_delete(mgr->pending, task) == NULL) {
-    return MU_ACCESS_MGR_ERR_NOT_PENDING;
-  }
+    } else if (mu_pqueue_delete(mgr->pending, task) == NULL) {
+        return MU_ACCESS_MGR_ERR_NOT_PENDING;
+    }
 
-  return MU_ACCESS_MGR_ERR_NONE;
+    return MU_ACCESS_MGR_ERR_NONE;
 }
 
 bool mu_access_mgr_has_ownership(mu_access_mgr_t *mgr, mu_task_t *task) {
-  return task == mgr->owner;
+    return task == mgr->owner;
 }
 
 // *****************************************************************************

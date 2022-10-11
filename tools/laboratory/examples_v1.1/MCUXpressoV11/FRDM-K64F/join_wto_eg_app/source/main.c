@@ -6,10 +6,10 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "pin_mux.h"
-#include "clock_config.h"
 #include "board.h"
+#include "clock_config.h"
 #include "join_wto_eg.h"
+#include "pin_mux.h"
 
 /*******************************************************************************
  * Definitions
@@ -30,14 +30,13 @@
 /*!
  * @brief Main function
  */
-int main(void)
-{
+int main(void) {
     BOARD_InitPins();
     BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
 
     join_wto_eg_init();
-    while(1) {
-      join_wto_eg_step();
+    while (1) {
+        join_wto_eg_step();
     }
 }

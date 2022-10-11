@@ -41,35 +41,31 @@
 // *****************************************************************************
 // public code
 
-mu_strbuf_t *mu_strbuf_init_ro(mu_strbuf_t *buf,
-                               const uint8_t *const rdata,
+mu_strbuf_t *mu_strbuf_init_ro(mu_strbuf_t *buf, const uint8_t *const rdata,
                                size_t capacity) {
-  buf->rdata = rdata;
-  buf->capacity = capacity;
-  return buf;
+    buf->rdata = rdata;
+    buf->capacity = capacity;
+    return buf;
 }
 
-mu_strbuf_t *mu_strbuf_init_wr(mu_strbuf_t *buf,
-                               uint8_t *wdata,
+mu_strbuf_t *mu_strbuf_init_wr(mu_strbuf_t *buf, uint8_t *wdata,
                                size_t capacity) {
-  buf->wdata = wdata;
-  buf->capacity = capacity;
-  return buf;
+    buf->wdata = wdata;
+    buf->capacity = capacity;
+    return buf;
 }
 
 mu_strbuf_t *mu_strbuf_init_from_cstr(mu_strbuf_t *buf,
                                       const char *const cstr) {
-  return mu_strbuf_init_ro(buf, (const uint8_t *const)cstr, strlen(cstr));
+    return mu_strbuf_init_ro(buf, (const uint8_t *const)cstr, strlen(cstr));
 }
 
-uint8_t const *mu_strbuf_rdata(const mu_strbuf_t *buf) {
-  return buf->rdata;
-}
+uint8_t const *mu_strbuf_rdata(const mu_strbuf_t *buf) { return buf->rdata; }
 
 uint8_t *mu_strbuf_wdata(const mu_strbuf_t *buf) { return buf->wdata; }
 
 size_t mu_strbuf_capacity(const mu_strbuf_t *const buf) {
-  return buf->capacity;
+    return buf->capacity;
 }
 
 // *****************************************************************************

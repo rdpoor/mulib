@@ -37,7 +37,6 @@ extern "C" {
 
 typedef enum { OS_TYPE_LINUX = 1, OS_TYPE_DARWIN } os_type_t;
 
-
 // *****************************************************************************
 // Declarations
 

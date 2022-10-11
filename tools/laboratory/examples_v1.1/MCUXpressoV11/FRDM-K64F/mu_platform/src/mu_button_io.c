@@ -28,9 +28,9 @@
 #include "mu_button_io.h"
 
 #include "board.h"
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // Local types and definitions
@@ -52,35 +52,34 @@ static mu_button_io_callback_t s_button_cb;
 // Public code
 
 void mu_button_io_init(void) {
-  s_button_cb = NULL;
+    s_button_cb = NULL;
 
-  gpio_pin_config_t sw_config = {
-      kGPIO_DigitalInput,
-      0,
-  };
-  GPIO_PinInit(BOARD_SW_GPIO, BOARD_SW_GPIO_PIN, &sw_config);
+    gpio_pin_config_t sw_config = {
+        kGPIO_DigitalInput,
+        0,
+    };
+    GPIO_PinInit(BOARD_SW_GPIO, BOARD_SW_GPIO_PIN, &sw_config);
 
-  PORT_SetPinInterruptConfig(BOARD_SW_PORT, BOARD_SW_GPIO_PIN, kPORT_InterruptFallingEdge);
-  EnableIRQ(BOARD_SW_IRQ);
+    PORT_SetPinInterruptConfig(BOARD_SW_PORT, BOARD_SW_GPIO_PIN,
+                               kPORT_InterruptFallingEdge);
+    EnableIRQ(BOARD_SW_IRQ);
 }
 
-void mu_button_io_set_callback(mu_button_io_callback_t cb) {
-  s_button_cb = cb;
-}
+void mu_button_io_set_callback(mu_button_io_callback_t cb) { s_button_cb = cb; }
 
 bool mu_button_io_get_button(uint8_t button_id) {
-  (void)button_id;
-  return GPIO_PinRead(BOARD_SW_GPIO, 1U << BOARD_SW_GPIO_PIN);
+    (void)button_id;
+    return GPIO_PinRead(BOARD_SW_GPIO, 1U << BOARD_SW_GPIO_PIN);
 }
 
 // *****************************************************************************
 // Local (static) code
 
 void BOARD_SW_IRQ_HANDLER(void) {
-  /* Clear external interrupt flag. */
-  GPIO_PortClearInterruptFlags(BOARD_SW_GPIO, 1U << BOARD_SW_GPIO_PIN);
-  if (s_button_cb != NULL) {
-    s_button_cb(mu_button_io_get_button());
-  }
-  SDK_ISR_EXIT_BARRIER;
+    /* Clear external interrupt flag. */
+    GPIO_PortClearInterruptFlags(BOARD_SW_GPIO, 1U << BOARD_SW_GPIO_PIN);
+    if (s_button_cb != NULL) {
+        s_button_cb(mu_button_io_get_button());
+    }
+    SDK_ISR_EXIT_BARRIER;
 }

@@ -6,9 +6,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "pin_mux.h"
-#include "clock_config.h"
 #include "board.h"
+#include "clock_config.h"
+#include "pin_mux.h"
 #include "platform_test.h"
 
 /*******************************************************************************
@@ -30,8 +30,7 @@
 /*!
  * @brief Main function
  */
-int main(void)
-{
+int main(void) {
     BOARD_InitPins();
     BOARD_BootClockRUN();
     BOARD_InitDebugConsole();
@@ -39,7 +38,7 @@ int main(void)
     mu_platform_init();
 
     platform_test_init();
-    while(1) {
-      platform_test_step();
+    while (1) {
+        platform_test_step();
     }
 }

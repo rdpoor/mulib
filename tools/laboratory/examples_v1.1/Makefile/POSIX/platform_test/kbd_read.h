@@ -32,8 +32,8 @@ extern "C" {
 // *****************************************************************************
 // includes
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // types and definitions
@@ -48,6 +48,3 @@ void start_kbd_reader_thread(void);
 #endif
 
 #endif /* #ifndef __KBD_READ_H_ */
-
-
-

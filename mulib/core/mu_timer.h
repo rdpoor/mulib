@@ -57,12 +57,12 @@ typedef enum {
 } mu_timer_state_t;
 
 typedef struct {
-  mu_task_t task;           // the timer task object
-  mu_timer_state_t state;   // current timer state
-  mu_task_t *on_completion; // task to run upon completion.
-  mu_time_rel_t delay_tics;
-  mu_time_abs_t delay_until;
-  bool periodic;
+    mu_task_t task;           // the timer task object
+    mu_timer_state_t state;   // current timer state
+    mu_task_t *on_completion; // task to run upon completion.
+    mu_time_rel_t delay_tics;
+    mu_time_abs_t delay_until;
+    bool periodic;
 } mu_timer_t;
 
 // *****************************************************************************
@@ -85,7 +85,7 @@ void mu_timer_init(mu_timer_t *timer);
  * @param on_completion The task to call upon timeout.  May be NULL.
  */
 void mu_timer_start(mu_timer_t *timer, uint32_t delay_ms, bool periodic,
-                 mu_task_t *on_completion);
+                    mu_task_t *on_completion);
 
 /**
  * @brief Stop the timer.
@@ -101,6 +101,11 @@ void mu_timer_stop(mu_timer_t *timer);
  * @brief Return true if the timer is currently running.
  */
 bool mu_timer_is_running(mu_timer_t *timer);
+
+/**
+ * @brief Return true if the timer is stopped (expired or error)
+ */
+bool mu_timer_is_stopped(mu_timer_t *timer);
 
 // *****************************************************************************
 // End of file

@@ -41,16 +41,15 @@
 // *****************************************************************************
 // Public code
 
-mu_task_t *mu_task_init(mu_task_t *task,
-                        mu_task_fn fn,
-                        void *ctx,
+mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn, void *ctx,
                         const char *task_name) {
-  // (void)task_name;  // will be used when MU_CONFIG_PROFILING_TASKS is defined
+    // (void)task_name;  // will be used when MU_CONFIG_PROFILING_TASKS is
+    // defined
 
-  task->fn = fn;
-  task->ctx = ctx;
-  task->name = task_name;
-  return task;
+    task->fn = fn;
+    task->ctx = ctx;
+    task->name = task_name;
+    return task;
 }
 
 mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
@@ -58,9 +57,9 @@ mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
 void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
 
 void mu_task_call(mu_task_t *task, void *arg) {
-  if (task != NULL) {          // A NULL task is treated as a no-op
-    task->fn(task->ctx, arg);
-  }
+    if (task != NULL) { // A NULL task is treated as a no-op
+        task->fn(task->ctx, arg);
+    }
 }
 
 // *****************************************************************************

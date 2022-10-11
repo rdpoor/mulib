@@ -32,8 +32,8 @@ extern "C" {
 // *****************************************************************************
 // includes
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // *****************************************************************************
 // types and definitions
@@ -41,27 +41,29 @@ extern "C" {
 #define MU_FLOAT float
 
 typedef struct {
-  char *pd;
-  char *cm;
+    char *pd;
+    char *cm;
 } i_ching_line;
 
 typedef struct {
-  unsigned char number; // 1 - 64, corresponding to the KWS chart
-  uint8_t sk; // holds the bit encoding of the lines
-  char *name;
-  char *cm;
-  char *jd;
-  char *j_cm;
-  char *im;
-  char *i_cm;
-  i_ching_line lines[7]; // 7th line seems to speak to the special case when all 6 lines are changing (old)
+    unsigned char number; // 1 - 64, corresponding to the KWS chart
+    uint8_t sk;           // holds the bit encoding of the lines
+    char *name;
+    char *cm;
+    char *jd;
+    char *j_cm;
+    char *im;
+    char *i_cm;
+    i_ching_line lines[7]; // 7th line seems to speak to the special case when
+                           // all 6 lines are changing (old)
 } i_ching_hexagram;
 
 // *****************************************************************************
 // declarations
 int hexagram_number_from_user_lines(char *user_lines);
 char *change_user_lines(char *user_lines);
-void draw_multiple_user_lines(char *user_lines[], int how_many, int width, int height);
+void draw_multiple_user_lines(char *user_lines[], int how_many, int width,
+                              int height);
 void print_analaysis_of_changing_lines(char *user_lines);
 const i_ching_hexagram *get_hexagram(int number);
 
@@ -70,5 +72,3 @@ const i_ching_hexagram *get_hexagram(int number);
 #endif
 
 #endif /* #ifndef HEXAGRAMS_H_ */
-
-

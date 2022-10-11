@@ -70,8 +70,8 @@ extern "C" {
 // +-------+
 
 typedef struct {
-  mu_list_t head; // items are removed (popped) from the head
-  mu_list_t tail; // items are added (pushed) after the tail
+    mu_list_t head; // items are removed (popped) from the head
+    mu_list_t tail; // items are added (pushed) after the tail
 } mu_queue_t;
 
 // *****************************************************************************

@@ -16,12 +16,12 @@
  */
 
 /**********************************************************************************
-* Include
-***********************************************************************************/
+ * Include
+ ***********************************************************************************/
 
 /**********************************************************************************
-* Public macro definitions
-***********************************************************************************/
+ * Public macro definitions
+ ***********************************************************************************/
 /*! @brief Definition to determine whether use list light. */
 #ifndef GENERIC_LIST_LIGHT
 #define GENERIC_LIST_LIGHT (1)
@@ -33,22 +33,22 @@
 #endif
 
 /**********************************************************************************
-* Public type definitions
-***********************************************************************************/
+ * Public type definitions
+ ***********************************************************************************/
 /*! @brief The list status */
-typedef enum _list_status
-{
-    kLIST_Ok             = kStatus_Success,                   /*!< Success */
-    kLIST_DuplicateError = MAKE_STATUS(kStatusGroup_LIST, 1), /*!< Duplicate Error */
-    kLIST_Full           = MAKE_STATUS(kStatusGroup_LIST, 2), /*!< FULL */
-    kLIST_Empty          = MAKE_STATUS(kStatusGroup_LIST, 3), /*!< Empty */
-    kLIST_OrphanElement  = MAKE_STATUS(kStatusGroup_LIST, 4), /*!< Orphan Element */
-    kLIST_NotSupport     = MAKE_STATUS(kStatusGroup_LIST, 5), /*!< Not Support  */
+typedef enum _list_status {
+    kLIST_Ok = kStatus_Success, /*!< Success */
+    kLIST_DuplicateError =
+        MAKE_STATUS(kStatusGroup_LIST, 1),           /*!< Duplicate Error */
+    kLIST_Full = MAKE_STATUS(kStatusGroup_LIST, 2),  /*!< FULL */
+    kLIST_Empty = MAKE_STATUS(kStatusGroup_LIST, 3), /*!< Empty */
+    kLIST_OrphanElement =
+        MAKE_STATUS(kStatusGroup_LIST, 4),                /*!< Orphan Element */
+    kLIST_NotSupport = MAKE_STATUS(kStatusGroup_LIST, 5), /*!< Not Support  */
 } list_status_t;
 
 /*! @brief The list structure*/
-typedef struct list_label
-{
+typedef struct list_label {
     struct list_element_tag *head; /*!< list head */
     struct list_element_tag *tail; /*!< list tail */
     uint16_t size;                 /*!< list size */
@@ -56,23 +56,21 @@ typedef struct list_label
 } list_label_t, *list_handle_t;
 #if (defined(GENERIC_LIST_LIGHT) && (GENERIC_LIST_LIGHT > 0U))
 /*! @brief The list element*/
-typedef struct list_element_tag
-{
+typedef struct list_element_tag {
     struct list_element_tag *next; /*!< next list element   */
     struct list_label *list;       /*!< pointer to the list */
 } list_element_t, *list_element_handle_t;
 #else
 /*! @brief The list element*/
-typedef struct list_element_tag
-{
+typedef struct list_element_tag {
     struct list_element_tag *next; /*!< next list element   */
     struct list_element_tag *prev; /*!< previous list element */
     struct list_label *list;       /*!< pointer to the list */
 } list_element_t, *list_element_handle_t;
 #endif
 /**********************************************************************************
-* Public prototypes
-***********************************************************************************/
+ * Public prototypes
+ ***********************************************************************************/
 /**********************************************************************************
  * API
  **********************************************************************************/
@@ -95,7 +93,8 @@ void LIST_Init(list_handle_t list, uint32_t max);
  *
  *
  * @param element - Handle of the element.
- * @retval NULL if element is orphan, Handle of the list the element is inserted into.
+ * @retval NULL if element is orphan, Handle of the list the element is inserted
+ * into.
  */
 list_handle_t LIST_GetList(list_element_handle_t element);
 
@@ -122,7 +121,8 @@ list_status_t LIST_AddTail(list_handle_t list, list_element_handle_t element);
  *
  * @param list - Handle of the list.
  *
- * @retval NULL if list is empty, handle of removed element(pointer) if removal was successful.
+ * @retval NULL if list is empty, handle of removed element(pointer) if removal
+ * was successful.
  */
 list_element_handle_t LIST_RemoveHead(list_handle_t list);
 
@@ -131,7 +131,8 @@ list_element_handle_t LIST_RemoveHead(list_handle_t list);
  *
  * @param list - Handle of the list.
  *
- * @retval NULL if list is empty, handle of removed element(pointer) if removal was successful.
+ * @retval NULL if list is empty, handle of removed element(pointer) if removal
+ * was successful.
  */
 list_element_handle_t LIST_GetHead(list_handle_t list);
 
@@ -140,7 +141,8 @@ list_element_handle_t LIST_GetHead(list_handle_t list);
  *
  * @param element - Handle of the element.
  *
- * @retval NULL if list is empty, handle of removed element(pointer) if removal was successful.
+ * @retval NULL if list is empty, handle of removed element(pointer) if removal
+ * was successful.
  */
 list_element_handle_t LIST_GetNext(list_element_handle_t element);
 
@@ -149,7 +151,8 @@ list_element_handle_t LIST_GetNext(list_element_handle_t element);
  *
  * @param element - Handle of the element.
  *
- * @retval NULL if list is empty, handle of removed element(pointer) if removal was successful.
+ * @retval NULL if list is empty, handle of removed element(pointer) if removal
+ * was successful.
  */
 list_element_handle_t LIST_GetPrev(list_element_handle_t element);
 
@@ -164,7 +167,8 @@ list_element_handle_t LIST_GetPrev(list_element_handle_t element);
 list_status_t LIST_RemoveElement(list_element_handle_t element);
 
 /*!
- * @brief Links an element in the previous position relative to a given member of a list.
+ * @brief Links an element in the previous position relative to a given member
+ * of a list.
  *
  * @param element - Handle of the element.
  * @param newElement - New element to insert before the given member.
@@ -172,7 +176,8 @@ list_status_t LIST_RemoveElement(list_element_handle_t element);
  * @retval kLIST_OrphanElement if element is not part of any list.
  * @retval kLIST_Ok if removal was successful.
  */
-list_status_t LIST_AddPrevElement(list_element_handle_t element, list_element_handle_t newElement);
+list_status_t LIST_AddPrevElement(list_element_handle_t element,
+                                  list_element_handle_t newElement);
 
 /*!
  * @brief Gets the current size of a list.
