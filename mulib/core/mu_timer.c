@@ -49,14 +49,13 @@
 /**
  * @brief The primary state machine for the mu_timer task.
  */
-static void mu_timer_fn(void *ctx, void *arg);
+static void mu_timer_fn(mu_task_t *task, void *arg);
 
 // *****************************************************************************
 // Public code
 
 void mu_timer_init(mu_timer_t *timer) {
-    mu_task_init(&timer->task, mu_timer_fn, timer, "Timer Task");
-    timer->state = MU_TIMER_STATE_IDLE;
+    mu_task_init(&timer->task, mu_timer_fn, MU_TIMER_STATE_IDLE, NULL);
 }
 
 void mu_timer_start(mu_timer_t *timer, uint32_t delay_ms, bool periodic,
@@ -91,8 +90,8 @@ bool mu_timer_is_stopped(mu_timer_t *timer) {
 // *****************************************************************************
 // Private (static) code
 
-static void mu_timer_fn(void *ctx, void *arg) {
-    mu_timer_t *self = (mu_timer_t *)ctx;
+static void mu_timer_fn(mu_task_t *task, void *arg) {
+    mu_timer_t *self = MU_TASK_CTX(task, mu_timer_t, task);
     (void)arg; // unused
 
     switch (self->state) {
