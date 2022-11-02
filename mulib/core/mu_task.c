@@ -27,6 +27,7 @@
 
 #include "mu_task.h"
 
+#include "mu_sched.h"
 #include <stddef.h>
 
 // *****************************************************************************
@@ -38,28 +39,71 @@
 // *****************************************************************************
 // Local storage
 
+mu_task_state_change_hook_fn s_state_change_hook_fn = NULL;
+
 // *****************************************************************************
 // Public code
 
-mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn, void *ctx,
-                        const char *task_name) {
-    // (void)task_name;  // will be used when MU_CONFIG_PROFILING_TASKS is
-    // defined
+void mu_task_register_state_change_hook(mu_task_state_change_hook_fn fn) {
+    s_state_change_hook_fn = fn;
+}
 
+mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
+                        unsigned int initial_state,
+                        mu_task_state_name_fn state_name_fn) {
     task->fn = fn;
-    task->ctx = ctx;
-    task->name = task_name;
+    task->state = initial_state;
+    task->state_name_fn = state_name_fn;
     return task;
 }
 
-mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
-
-void *mu_task_get_ctx(mu_task_t *task) { return task->ctx; }
-
 void mu_task_call(mu_task_t *task, void *arg) {
-    if (task != NULL) { // A NULL task is treated as a no-op
-        task->fn(task->ctx, arg);
+    if (task != NULL) {
+        task->fn(task, arg);
     }
+}
+
+mu_task_fn mu_task_get_fn(mu_task_t *task) {
+    return task->fn; }
+
+unsigned int mu_task_get_state(mu_task_t *task) {
+    return task->state; }
+
+void mu_task_set_state(mu_task_t *task, unsigned int state) {
+    if (s_state_change_hook_fn) {
+        s_state_change_hook_fn(task, task->state, state);
+    }
+    task->state = state;
+}
+
+const char *mu_task_state_name(mu_task_t *task, unsigned int state) {
+   if (task->state_name_fn) {
+       return task->state_name_fn(task, state);
+   } else {
+       return NULL;
+   }
+}
+
+void mu_task_yield(mu_task_t *task, unsigned int state) {
+    mu_task_set_state(task, state);
+    mu_sched_now(task);
+}
+
+void mu_task_deferred_yield(mu_task_t *task, unsigned int state,
+                            mu_time_rel_t tics) {
+    mu_task_set_state(task, state);
+    mu_sched_defer_for(task, tics);
+}
+
+void mu_task_transfer(mu_task_t *task, unsigned int state, mu_task_t *to) {
+    mu_task_set_state(task, state);
+    mu_sched_now(to);
+}
+
+void mu_task_deferred_transfer(mu_task_t *task, unsigned int state,
+                               mu_task_t *to, mu_time_rel_t tics) {
+    mu_task_set_state(task, state);
+    mu_sched_defer_for(to, tics);
 }
 
 // *****************************************************************************
