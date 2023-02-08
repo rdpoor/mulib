@@ -99,13 +99,13 @@ void mu_sched_test(void) {
   ASSERT(event != NULL);
   ASSERT(mu_event_get_time(event) == 100);
   // Cannot schedule an event already scheduled
-  ASSERT(mu_sched_at(&s_counting_task1, 110) == MU_SCHED_ERR_ALREADY_SCHEDULED);
+  ASSERT(mu_sched_defer_until(&s_counting_task1, 110) == MU_SCHED_ERR_ALREADY_SCHEDULED);
   // Remove the task.
   ASSERT(mu_sched_remove_task(&s_counting_task1) == &s_counting_task1);
   // Removing a task not in the schedule returns null
   ASSERT(mu_sched_remove_task(&s_counting_task1) == NULL);
   // After being removed, the task can be scheduled
-  ASSERT(mu_sched_at(&s_counting_task1, 110) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task1, 110) == MU_SCHED_ERR_NONE);
   // mu_sched_step() where the time has not yet arrived...
   ASSERT(mu_sched_step() == MU_SCHED_ERR_NONE);
   ASSERT(s_counting_ctx1.call_count == 0);
@@ -120,9 +120,9 @@ void mu_sched_test(void) {
   ASSERT(mu_sched_peek_next_event() == NULL);
 
   reset();
-  ASSERT(mu_sched_at(&s_counting_task1, 110) == MU_SCHED_ERR_NONE);
-  ASSERT(mu_sched_at(&s_counting_task2, 120) == MU_SCHED_ERR_NONE);
-  ASSERT(mu_sched_at(&s_counting_task3, 130) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task1, 110) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task2, 120) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task3, 130) == MU_SCHED_ERR_NONE);
   set_local_time(100);
   mu_sched_step();
   ASSERT(s_counting_ctx1.call_count == 0);
@@ -146,9 +146,9 @@ void mu_sched_test(void) {
   ASSERT(mu_sched_is_empty() == true);
 
   reset();
-  ASSERT(mu_sched_at(&s_counting_task1, 130) == MU_SCHED_ERR_NONE);
-  ASSERT(mu_sched_at(&s_counting_task2, 120) == MU_SCHED_ERR_NONE);
-  ASSERT(mu_sched_at(&s_counting_task3, 110) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task1, 130) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task2, 120) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task3, 110) == MU_SCHED_ERR_NONE);
   set_local_time(100);
   mu_sched_step();
   ASSERT(s_counting_ctx1.call_count == 0);
@@ -172,9 +172,9 @@ void mu_sched_test(void) {
   ASSERT(mu_sched_is_empty() == true);
 
   reset();
-  ASSERT(mu_sched_at(&s_counting_task1, 110) == MU_SCHED_ERR_NONE);
-  ASSERT(mu_sched_at(&s_counting_task2, 110) == MU_SCHED_ERR_NONE);
-  ASSERT(mu_sched_at(&s_counting_task3, 110) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task1, 110) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task2, 110) == MU_SCHED_ERR_NONE);
+  ASSERT(mu_sched_defer_until(&s_counting_task3, 110) == MU_SCHED_ERR_NONE);
   set_local_time(100);
   mu_sched_step();
   ASSERT(s_counting_ctx1.call_count == 0);
@@ -204,7 +204,7 @@ static void reset(void) {
   mu_task_init(&s_counting_task5, counting_fn, &s_counting_ctx5);
   mu_task_init(&s_idle_task, idle_fn, NULL);
 
-  mu_sched_init();
+  mu_sched_defer_forit();
   mu_sched_set_clock_source(get_local_time);
   mu_sched_set_idle_task(&s_idle_task);
 

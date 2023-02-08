@@ -25,62 +25,78 @@
 // *****************************************************************************
 // includes
 
-#include "mu_spsc.h"
-#include "mu_test_utils.h"
+#include "mu_queue.h"
+#include "mu_list.h"
+#include <stdbool.h>
 #include <stddef.h>
 
-// *****************************************************************************
-// private types and definitions
+// #include <stdio.h>  // debugging
 
-#define POOL_SIZE 4
 // *****************************************************************************
-// private declarations
+// local types and definitions
+
+// *****************************************************************************
+// local (forward) declarations
 
 // *****************************************************************************
 // local storage
 
-static void *pool[POOL_SIZE];
-static int item0 = 0;
-static int item1 = 1;
-static int item2 = 2;
-static int item3 = 3;
-
 // *****************************************************************************
 // public code
 
-void mu_spsc_test() {
-  mu_spsc_t cqi;
-  mu_spsc_t *cq = &cqi;
-  mu_spsc_item_t item;
-
-  // mu_spsc_err_t mu_spsc_init(mu_spsc_t *cq, mu_spsc_obj_t *pool, unsigned int
-  // capacity); pool size must be a power of two
-  ASSERT(mu_spsc_init(cq, pool, POOL_SIZE - 1) == MU_SPSC_ERR_SIZE);
-  ASSERT(mu_spsc_init(cq, pool, POOL_SIZE) == MU_SPSC_ERR_NONE);
-  ASSERT(mu_spsc_capacity(cq) == POOL_SIZE - 1);
-
-  // mu_spsc_err_t mu_spsc_put(mu_spsc_t *cq, mu_spsc_obj_t obj);
-  ASSERT(mu_spsc_put(cq, (mu_spsc_item_t)&item0) == MU_SPSC_ERR_NONE);
-  ASSERT(mu_spsc_put(cq, (mu_spsc_item_t)&item1) == MU_SPSC_ERR_NONE);
-  ASSERT(mu_spsc_put(cq, (mu_spsc_item_t)&item2) == MU_SPSC_ERR_NONE);
-  // put into a full queue fails
-  ASSERT(mu_spsc_put(cq, (mu_spsc_item_t)&item3) == MU_SPSC_ERR_FULL);
-
-  // mu_spsc_err_t mu_spsc_get(mu_spsc_t *cq, mu_spsc_obj_t *obj);
-  ASSERT(mu_spsc_get(cq, &item) == MU_SPSC_ERR_NONE);
-  ASSERT(item == &item0);
-  ASSERT(mu_spsc_get(cq, &item) == MU_SPSC_ERR_NONE);
-  ASSERT(item == &item1);
-  ASSERT(mu_spsc_get(cq, &item) == MU_SPSC_ERR_NONE);
-  ASSERT(item == &item2);
-  // get from an empty queue fails
-  ASSERT(mu_spsc_get(cq, &item) == MU_SPSC_ERR_EMPTY);
-  ASSERT(item == NULL);
-
-  // mu_spsc_err_t mu_spsc_reset(mu_spsc_t *cq);
-  ASSERT(mu_spsc_put(cq, (mu_spsc_item_t)&item0) == MU_SPSC_ERR_NONE);
-  ASSERT(mu_spsc_reset(cq) == MU_SPSC_ERR_NONE);
+mu_queue_t *mu_queue_init(mu_queue_t *q) {
+    mu_list_init(&q->head);
+    mu_list_init(&q->tail);
+    return q;
 }
 
+mu_list_t *mu_queue_list(mu_queue_t *q) { return mu_list_rest(&q->head); }
+
+mu_queue_t *mu_queue_append(mu_queue_t *q, mu_list_t *item) {
+    item->next = NULL;
+    if (mu_list_is_empty(&q->tail)) {
+        mu_list_push(&q->head, item);
+    } else {
+        mu_list_push(q->tail.next, item);
+    }
+    q->tail.next = item;
+    return q;
+}
+
+mu_queue_t *mu_queue_prepend(mu_queue_t *q, mu_list_t *item) {
+    mu_list_push(&q->head, item);
+    if (mu_list_is_empty(&q->tail)) {
+        q->tail.next = item;
+    }
+    return q;
+}
+
+mu_list_t *mu_queue_remove(mu_queue_t *q) {
+    mu_list_t *item = mu_list_pop(&q->head);
+    if (mu_list_is_empty(&q->head)) {
+        q->tail.next = NULL; // removing last item;
+    }
+    return item;
+}
+
+mu_list_t *mu_queue_delete(mu_queue_t *q, mu_list_t *item) {
+    return mu_list_delete(&q->head, item);
+}
+
+bool mu_queue_is_empty(mu_queue_t *q) { return mu_list_is_empty(&q->head); }
+
+mu_queue_t *mu_queue_reset(mu_queue_t *q) {
+    while (!mu_queue_is_empty(q)) {
+        mu_queue_remove(q);
+    }
+    return q;
+}
+
+bool mu_queue_contains(mu_queue_t *q, mu_list_t *item) {
+    return mu_list_contains(&q->head, item);
+}
+
+int mu_queue_length(mu_queue_t *q) { return mu_list_length(&q->head); }
+
 // *****************************************************************************
-// private code
+// local (static) code

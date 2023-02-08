@@ -28,9 +28,9 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_list.h"
+#include "mu_time.h"
 
-// =============================================================================
+// *****************************************************************************
 // C++ compatibility
 
 #ifdef __cplusplus
@@ -42,29 +42,54 @@ extern "C" {
 
 /**
  * A `mu_task` is a function that can be called later.  It comprises a function
- * pointer (`mu_task_fn`) and a context (`void *ctx`).  When called, the
- * function is passed the ctx argument and a caller-supplied `void *` argument.
+ * pointer (`mu_task_fn`) embedded within a context (`void *ctx`).  When called,
+ * function is passed the task object itself.
  */
 
-// The signature of a mu_task function.
-typedef void (*mu_task_fn)(void *ctx, void *arg);
+/**
+ * @brief Given a pointer to a mu_task_t, return a pointer to the context
+ * structure that contains it.
+ */
+#define MU_TASK_CTX(_task_pointer, _ctx_type, _task_slot)                      \
+    ((_ctx_type *)((char *)(1 ? (_task_pointer)                                \
+                              : &((_ctx_type *)0)->_task_slot) -               \
+                   offsetof(_ctx_type, _task_slot)))
 
-typedef struct {
-  mu_task_fn fn;                    // function to call
-  void *ctx;                        // context to pass when called
-  const char *name;                 // debugging
+struct _mu_task; // forward declaration
+
+// The signature of a mu_task function.
+typedef void (*mu_task_fn)(struct _mu_task *task, void *arg);
+
+// Signature of a function that maps a state to a state string.
+typedef const char *(*mu_task_state_name_fn)(struct _mu_task *task, unsigned int state);
+
+typedef struct _mu_task {
+    mu_task_fn fn;      // the function to call
+    unsigned int state; // the current task state
+    mu_task_state_name_fn state_name_fn; // fn to map state to state name
 } mu_task_t;
+
+typedef void (*mu_task_state_change_hook_fn)(mu_task_t *task,
+                                             unsigned int prev_state,
+                                             unsigned int state);
 
 // *****************************************************************************
 // Public declarations
 
+void mu_task_register_state_change_hook(mu_task_state_change_hook_fn fn);
+
 /**
  * @brief Initialize a task object with its function and context.
  */
-mu_task_t *mu_task_init(mu_task_t *task, 
-                        mu_task_fn fn, 
-                        void *ctx, 
-                        const char *task_name);
+mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
+                        unsigned int initial_state,
+                        mu_task_state_name_fn state_name_fn);
+
+/**
+ * @brief Invoke the deferred function.
+ * Note: Task may be NULL, in which case this is a no-op.
+ */
+void mu_task_call(mu_task_t *task, void *arg);
 
 /**
  * @brief Return the function of this task.
@@ -72,16 +97,29 @@ mu_task_t *mu_task_init(mu_task_t *task,
 mu_task_fn mu_task_get_fn(mu_task_t *task);
 
 /**
- * @brief Return the context of this task.
+ * @brief Return the state variable of this task.
  */
-void *mu_task_get_ctx(mu_task_t *task);
+unsigned int mu_task_get_state(mu_task_t *task);
 
 /**
- * @brief Invoke the deferred function.
- *
- * Note: for convenience task may be null, in which case this is a no-op.
+ * @brief Set the state variable of this task.
  */
-void mu_task_call(mu_task_t *task, void *arg);
+void mu_task_set_state(mu_task_t *task, unsigned int state);
+
+/**
+ * @brief Return a string naming the given state.  Returns NULL if not known.
+ */
+const char *mu_task_state_name(mu_task_t *task, unsigned int state);
+
+void mu_task_yield(mu_task_t *task, unsigned int state);
+
+void mu_task_deferred_yield(mu_task_t *task, unsigned int state,
+                            mu_time_rel_t tics);
+
+void mu_task_transfer(mu_task_t *task, unsigned int state, mu_task_t *to);
+
+void mu_task_deferred_transfer(mu_task_t *task, unsigned int state,
+                               mu_task_t *to, mu_time_rel_t tics);
 
 #ifdef __cplusplus
 }

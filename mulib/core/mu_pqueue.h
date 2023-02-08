@@ -33,13 +33,13 @@
 extern "C" {
 #endif
 
-// =============================================================================
+// *****************************************************************************
 // includes
 
 #include <stdbool.h>
 #include <stddef.h>
 
-// =============================================================================
+// *****************************************************************************
 // types and definitions
 
 typedef void *(*mu_pqueue_visit_fn)(void *item, void *arg);
@@ -48,14 +48,14 @@ typedef void *(*mu_pqueue_visit_fn)(void *item, void *arg);
 // the putr.
 
 typedef struct {
-  void **store;
-  size_t capacity;
-  size_t count;
-  size_t getr;    // index for the next item to fetch
-  size_t putr;    // index for the next item to store
+    void **store;
+    size_t capacity;
+    size_t count;
+    size_t getr; // index for the next item to fetch
+    size_t putr; // index for the next item to store
 } mu_pqueue_t;
 
-// =============================================================================
+// *****************************************************************************
 // declarations
 
 /**
@@ -66,33 +66,33 @@ typedef struct {
 mu_pqueue_t *mu_pqueue_init(mu_pqueue_t *q, void **store, size_t capacity);
 
 /**
-* @brief Reset the queue to its empty state.
-*/
+ * @brief Reset the queue to its empty state.
+ */
 mu_pqueue_t *mu_pqueue_reset(mu_pqueue_t *q);
 
 /**
-* @brief Return the capacity of the queue.
-*/
+ * @brief Return the capacity of the queue.
+ */
 size_t mu_pqueue_capacity(mu_pqueue_t *q);
 
 /**
-* @brief Return the number of items in the queue.
-*/
+ * @brief Return the number of items in the queue.
+ */
 size_t mu_pqueue_count(mu_pqueue_t *q);
 
 /**
-* @brief Return true if the queue is empty
-*/
+ * @brief Return true if the queue is empty
+ */
 bool mu_pqueue_is_empty(mu_pqueue_t *q);
 
 /**
-* @brief Return true if the queue is full
-*/
+ * @brief Return true if the queue is full
+ */
 bool mu_pqueue_is_full(mu_pqueue_t *q);
 
 /**
-* @brief Return true if the queue contains the given item, false otherwise.
-*/
+ * @brief Return true if the queue contains the given item, false otherwise.
+ */
 bool mu_pqueue_contains(mu_pqueue_t *q, void *item);
 
 /**

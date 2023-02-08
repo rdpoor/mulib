@@ -146,4 +146,3 @@ mu_str_t *mu_str_rtrim(mu_str_t *str, mu_str_predicate predicate, void *arg);
  * @return modified str.
  */
 mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate predicate, void *arg);
-

@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,50 +23,70 @@
  */
 
 // *****************************************************************************
-// includes
+// Includes
 
-#include "mu_strbuf.h"
-#include "mu_test_utils.h"
+#include "mu_config.h"
+#include "mu_time.h"
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <string.h>
+#include <time.h>
 
 // *****************************************************************************
-// private types and definitions
-
-#define ELEMENT_COUNT 10
+// Private types and definitions
 
 // *****************************************************************************
-// private declarations
+// Private (static) storage
 
 // *****************************************************************************
-// local storage
+// Private (forward) declarations
 
 // *****************************************************************************
-// public code
+// Public code
 
-void mu_strbuf_test() {
-  // allocate read_only and read/write string buffers, with pointers...
-  mu_strbuf_t strbuf_ro;
-  mu_strbuf_t strbuf_wr;
-  mu_strbuf_t *s_ro = &strbuf_ro;
-  mu_strbuf_t *s_wr = &strbuf_wr;
-  // allocate some C-strings for testing.
-  const char cstr_ro[] = "the quick brown fox jumps over the lazy dog.";
-  uint8_t cstr_wr[ELEMENT_COUNT];
+void mu_time_init(void) {}
 
-  ASSERT(mu_strbuf_init_ro(s_ro, (const uint8_t *)cstr_ro, strlen(cstr_ro)) ==
-         s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
+mu_time_abs_t mu_time_now(void) { return clock(); }
 
-  ASSERT(mu_strbuf_init_wr(s_wr, cstr_wr, ELEMENT_COUNT) == s_wr);
-  ASSERT(mu_strbuf_capacity(s_wr) == ELEMENT_COUNT);
-  ASSERT(mu_strbuf_wdata(s_wr) == cstr_wr);
-
-  ASSERT(mu_strbuf_init_from_cstr(s_ro, cstr_ro) == s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
+mu_time_abs_t mu_time_offset(mu_time_abs_t t, mu_time_rel_t dt) {
+  return t + dt;
 }
 
+mu_time_rel_t mu_time_difference(mu_time_abs_t t1, mu_time_abs_t t2) {
+  return t1 - t2;
+}
+
+bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2) {
+  return (t1 - t2) > MU_TIME_REL_MAX;
+}
+
+bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2) { return t1 == t2; }
+
+bool mu_time_follows(mu_time_abs_t t1, mu_time_abs_t t2) {
+  return (t1 - t2) < MU_TIME_REL_MAX;
+}
+
+int mu_time_rel_to_ms(mu_time_rel_t dt) {
+  // TODO: reinstate integer rounding fn
+  return (dt * 1000UL) / MU_TIME_TICKS_PER_SECOND;
+}
+
+mu_time_rel_t mu_time_ms_to_rel(int ms) {
+  // TODO: reinstate integer rounding fn
+  return ms * MU_TIME_TICKS_PER_SECOND / 1000UL;
+}
+
+#ifdef MU_PLATFORM_HAS_FLOAT
+
+mu_time_seconds_t mu_time_rel_to_s(mu_time_rel_t dt) {
+  return dt / (mu_time_seconds_t)MU_TIME_TICKS_PER_SECOND;
+}
+
+mu_time_seconds_t mu_time_s_to_rel(MU_FLOAT s) {
+  return s * MU_TIME_TICKS_PER_SECOND;
+}
+
+#endif
+
 // *****************************************************************************
-// private code
+// Private (static) code

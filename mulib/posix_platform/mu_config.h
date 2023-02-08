@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. Dunbar Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,51 +22,57 @@
  * SOFTWARE.
  */
 
-// *****************************************************************************
-// includes
+/**
+ * @file mu_config.h
+ *
+ * @brief Platform specific definitions and declarations required by mulib.
+ *
+ * If you are porting mulib to a specific platform, create the required
+ * definitions and declarations in mu_config.h and mu_time.h and implementation
+ * in mu_time.c.  If you are using mulib in your project, you must find (or
+ & create) the appropriate mu_config and mu_time files for your config.
+ */
 
-#include "mu_strbuf.h"
-#include "mu_test_utils.h"
-#include <stdint.h>
-#include <string.h>
-
-// *****************************************************************************
-// private types and definitions
-
-#define ELEMENT_COUNT 10
-
-// *****************************************************************************
-// private declarations
+#ifndef _MU_CONFIG_H_
+#define _MU_CONFIG_H_
 
 // *****************************************************************************
-// local storage
+// Includes
 
 // *****************************************************************************
-// public code
+// C++ Compatibility
 
-void mu_strbuf_test() {
-  // allocate read_only and read/write string buffers, with pointers...
-  mu_strbuf_t strbuf_ro;
-  mu_strbuf_t strbuf_wr;
-  mu_strbuf_t *s_ro = &strbuf_ro;
-  mu_strbuf_t *s_wr = &strbuf_wr;
-  // allocate some C-strings for testing.
-  const char cstr_ro[] = "the quick brown fox jumps over the lazy dog.";
-  uint8_t cstr_wr[ELEMENT_COUNT];
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-  ASSERT(mu_strbuf_init_ro(s_ro, (const uint8_t *)cstr_ro, strlen(cstr_ro)) ==
-         s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
+// *****************************************************************************
+// Public types and definitions
 
-  ASSERT(mu_strbuf_init_wr(s_wr, cstr_wr, ELEMENT_COUNT) == s_wr);
-  ASSERT(mu_strbuf_capacity(s_wr) == ELEMENT_COUNT);
-  ASSERT(mu_strbuf_wdata(s_wr) == cstr_wr);
+// Optional: un-comment this if your config supports floating point operations
+#define MU_CONFIG_HAS_FLOAT
 
-  ASSERT(mu_strbuf_init_from_cstr(s_ro, cstr_ro) == s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
+// Optional: Define the number of events that may be scheduled in mu_sched.
+// Leave commented to accept the default.
+// #define MU_CONFIG_MAX_EVENTS <n>
+
+// Optional: Uncomment the following to generate profiling functions for mu_task
+// and mu_sched, at the expense of larger storage and slightly slower executiion
+// times.
+// define MU_CONFIG_PROFILING_TASKS
+
+// Optional: If implementing power management, the minimum time the system will
+// sleep for.
+// #define MU_CONFIG_SLEEP_TIME_MIN mu_time_ms_to_rel(1)
+
+// *****************************************************************************
+// Public declarations
+
+// *****************************************************************************
+// End of file
+
+#ifdef __cplusplus
 }
+#endif
 
-// *****************************************************************************
-// private code
+#endif /* #ifndef _MU_CONFIG_H_ */

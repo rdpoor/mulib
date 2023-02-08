@@ -36,41 +36,40 @@
 extern "C" {
 #endif
 
-// =============================================================================
+// *****************************************************************************
 // includes
 
 #include <stdbool.h>
 #include <stdint.h>
 
-// =============================================================================
+// *****************************************************************************
 // types and definitions
 
 typedef enum {
-  MU_SPSC_ERR_NONE,
-  MU_SPSC_ERR_EMPTY,
-  MU_SPSC_ERR_FULL,
-  MU_SPSC_ERR_SIZE,
+    MU_SPSC_ERR_NONE,
+    MU_SPSC_ERR_EMPTY,
+    MU_SPSC_ERR_FULL,
+    MU_SPSC_ERR_SIZE,
 } mu_spsc_err_t;
 
 // mu_spsc manages pointer-sized objects
 typedef void *mu_spsc_item_t;
 
 typedef struct {
-  uint16_t mask;
-  volatile uint16_t head;
-  volatile uint16_t tail;
-  mu_spsc_item_t *store;
+    uint16_t mask;
+    volatile uint16_t head;
+    volatile uint16_t tail;
+    mu_spsc_item_t *store;
 } mu_spsc_t;
 
-// =============================================================================
+// *****************************************************************************
 // declarations
 
 /**
  * @brief initialize a cqueue with a backing store.  capacity must be a power
  * of two.
  */
-mu_spsc_err_t mu_spsc_init(mu_spsc_t *q,
-                           mu_spsc_item_t *store,
+mu_spsc_err_t mu_spsc_init(mu_spsc_t *q, mu_spsc_item_t *store,
                            uint16_t capacity);
 
 /**

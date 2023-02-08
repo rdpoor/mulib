@@ -26,17 +26,14 @@
 // includes
 
 #include "mu_strbuf.h"
-#include "mu_test_utils.h"
-#include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 
 // *****************************************************************************
-// private types and definitions
-
-#define ELEMENT_COUNT 10
+// local types and definitions
 
 // *****************************************************************************
-// private declarations
+// local (forward) declarations
 
 // *****************************************************************************
 // local storage
@@ -44,29 +41,32 @@
 // *****************************************************************************
 // public code
 
-void mu_strbuf_test() {
-  // allocate read_only and read/write string buffers, with pointers...
-  mu_strbuf_t strbuf_ro;
-  mu_strbuf_t strbuf_wr;
-  mu_strbuf_t *s_ro = &strbuf_ro;
-  mu_strbuf_t *s_wr = &strbuf_wr;
-  // allocate some C-strings for testing.
-  const char cstr_ro[] = "the quick brown fox jumps over the lazy dog.";
-  uint8_t cstr_wr[ELEMENT_COUNT];
+mu_strbuf_t *mu_strbuf_init_ro(mu_strbuf_t *buf, const uint8_t *const rdata,
+                               size_t capacity) {
+    buf->rdata = rdata;
+    buf->capacity = capacity;
+    return buf;
+}
 
-  ASSERT(mu_strbuf_init_ro(s_ro, (const uint8_t *)cstr_ro, strlen(cstr_ro)) ==
-         s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
+mu_strbuf_t *mu_strbuf_init_wr(mu_strbuf_t *buf, uint8_t *wdata,
+                               size_t capacity) {
+    buf->wdata = wdata;
+    buf->capacity = capacity;
+    return buf;
+}
 
-  ASSERT(mu_strbuf_init_wr(s_wr, cstr_wr, ELEMENT_COUNT) == s_wr);
-  ASSERT(mu_strbuf_capacity(s_wr) == ELEMENT_COUNT);
-  ASSERT(mu_strbuf_wdata(s_wr) == cstr_wr);
+mu_strbuf_t *mu_strbuf_init_from_cstr(mu_strbuf_t *buf,
+                                      const char *const cstr) {
+    return mu_strbuf_init_ro(buf, (const uint8_t *const)cstr, strlen(cstr));
+}
 
-  ASSERT(mu_strbuf_init_from_cstr(s_ro, cstr_ro) == s_ro);
-  ASSERT(mu_strbuf_capacity(s_ro) == strlen(cstr_ro));
-  ASSERT(mu_strbuf_rdata(s_ro) == (const uint8_t *)cstr_ro);
+uint8_t const *mu_strbuf_rdata(const mu_strbuf_t *buf) { return buf->rdata; }
+
+uint8_t *mu_strbuf_wdata(const mu_strbuf_t *buf) { return buf->wdata; }
+
+size_t mu_strbuf_capacity(const mu_strbuf_t *const buf) {
+    return buf->capacity;
 }
 
 // *****************************************************************************
-// private code
+// local (static) code

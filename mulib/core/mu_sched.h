@@ -30,8 +30,8 @@ mu_task can be scheduled to run at some point in the future through the
 following calls:
 
    mu_sched_err_t mu_sched_now(mu_task_t *task);
-   mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_abs_t at);
-   mu_sched_err_t mu_sched_in(mu_task_t *task, mu_time_rel_t in);
+   mu_sched_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
+   mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
 
 Each of these functions add a task to the scheduler's queue.
 
@@ -61,7 +61,7 @@ queue and is called.
 extern "C" {
 #endif
 
-// =============================================================================
+// *****************************************************************************
 // includes
 
 #include "mu_task.h"
@@ -70,29 +70,37 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-// =============================================================================
+// *****************************************************************************
 // types and definitions
 
 #ifndef MU_SCHED_MAX_DEFERRED_TASKS
-#define MU_SCHED_MAX_DEFERRED_TASKS 30
+#define MU_SCHED_MAX_DEFERRED_TASKS 20
+#endif
+
+#ifndef MU_SCHED_MAX_IRQ_TASKS
+#define MU_SCHED_MAX_IRQ_TASKS 8 // must be a power of two!
+#endif
+
+#ifndef MU_SCHED_MAX_NOW_TASKS
+#define MU_SCHED_MAX_NOW_TASKS 20
 #endif
 
 typedef enum {
-  MU_SCHED_ERR_NONE,
-  MU_SCHED_ERR_ILLEGAL_ARG,
-  MU_SCHED_ERR_EMPTY,
-  MU_SCHED_ERR_FULL,
-  MU_SCHED_ERR_NOT_FOUND,
+    MU_SCHED_ERR_NONE,
+    MU_SCHED_ERR_ILLEGAL_ARG,
+    MU_SCHED_ERR_EMPTY,
+    MU_SCHED_ERR_FULL,
+    MU_SCHED_ERR_NOT_FOUND,
 } mu_sched_err_t;
 
 // Signature for clock source function.  Returns the current time.
 typedef mu_time_abs_t (*mu_clock_fn)(void);
 
-// A mu_sched_event associates a task and a time.
+// A mu_sched_deferred_task associates a task and a time.
 typedef struct {
-  mu_time_abs_t at;
-  mu_task_t *task;
-} mu_sched_event_t;
+    mu_time_abs_t at;
+    mu_task_t *task;
+} mu_sched_deferred_task_t;
 
 /**
  * @brief Signature for a function passed to mu_sched_visit_events.
@@ -101,7 +109,8 @@ typedef struct {
  * @param arg A user-supplied argument.
  * @return A NULL value to continue traversing, a non-null value to stop.
  */
-typedef void *(*mu_sched_visit_event_fn)(mu_sched_event_t *event, void *arg);
+// typedef void *(*mu_sched_visit_event_fn)(mu_sched_deferred_task_t *event,
+// void *arg);
 
 /**
  * @brief Signature for a function passed to mu_sched_visit_immediate_tasks.
@@ -110,9 +119,9 @@ typedef void *(*mu_sched_visit_event_fn)(mu_sched_event_t *event, void *arg);
  * @param arg A user-supplied argument.
  * @return A NULL value to continue traversing, a non-null value to stop.
  */
-typedef void *(*mu_sched_visit_task_fn)(mu_task_t *task, void *arg);
+// typedef void *(*mu_sched_visit_task_fn)(mu_task_t *task, void *arg);
 
-// =============================================================================
+// *****************************************************************************
 // declarations
 
 /**
@@ -168,9 +177,9 @@ void mu_sched_set_idle_task(mu_task_t *task);
 mu_task_t *mu_sched_get_current_task(void);
 
 /**
- * @brief Return the next task to be run or NULL if there isn't one.
+ * @brief Return the next deferred task to be run or NULL if there isn't one.
  */
-mu_sched_event_t *mu_sched_peek_next_event(void);
+mu_sched_deferred_task_t *mu_sched_peek_next_deferred_task(void);
 
 /**
  * @brief Remove a scheduled task.
@@ -179,10 +188,10 @@ mu_sched_event_t *mu_sched_peek_next_event(void);
  * @return MU_SCHED_ERR_NOT_FOUND if the task was not present in the schedule,
  *         MU_SCHED_ERR_NONE otherwise.
  */
-mu_sched_err_t mu_sched_remove_task(mu_task_t *task);
+mu_sched_err_t mu_sched_remove_deferred_task(mu_task_t *task);
 
 /**
- * @brief Schedule (or reschedule) a task to be run as soon as possible.
+ * @brief Schedule a task to be run as soon as possible.
  *
  * Note: If there are other runnable tasks, the new task will be scheduled after
  * those have run.
@@ -190,30 +199,26 @@ mu_sched_err_t mu_sched_remove_task(mu_task_t *task);
 mu_sched_err_t mu_sched_now(mu_task_t *task);
 
 /**
+ * @brief Schedule a task from interrupt level.
+ */
+mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
+
+/**
  * @brief Schedule a task to be run at a particular time in the future.
  */
-mu_sched_err_t mu_sched_at(mu_task_t *task, mu_time_abs_t at);
+mu_sched_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
 
 /**
  * @brief Schedule a task to be run after a given interval.
  */
-mu_sched_err_t mu_sched_in(mu_task_t *task, mu_time_rel_t in);
-
-/**
- * @brief Schedule a task from interrupt level.
- *
- * @param task The task to be scheduled.
- * @return MU_SCHED_ERR_NONE on no error, MU_SCHED_ERR_FULL if the interrupt
- *         queue is full.
- */
-mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
+mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
 
 /**
  * @brief Call a user-supplied function for each deferred event in the schedule.
  *
  * The user-supplied function has the signature:
  *
- *    mu_task_t *user_fn(mu_sched_event_t *event, void *arg)
+ *    mu_task_t *user_fn(mu_sched_deferred_task_t *event, void *arg)
  *
  * Traversing the list continues until all events have been visited, or the
  * user function returns a non-null value.
@@ -222,7 +227,8 @@ mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
  * @param arg The value supplied as the second argument to the user fun.
  * @return A non-null value returned by the user function, or NULL otherwise.
  */
-void *mu_sched_visit_deferred_events(mu_sched_visit_event_fn user_fn, void *arg);
+// void *mu_sched_visit_deferred_events(mu_sched_visit_event_fn user_fn, void
+// *arg);
 
 /**
  * @brief Call a user-supplied function for each immediate task in the schedule.
@@ -238,7 +244,8 @@ void *mu_sched_visit_deferred_events(mu_sched_visit_event_fn user_fn, void *arg)
  * @param arg The value supplied as the second argument to the user fun.
  * @return A non-null value returned by the user function, or NULL otherwise.
  */
-void *mu_sched_visit_immediate_tasks(mu_sched_visit_task_fn user_fn, void *arg);
+// void *mu_sched_visit_immediate_tasks(mu_sched_visit_task_fn user_fn, void
+// *arg);
 
 #ifdef __cplusplus
 }
