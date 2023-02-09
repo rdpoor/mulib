@@ -1,35 +1,59 @@
 /**
- * @file: mu_str.h
- * 
- * @brief Safe, in-place string operations without the null terminator.
+ * MIT License
+ *
+ * Copyright (c) 2021-2023 R. D. Poor <rdpoor@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
+
+// *****************************************************************************
+// Includes
 
 #include "mu_str.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
-mu_str_t *mu_str_init(mu_str_t *str, uint8_t *bytes, size_t len) {
+// *****************************************************************************
+// Private types and definitions
+
+// *****************************************************************************
+// Private (static) storage
+
+// *****************************************************************************
+// Private (forward) declarations
+
+// *****************************************************************************
+// Public code
+
+mu_str_t *mu_str_init(mu_str_t *str, const uint8_t *bytes, size_t len) {
   str->bytes = bytes;
   str->len = len;
   return str;
 }
 
-mu_str_t *mu_str_ro_init(mu_str_t *str, const uint8_t *bytes, size_t len) {
-  str->ro_bytes = bytes;
-  str->len = len;
-  return str;
-}
-
 mu_str_t *mu_str_cstr_init(mu_str_t *str, const char *cstr) {
-    return mu_str_ro_init(str, (const uint8_t *)cstr, strlen(cstr));
+    return mu_str_init(str, (const uint8_t *)cstr, strlen(cstr));
 }
 
-uint8_t *mu_str_bytes(mu_str_t *str) { return str->bytes; }
-
-const uint8_t *mu_str_ro_bytes(mu_str_t *str) { return str->ro_bytes; }
+const uint8_t *mu_str_bytes(mu_str_t *str) { return str->bytes; }
 
 size_t mu_str_length(mu_str_t *str) { return str->len; }
 
@@ -39,15 +63,10 @@ mu_str_t *mu_str_copy(mu_str_t *dst, mu_str_t *src) {
   return mu_str_init(dst, src->bytes, src->len);
 }
 
-mu_str_t *mu_str_fill(mu_str_t *str, uint8_t byte) {
-  memset(str->bytes, byte, str->len);
-  return str;
-}
-
 int mu_str_compare(mu_str_t *s1, mu_str_t *s2) {
-  uint8_t *b1 = mu_str_bytes(s1);
+  const uint8_t *b1 = mu_str_bytes(s1);
   size_t len1 = mu_str_length(s1);
-  uint8_t *b2 = mu_str_bytes(s2);
+  const uint8_t *b2 = mu_str_bytes(s2);
   size_t len2 = mu_str_length(s2);
 
   size_t len = (len1 < len2) ? len1 : len2;
@@ -98,7 +117,7 @@ size_t mu_str_find(mu_str_t *str, mu_str_t *substr) {
   }
 
   size_t haystack_len = mu_str_length(str);
-  uint8_t *needle = mu_str_bytes(substr);
+  const uint8_t *needle = mu_str_bytes(substr);
   int j;
 
   // First scan through haystack looking for a byte that matches the first byte
@@ -106,7 +125,7 @@ size_t mu_str_find(mu_str_t *str, mu_str_t *substr) {
   // needle_len bytes of the end of haystack, since beyond that, the full-length
   // search will always fail.
   for (int i=0; i<haystack_len-needle_len; i++) {
-    uint8_t *haystack = &mu_str_bytes(str)[i];
+    const uint8_t *haystack = &mu_str_bytes(str)[i];
     if (*haystack == *needle) {
       // first byte matches.  Do the rest of the bytes match?
       for (j=0; j<needle_len; j++) {
@@ -134,7 +153,7 @@ size_t mu_str_rfind(mu_str_t *str, mu_str_t *substr) {
   }
 
   size_t haystack_len = mu_str_length(str);
-  uint8_t *needle = mu_str_bytes(substr);
+  const uint8_t *needle = mu_str_bytes(substr);
   int j;
 
   // First scan through haystack looking for a byte that matches the first byte
@@ -142,7 +161,7 @@ size_t mu_str_rfind(mu_str_t *str, mu_str_t *substr) {
   // needle_len bytes of the end of haystack, since beyond that, the full-length
   // search will always fail.
   for (int i=haystack_len-needle_len; i>=0; --i) {
-    uint8_t *haystack = &mu_str_bytes(str)[i];
+    const uint8_t *haystack = &mu_str_bytes(str)[i];
     if (*haystack == *needle) {
       // first byte matches.  Do the rest of the bytes match?
       for (j=0; j<needle_len; j++) {
@@ -163,7 +182,7 @@ size_t mu_str_rfind(mu_str_t *str, mu_str_t *substr) {
 }
 
 mu_str_t *mu_str_ltrim(mu_str_t *str, mu_str_predicate predicate, void *arg) {
-  uint8_t *bytes = mu_str_bytes(str);
+  const uint8_t *bytes = mu_str_bytes(str);
   size_t idx;
 
   for (idx=0; idx<mu_str_length(str); idx++) {
@@ -175,7 +194,7 @@ mu_str_t *mu_str_ltrim(mu_str_t *str, mu_str_predicate predicate, void *arg) {
 }
 
 mu_str_t *mu_str_rtrim(mu_str_t *str, mu_str_predicate predicate, void *arg) {
-  uint8_t *bytes = mu_str_bytes(str);
+  const uint8_t *bytes = mu_str_bytes(str);
   size_t idx = 0;  // suppress spurious compiler warning?
 
   for (size_t idx=mu_str_length(str); idx>0; idx--) {
@@ -189,6 +208,9 @@ mu_str_t *mu_str_rtrim(mu_str_t *str, mu_str_predicate predicate, void *arg) {
 mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate predicate, void *arg) {
 	return mu_str_rtrim(mu_str_ltrim(str, predicate, arg), predicate, arg);
 }
+
+// *****************************************************************************
+// Private (static) code
 
 // *****************************************************************************
 // Standalone tests
@@ -230,21 +252,11 @@ int main(void) {
   // mu_str_init
   do {
     mu_str_t s1;
-    uint8_t buf[10];
+    const uint8_t buf[] = {65, 66, 67, 68, 69, 70, 71, 72, 73, 74};
 
     ASSERT(&s1 == mu_str_init(&s1, buf, sizeof(buf)));
     ASSERT(mu_str_bytes(&s1) == buf);
     ASSERT(mu_str_length(&s1) == sizeof(buf));
-  } while (false);
-
-  // mu_str_ro_init
-  do {
-    mu_str_t s1;
-    char *buf = "ABCDEFGHIJ";
-
-    ASSERT(&s1 == mu_str_ro_init(&s1, (const uint8_t *)buf, strlen(buf)));
-    ASSERT(mu_str_bytes(&s1) == (const uint8_t *)buf);
-    ASSERT(mu_str_length(&s1) == strlen(buf));
   } while (false);
 
   // mu_str_cstr_init
@@ -266,18 +278,6 @@ int main(void) {
     ASSERT(&s2 == mu_str_copy(&s2, &s1));
     ASSERT(mu_str_bytes(&s2) == mu_str_bytes(&s1));
     ASSERT(mu_str_length(&s2) == mu_str_length(&s1));
-  } while (false);
-
-  // mu_str_fill
-  do {
-    mu_str_t s1;
-    uint8_t buf[5];
-
-    mu_str_init(&s1, buf, sizeof(buf));
-    ASSERT(&s1 == mu_str_fill(&s1, '5'));
-    for (int i=0; i<mu_str_length(&s1); i++) {
-      ASSERT(mu_str_bytes(&s1)[i] == '5');    
-    }
   } while (false);
 
   // mu_str_compare
