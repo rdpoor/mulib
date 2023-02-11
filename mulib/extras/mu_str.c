@@ -22,6 +22,18 @@
  * SOFTWARE.
  */
 
+/**
+Naming thoughts...
+
+bool mu_str_prefix_[cstr_]is() true if prefix exactly matches a string
+bool mu_str_suffix_[cstr_]is() true if suffix exactly matches a string
+size_t mu_str_[cstr_]find() index of literal string searching forward
+size_t mu_str_[cstr_]rfind() index of literal string searching backward
+size_t mu_str_match() index of predicate returning true searching forward
+size_t mu_str_rmatch() index of predicate returning true searching backward
+
+*/
+
 // *****************************************************************************
 // Includes
 
@@ -30,6 +42,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 // *****************************************************************************
 // Private types and definitions
@@ -40,6 +53,18 @@
 // *****************************************************************************
 // Private (forward) declarations
 
+static size_t mu_str_find_aux(const uint8_t *haystack,
+                              size_t haystack_len,
+                              const uint8_t *needle, 
+                              size_t needle_len, 
+                              bool skip_substr);
+
+static size_t mu_str_rfind_aux(const uint8_t *haystack,
+                               size_t haystack_len,
+                               const uint8_t *needle, 
+                               size_t needle_len, 
+                               bool skip_substr);
+
 // *****************************************************************************
 // Public code
 
@@ -49,7 +74,7 @@ mu_str_t *mu_str_init(mu_str_t *str, const uint8_t *bytes, size_t len) {
   return str;
 }
 
-mu_str_t *mu_str_cstr_init(mu_str_t *str, const char *cstr) {
+mu_str_t *mu_str_init_cstr(mu_str_t *str, const char *cstr) {
     return mu_str_init(str, (const uint8_t *)cstr, strlen(cstr));
 }
 
@@ -109,76 +134,36 @@ mu_str_t *mu_str_slice(mu_str_t *dst,
   return mu_str_init(dst, &src->bytes[start], end - start);
 }
 
-size_t mu_str_find(mu_str_t *str, mu_str_t *substr) {
-  size_t needle_len = mu_str_length(substr);
-
-  if (needle_len == 0) {
-    return 0;
-  }
-
-  size_t haystack_len = mu_str_length(str);
-  const uint8_t *needle = mu_str_bytes(substr);
-  int j;
-
-  // First scan through haystack looking for a byte that matches the first byte
-  // of needle.  Micro-optimization: We stop searching when we get within 
-  // needle_len bytes of the end of haystack, since beyond that, the full-length
-  // search will always fail.
-  for (int i=0; i<haystack_len-needle_len; i++) {
-    const uint8_t *haystack = &mu_str_bytes(str)[i];
-    if (*haystack == *needle) {
-      // first byte matches.  Do the rest of the bytes match?
-      for (j=0; j<needle_len; j++) {
-        if (haystack[j] != needle[j]) {
-          // mismatch: advance to next char in haystack
-          break;
-        }
-      }
-      if (j == needle_len) {
-        // found: &haystack[i] matched all of *needle
-        return i;
-      }
-    }
-    // advance to next byte in haystack
-  }
-  // got to end of haystack without a match.
-  return MU_STR_NOT_FOUND;
+size_t mu_str_find(mu_str_t *str, mu_str_t *substr, bool skip_substr) {
+  return mu_str_find_aux(mu_str_bytes(str),
+                         mu_str_length(str), 
+                         mu_str_bytes(substr), 
+                         mu_str_length(substr), 
+                         skip_substr);
 }
 
-size_t mu_str_rfind(mu_str_t *str, mu_str_t *substr) {
-  size_t needle_len = mu_str_length(substr);
+size_t mu_str_find_cstr(mu_str_t *str, const char *substr, bool skip_substr) {
+  return mu_str_find_aux(mu_str_bytes(str),
+                         mu_str_length(str), 
+                         (const uint8_t *)substr,
+                         strlen(substr),
+                         skip_substr);
+}
 
-  if (needle_len == 0) {
-    return 0;
-  }
+size_t mu_str_rfind(mu_str_t *str, mu_str_t *substr, bool skip_substr) {
+  return mu_str_rfind_aux(mu_str_bytes(str),
+                          mu_str_length(str), 
+                          mu_str_bytes(substr), 
+                          mu_str_length(substr), 
+                          skip_substr);
+}
 
-  size_t haystack_len = mu_str_length(str);
-  const uint8_t *needle = mu_str_bytes(substr);
-  int j;
-
-  // First scan through haystack looking for a byte that matches the first byte
-  // of needle.  Micro-optimization: We start searching at haystack_end -  
-  // needle_len bytes of the end of haystack, since beyond that, the full-length
-  // search will always fail.
-  for (int i=haystack_len-needle_len; i>=0; --i) {
-    const uint8_t *haystack = &mu_str_bytes(str)[i];
-    if (*haystack == *needle) {
-      // first byte matches.  Do the rest of the bytes match?
-      for (j=0; j<needle_len; j++) {
-        if (haystack[j] != needle[j]) {
-          // mismatch: advance to next char in haystack
-          break;
-        }
-      }
-      if (j == needle_len) {
-        // found: &haystack[i] matched all of *needle
-        return i;
-      }
-    }
-    // advance to next byte in haystack
-  }
-  // got to end of haystack without a match.
-  return MU_STR_NOT_FOUND;
+size_t mu_str_rfind_cstr(mu_str_t *str, const char *substr, bool skip_substr) {
+  return mu_str_rfind_aux(mu_str_bytes(str),
+                          mu_str_length(str), 
+                          (const uint8_t *)substr,
+                          strlen(substr),
+                          skip_substr);
 }
 
 mu_str_t *mu_str_ltrim(mu_str_t *str, mu_str_predicate predicate, void *arg) {
@@ -211,6 +196,78 @@ mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate predicate, void *arg) {
 
 // *****************************************************************************
 // Private (static) code
+
+static size_t mu_str_find_aux(const uint8_t *haystack,
+                              size_t haystack_len,
+                              const uint8_t *needle, 
+                              size_t needle_len, 
+                              bool skip_substr) {
+  if (needle_len == 0) {
+    return 0;
+  }
+
+  int j;
+
+  // First scan through haystack looking for a byte that matches the first byte
+  // of needle.  Micro-optimization: We stop searching when we get within 
+  // needle_len bytes of the end of haystack, since beyond that, the full-length
+  // search will always fail.
+  for (int i=0; i<haystack_len-needle_len; i++) {
+    const uint8_t *h2 = &haystack[i];
+    if (*h2 == *needle) {
+      // first byte matches.  Do the rest of the bytes match?
+      for (j=1; j<needle_len; j++) {
+        if (h2[j] != needle[j]) {
+          // mismatch: advance to next char in haystack
+          break;
+        }
+      }
+      if (j == needle_len) {
+        // found: &haystack[i] matched all of *needle
+        return skip_substr ? i + needle_len : i;
+      }
+    }
+    // advance to next byte in haystack
+  }
+  // got to end of haystack without a match.
+  return MU_STR_NOT_FOUND;
+}
+
+static size_t mu_str_rfind_aux(const uint8_t *haystack,
+                               size_t haystack_len,
+                               const uint8_t *needle, 
+                               size_t needle_len, 
+                               bool skip_substr) {
+  if (needle_len == 0) {
+    return 0;
+  }
+
+  int j;
+
+  // First scan through haystack looking for a byte that matches the first byte
+  // of needle.  Micro-optimization: We start searching at haystack_end -  
+  // needle_len bytes of the end of haystack, since beyond that, the full-length
+  // search will always fail.
+  for (int i=haystack_len-needle_len; i>=0; --i) {
+    const uint8_t *h2 = &haystack[i];
+    if (*h2 == *needle) {
+      // first byte matches.  Do the rest of the bytes match?
+      for (j=1; j<needle_len; j++) {
+        if (h2[j] != needle[j]) {
+          // mismatch: advance to next char in haystack
+          break;
+        }
+      }
+      if (j == needle_len) {
+        // found: &haystack[i] matched all of *needle
+        return skip_substr ? i + needle_len : i;
+      }
+    }
+    // advance to next byte in haystack
+  }
+  // got to end of haystack without a match.
+  return MU_STR_NOT_FOUND;
+}
 
 // *****************************************************************************
 // Standalone tests
@@ -245,7 +302,7 @@ static void print_str(mu_str_t *str) {
 	printf("\n[%ld]: '%.*s'", len, (int)len, mu_str_bytes(str));
 }
 
-int main(void) {
+void test_mu_str(void) {
 
   printf("\nStarting mu_str tests...");
 
@@ -259,12 +316,12 @@ int main(void) {
     ASSERT(mu_str_length(&s1) == sizeof(buf));
   } while (false);
 
-  // mu_str_cstr_init
+  // mu_str_init_cstr
   do {
     mu_str_t s1;
     char *cstr = "ABCDEFGHIJ";
 
-    ASSERT(&s1 == mu_str_cstr_init(&s1, cstr));
+    ASSERT(&s1 == mu_str_init_cstr(&s1, cstr));
     ASSERT(mu_str_bytes(&s1) == (const uint8_t *)cstr);
     ASSERT(mu_str_length(&s1) == strlen(cstr));
   } while (false);
@@ -284,30 +341,30 @@ int main(void) {
   do {
     mu_str_t s1, s2;
 
-    mu_str_cstr_init(&s1, "abcd");
+    mu_str_init_cstr(&s1, "abcd");
     // strings are equal in content and length
-    ASSERT(mu_str_compare(&s1, mu_str_cstr_init(&s2, "abcd")) == 0);
+    ASSERT(mu_str_compare(&s1, mu_str_init_cstr(&s2, "abcd")) == 0);
     // s1 is lexographically higher
-    ASSERT(mu_str_compare(&s1, mu_str_cstr_init(&s2, "abcc")) > 0);
+    ASSERT(mu_str_compare(&s1, mu_str_init_cstr(&s2, "abcc")) > 0);
     // s1 is lexographically lower
-    ASSERT(mu_str_compare(&s1, mu_str_cstr_init(&s2, "abce")) < 0);
+    ASSERT(mu_str_compare(&s1, mu_str_init_cstr(&s2, "abce")) < 0);
     // s1 is longer
-    ASSERT(mu_str_compare(&s1, mu_str_cstr_init(&s2, "abc")) > 0);
+    ASSERT(mu_str_compare(&s1, mu_str_init_cstr(&s2, "abc")) > 0);
     // s1 is shorter
-    ASSERT(mu_str_compare(&s1, mu_str_cstr_init(&s2, "abcde")) < 0);
+    ASSERT(mu_str_compare(&s1, mu_str_init_cstr(&s2, "abcde")) < 0);
     // both empty
-    ASSERT(mu_str_compare(mu_str_cstr_init(&s1, ""), mu_str_cstr_init(&s2, "")) == 0);
+    ASSERT(mu_str_compare(mu_str_init_cstr(&s1, ""), mu_str_init_cstr(&s2, "")) == 0);
     // s2 empty
-    ASSERT(mu_str_compare(mu_str_cstr_init(&s1, "abcd"), mu_str_cstr_init(&s2, "")) > 0);
+    ASSERT(mu_str_compare(mu_str_init_cstr(&s1, "abcd"), mu_str_init_cstr(&s2, "")) > 0);
     // s1 empty
-    ASSERT(mu_str_compare(mu_str_cstr_init(&s1, ""), mu_str_cstr_init(&s2, "abcd")) < 0);
+    ASSERT(mu_str_compare(mu_str_init_cstr(&s1, ""), mu_str_init_cstr(&s2, "abcd")) < 0);
   } while (false);
 
   // mu_str_slice
   do {
     mu_str_t s1, s2;
 
-    mu_str_cstr_init(&s1, "ABCDEFGHIJ");
+    mu_str_init_cstr(&s1, "ABCDEFGHIJ");
     // whole slice (indefinite end index)
     ASSERT(&s2 == mu_str_slice(&s2, &s1, 0, MU_STR_END));
     ASSERT(cstr_eq(&s2, "ABCDEFGHIJ"));
@@ -357,37 +414,221 @@ int main(void) {
     mu_str_t s1, s2;
 
     //                     0123456789
-    mu_str_cstr_init(&s1, "abXcdabYcd");
-    ASSERT(mu_str_find(&s1, mu_str_cstr_init(&s2, "")) == 0);
-    ASSERT(mu_str_find(&s1, mu_str_cstr_init(&s2, "ab")) == 0);
-    ASSERT(mu_str_find(&s1, mu_str_cstr_init(&s2, "cd")) == 3);
-    ASSERT(mu_str_find(&s1, mu_str_cstr_init(&s2, "cdX")) == MU_STR_NOT_FOUND);
+    mu_str_init_cstr(&s1, "abXcdabYcd");
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, ""), false) == 0);
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, ""), true) == 0);
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, "ab"), false) == 0);
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, "ab"), true) == 2);
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, "cd"), false) == 3);
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, "cd"), true) == 5);
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, "cdX"), false) == MU_STR_NOT_FOUND);
+    ASSERT(mu_str_find(&s1, mu_str_init_cstr(&s2, "cdX"), true) == MU_STR_NOT_FOUND);
 
-    ASSERT(mu_str_rfind(&s1, mu_str_cstr_init(&s2, "")) == 0);
-    ASSERT(mu_str_rfind(&s1, mu_str_cstr_init(&s2, "ab")) == 5);
-    ASSERT(mu_str_rfind(&s1, mu_str_cstr_init(&s2, "cd")) == 8);
-    ASSERT(mu_str_rfind(&s1, mu_str_cstr_init(&s2, "cdX")) == MU_STR_NOT_FOUND);
+    ASSERT(mu_str_find_cstr(&s1, "", false) == 0);
+    ASSERT(mu_str_find_cstr(&s1, "", true) == 0);
+    ASSERT(mu_str_find_cstr(&s1, "ab", false) == 0);
+    ASSERT(mu_str_find_cstr(&s1, "ab", true) == 2);
+    ASSERT(mu_str_find_cstr(&s1, "cd", false) == 3);
+    ASSERT(mu_str_find_cstr(&s1, "cd", true) == 5);
+    ASSERT(mu_str_find_cstr(&s1, "cdX", false) == MU_STR_NOT_FOUND);
+    ASSERT(mu_str_find_cstr(&s1, "cdX", true) == MU_STR_NOT_FOUND);
+
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, ""), false) == 0);
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, ""), true) == 0);
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, "ab"), false) == 5);
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, "ab"), true) == 7);
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, "cd"), false) == 8);
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, "cd"), true) == 10);
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, "cdX"), false) == MU_STR_NOT_FOUND);
+    ASSERT(mu_str_rfind(&s1, mu_str_init_cstr(&s2, "cdX"), true) == MU_STR_NOT_FOUND);
+
+    ASSERT(mu_str_rfind_cstr(&s1, "", false) == 0);
+    ASSERT(mu_str_rfind_cstr(&s1, "", true) == 0);
+    ASSERT(mu_str_rfind_cstr(&s1, "ab", false) == 5);
+    ASSERT(mu_str_rfind_cstr(&s1, "ab", true) == 7);
+    ASSERT(mu_str_rfind_cstr(&s1, "cd", false) == 8);
+    ASSERT(mu_str_rfind_cstr(&s1, "cd", true) == 10);
+    ASSERT(mu_str_rfind_cstr(&s1, "cdX", false) == MU_STR_NOT_FOUND);
+    ASSERT(mu_str_rfind_cstr(&s1, "cdX", true) == MU_STR_NOT_FOUND);
   } while (false);
 
   // mu_str_ltrim, mu_str_rtrim, mu_str_trim
   do {
     mu_str_t s1;
 
-    mu_str_cstr_init(&s1, "  abcde  ");
+    mu_str_init_cstr(&s1, "  abcde  ");
     ASSERT(&s1 == mu_str_ltrim(&s1, is_whitespace, NULL));
     ASSERT(cstr_eq(&s1, "abcde  "));
 
-    mu_str_cstr_init(&s1, "  abcde  ");
+    mu_str_init_cstr(&s1, "  abcde  ");
     ASSERT(&s1 == mu_str_rtrim(&s1, is_whitespace, NULL));
     ASSERT(cstr_eq(&s1, "  abcde"));
 
-    mu_str_cstr_init(&s1, "  abcde  ");
+    mu_str_init_cstr(&s1, "  abcde  ");
     ASSERT(&s1 == mu_str_trim(&s1, is_whitespace, NULL));
     ASSERT(cstr_eq(&s1, "abcde"));
   } while (false);
 
   printf("\n...tests complete\n");
-  return 0;
+}
+
+void test_mu_str_example(void) {
+  // Parse an HTML message, extracting the Date: from the header and the
+  // contents of the body.  
+  printf("\nStarting mu_str_example...");
+
+  const char *HTML =
+    "HTTP/1.1 200 OK\r\n"
+    "Date: Wed, 26 Oct 2022 17:17:34 GMT\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: 27\r\n"
+    "Connection: keep-alive\r\n"
+    "X-Javatime: 1666804654506\r\n"
+    "\r\n"
+    "{\"code\":200,\"message\":\"ok\"}";
+
+  mu_str_t html, date_value, body;
+  size_t idx;
+
+  mu_str_init_cstr(&html, HTML);
+
+  // find "Wed, 26 Oct 2022 17:17:34 GMT"
+  // Extract the text following "Date: " to end of line
+  idx = mu_str_find_cstr(&html, "Date: ", true);
+  ASSERT(idx != MU_STR_NOT_FOUND);
+  mu_str_slice(&date_value, &html, idx, MU_STR_END);
+  idx = mu_str_find_cstr(&date_value, "\r\n", false);
+  ASSERT(idx != MU_STR_NOT_FOUND);
+  mu_str_slice(&date_value, &date_value, 0, idx);
+  ASSERT(cstr_eq(&date_value, "Wed, 26 Oct 2022 17:17:34 GMT"));
+
+  // find "{\"code\":200,\"message\":\"ok\"}"
+  // blank \r\n\r\n signifies end of HTML header and start of body
+  idx = mu_str_find_cstr(&html, "\r\n\r\n", true);
+  ASSERT(idx != MU_STR_NOT_FOUND);
+  mu_str_slice(&body, &html, idx, MU_STR_END);
+  ASSERT(cstr_eq(&body, "{\"code\":200,\"message\":\"ok\"}"));
+  
+  printf("\n...mu_str_example complete\n");
+
+}
+
+typedef struct {
+    const char *host_name;
+    size_t host_name_len;
+    uint16_t host_port;
+    bool use_tls;
+} http_params_t;
+
+http_params_t *parse_http_params(http_params_t *params, const char *url) {
+  mu_str_t url_str;
+  size_t idx;
+
+  mu_str_init_cstr(&url_str, url);
+
+  if ((idx = mu_str_find_cstr(&url_str, "https://", true)) == 0) {
+      // found "https://" at position 0
+      params->host_port = 443;  // until proven otherwise...
+      params->use_tls = true;
+      break;
+  } else if ((idx = mu_str_find_cstr(&url_str, "http://", true)) == 0) {
+      // found "http://" at position 0
+      params->host_port = 80;  // until proven otherwise...
+      params->use_tls = false;
+      break;
+  } else {
+    return NULL;
+  }
+
+  // skip over "http://" (or "https://")
+  mu_str_slice(&url_str, &url_str, idx, MU_STR_END);
+
+  // host_name terminates with ':', '/', or end-of-line
+
+  if ((idx = mu_str_find_cstr(&url_str, ":", false)) != MU_STR_NOT_FOUND) {
+    // found a ':' in the url.  candidate host name is everything before ':'
+    mu_str_t candidate;
+    mu_str_slice(&candidate, &url_str, 0, idx);
+    if ((idx2 = mu_str_find_cstr(&candidate, "/", true) != MU_STR_NOT_FOUND)) {
+      // found a '/' preceding the ':' -- not allowed.
+      // TODO: are there other illegal chars we should look for?
+      // TODO: bool mu_str_contains_chars(str, cstring charlist) would be useful...
+      // TODO: bool mu_str_contains_char(str, char ch) also...
+      return NULL;
+    }
+    // host name terminates with ':' and looks okay - capture it.
+    params->host_name = mu_str_bytes(candidate);
+    params->host_name_len = idx;
+    idx += 1;                      // skip over ':'
+
+  }
+
+
+  }
+  // success
+  return params;
+}
+
+void test_parse_url() {
+  http_params_t params;
+
+  printf("\nStarting test_parse_url example...");
+
+  ASSERT(parse_http_params(&params, "http://example.com") == &params);
+  ASSERT(strcmp(params->host_name, "example.com") == 0);
+  ASSERT(params->host_port == 80);
+  ASSERT(params->use_tls == false);
+
+  ASSERT(parse_http_params(&params, "https://example.com") == &params);
+  ASSERT(strcmp(params->host_name, "example.com") == 0);
+  ASSERT(params->host_port == 443);
+  ASSERT(params->use_tls == true);
+
+  ASSERT(parse_http_params(&params, "http://example.com:8080") == &params);
+  ASSERT(strcmp(params->host_name, "example.com") == 0);
+  ASSERT(params->host_port == 8080);
+  ASSERT(params->use_tls == false);
+
+  ASSERT(parse_http_params(&params, "https://example.com:8080") == &params);
+  ASSERT(strcmp(params->host_name, "example.com") == 0);
+  ASSERT(params->host_port == 8080);
+  ASSERT(params->use_tls == true);
+
+  ASSERT(parse_http_params(&params, "https://example.com/extra") == &params);
+  ASSERT(strcmp(params->host_name, "example.com") == 0);
+  ASSERT(params->host_port == 443);
+  ASSERT(params->use_tls == true);
+
+  ASSERT(parse_http_params(&params, "https://example.com:123/extra") == &params);
+  ASSERT(strcmp(params->host_name, "example.com") == 0);
+  ASSERT(params->host_port == 123);
+  ASSERT(params->use_tls == true);
+
+  ASSERT(parse_http_params(&params, "https://example.com/") == &params);
+  ASSERT(strcmp(params->host_name, "example.com") == 0);
+  ASSERT(params->host_port == 443);
+  ASSERT(params->use_tls == true);
+
+  // pathologies
+  ASSERT(parse_http_params(&params, "") == NULL);
+  ASSERT(parse_http_params(&params, "http") == NULL);
+  ASSERT(parse_http_params(&params, "http:") == NULL);
+  ASSERT(parse_http_params(&params, "http:/") == NULL);
+  ASSERT(parse_http_params(&params, "http://") == NULL);
+  ASSERT(parse_http_params(&params, "http://:") == NULL);
+  ASSERT(parse_http_params(&params, "http://:123") == NULL);
+  ASSERT(parse_http_params(&params, "http://example.com:") == NULL);
+  ASSERT(parse_http_params(&params, "http://example.com:abc") == NULL);
+  ASSERT(parse_http_params(&params, "http://example.com/extra:123") == NULL);
+  ASSERT(parse_http_params(&params, "ftp://example.com:123") == NULL);
+
+  printf("\n...test_parse_url example complete\n");
+}
+
+int main(void) {
+  test_mu_str();
+  test_mu_str_example();
+  // test_parse_url();
 }
 
 #endif // #ifdef TEST_MU_STR

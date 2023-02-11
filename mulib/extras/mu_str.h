@@ -37,7 +37,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
 // *****************************************************************************
 // C++ Compatibility
@@ -68,14 +67,14 @@ typedef bool (*mu_str_predicate)(uint8_t byte, void *arg);
 // Public declarations
 
 /**
- * @brief Initialize a mu_str with a data buffer and a length.
+ * @brief Initialize a mu_str with a readonly data buffer and a length.
  */
 mu_str_t *mu_str_init(mu_str_t *str, const uint8_t *bytes, size_t len);
 
 /**
  * @brief Initialize a mu_str with null-terminated C-style string.
  */
-mu_str_t *mu_str_cstr_init(mu_str_t *str, const char *cstr);
+mu_str_t *mu_str_init_cstr(mu_str_t *str, const char *cstr);
 
 /**
  * @brief Return the mu_str's data buffer.
@@ -134,16 +133,52 @@ mu_str_t *mu_str_slice(mu_str_t *dst,
                        ptrdiff_t end);
 
 /**
- * @brief Find a substring within a string, returning the indes of the first 
- * byte or MU_STR_NOT_FOUND if not found.
+ * @brief Search forward to find a substring within a string.
+ * 
+ * @param str The source string to search
+ * @param substr The substring to search
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.   
  */
-size_t mu_str_find(mu_str_t *str, mu_str_t *substr);
+size_t mu_str_find(mu_str_t *str, mu_str_t *substr, bool skip_substr);
 
 /**
- * @brief Find a substring within a string searching backwards from the end,
- * returning the indes of the first byte or MU_STR_NOT_FOUND if not found.
+ * @brief Search forward to find a substring within a string.
+ * 
+ * @param str The source string to search
+ * @param substr A null-terminated C-style string to search for.
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.   
  */
-size_t mu_str_rfind(mu_str_t *str, mu_str_t *substr);
+size_t mu_str_find_cstr(mu_str_t *str, const char *substr, bool skip_substr);
+
+/**
+ * @brief Search in reverse to find a substring within a string.
+ * 
+ * @param str The source string to search
+ * @param substr The substring to search
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.   
+ */
+size_t mu_str_rfind(mu_str_t *str, mu_str_t *substr, bool skip_substr);
+
+/**
+ * @brief Search in reverse to find a substring within a string.
+ * 
+ * @param str The source string to search
+ * @param substr A null-terminated C-style string to search for.
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.   
+ */
+size_t mu_str_rfind_cstr(mu_str_t *str, const char *substr, bool skip_substr);
 
 /**
  * @brief Remove bytes from the start of str for which predicate returns true.
