@@ -364,8 +364,7 @@ static size_t mu_str_rfind_aux(const uint8_t *haystack, size_t haystack_len,
 // *****************************************************************************
 
 // Run this command in to run the standalone tests.
-// (gcc -Wall -DTEST_MU_STR -o test_mu_str mu_str.c && ./test_mu_str && rm
-// ./test_mu_str)
+// gcc -Wall -DTEST_MU_STR -o test_mu_str mu_str.c && ./test_mu_str && rm ./test_mu_str
 
 #ifdef TEST_MU_STR
 
