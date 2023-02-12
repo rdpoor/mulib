@@ -24,7 +24,7 @@
 
 /**
  * @file: mu_str.h
- * 
+ *
  * @brief Safe, in-place string operations without the null terminator.
  */
 
@@ -53,12 +53,12 @@ extern "C" {
 
 typedef struct {
   const uint8_t *bytes; // pointer to read-only byte buffer
-  size_t len; // length of buffer in bytes
+  size_t len;           // length of buffer in bytes
 } mu_str_t;
 
 /**
  * @brief The signature for a user-supplied predicate to mu_str_match (q.v.).
- * 
+ *
  * The function should return true on a match, false otherwise.
  */
 typedef bool (*mu_str_predicate_t)(uint8_t byte, void *arg);
@@ -116,7 +116,7 @@ int mu_str_compare(mu_str_t *s1, mu_str_t *s2);
 /**
  * @brief Compare a mu_str against a null-terminate C-style string.
  *
- * mu_str_compare compares the first N bytes of s1 and cstr, where N is the 
+ * mu_str_compare compares the first N bytes of s1 and cstr, where N is the
  * lesser of mu_str_length(s1) and strlen(cstr), and returns:
  *   zero if the s1 and cstr are equal;
  *   a negative value if s1 is less than cstr;
@@ -130,7 +130,7 @@ int mu_str_compare_cstr(mu_str_t *s1, const char *cstr);
 
 /**
  * @brief Slice a substring of a mu_str.
- * 
+ *
  * @param dst The substring to receive the slice.  (Note: may be same as src).
  * @param src The string being sliced.
  * @param start Index into src, which becomes the first byte of dst.  If start
@@ -138,13 +138,11 @@ int mu_str_compare_cstr(mu_str_t *s1, const char *cstr);
  * @param end Index into src, which becomes the last byte (exclusive) of dst.
  *        If end is negative, indexes from the end of src.
  * @return dst
- * 
+ *
  * Note that MU_STR_END may be used as an argument for start or end, signifying
  * the end (exclusive) of src.
  */
-mu_str_t *mu_str_slice(mu_str_t *dst,
-                       mu_str_t *src,
-                       ptrdiff_t start,
+mu_str_t *mu_str_slice(mu_str_t *dst, mu_str_t *src, ptrdiff_t start,
                        ptrdiff_t end);
 
 /**
@@ -169,63 +167,67 @@ bool mu_str_has_suffix_cstr(mu_str_t *s1, const char *cstr);
 
 /**
  * @brief Search forward to find a substring within a string.
- * 
+ *
  * @param haystack The source string to search
  * @param needle The substring to search
  * @param skip_substr Indicates whether to include or exclude needle.
  * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
  *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.   
+ *         else returns index of last byte of needle.
  */
 size_t mu_str_find(mu_str_t *haystack, mu_str_t *needle, bool skip_substr);
 
 /**
  * @brief Search forward to find a substring within a string.
- * 
+ *
  * @param haystack The source string to search
  * @param needle A null-terminated C-style string to search for.
  * @param skip_substr Indicates whether to include or exclude needle.
  * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
  *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.   
+ *         else returns index of last byte of needle.
  */
-size_t mu_str_find_cstr(mu_str_t *haystack, const char *needle, bool skip_substr);
+size_t mu_str_find_cstr(mu_str_t *haystack, const char *needle,
+                        bool skip_substr);
 
 /**
  * @brief Search in reverse to find a substring within a string.
- * 
+ *
  * @param haystack The source string to search
  * @param needle The substring to search
  * @param skip_substr Indicates whether to include or exclude needle.
  * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
  *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.   
+ *         else returns index of last byte of needle.
  */
 size_t mu_str_rfind(mu_str_t *haystack, mu_str_t *needle, bool skip_substr);
 
 /**
  * @brief Search in reverse to find a substring within a string.
- * 
+ *
  * @param haystack The source string to search
  * @param needle A null-terminated C-style string to search for.
  * @param skip_substr Indicates whether to include or exclude needle.
  * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
  *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.   
+ *         else returns index of last byte of needle.
  */
-size_t mu_str_rfind_cstr(mu_str_t *haystack, const char *needle, bool skip_substr);
+size_t mu_str_rfind_cstr(mu_str_t *haystack, const char *needle,
+                         bool skip_substr);
 
 /**
- * @brief Return the index of the first char for which predicate returns true,
- * or mu_str_length(str) if there was no match.
+ * @brief Return the index of the first char for which predicate returns
+ * break_if, or MU_STR_NOT_FOUND if there was no match.
  */
-size_t mu_str_match(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
+size_t mu_str_match(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+                    bool break_if);
 
 /**
- * @brief Return the index of the last char for which predicate returns true
- * or mu_str_length(str) if there was no match.
+ * @brief Return the index of the last char for which predicate returns
+ * break_if, or MU_STR_NOT_FOUND if there was no match.
  */
-size_t mu_str_rmatch(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
+size_t mu_str_rmatch(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+                     bool break_if);
 
 /**
  * @brief Remove bytes from the start of str for which predicate returns true.
