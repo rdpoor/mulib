@@ -910,6 +910,11 @@ void test_parse_url() {
   ASSERT(params.host_port == 443);
   ASSERT(params.use_tls == true);
 
+  ASSERT(parse_http_params(&params, "https://192.168.12.34/") == &params);
+  ASSERT(strncmp(params.host_name, "192.168.12.34", params.host_name_len) == 0);
+  ASSERT(params.host_port == 443);
+  ASSERT(params.use_tls == true);
+
   // These are the valid chars that end a port #
   // #?/\
 

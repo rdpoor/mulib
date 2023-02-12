@@ -57,7 +57,7 @@ typedef struct {
 } mu_str_t;
 
 /**
- * @brief The signature for a user-supplied predicate to mu_str_trim (q.v.).
+ * @brief The signature for a user-supplied predicate to mu_str_match (q.v.).
  * 
  * The function should return true on a match, false otherwise.
  */
@@ -257,5 +257,3 @@ mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
 #endif
 
 #endif /* #ifndef _MU_STR_H_ */
-
-
