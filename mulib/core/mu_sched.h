@@ -86,11 +86,11 @@ extern "C" {
 #endif
 
 typedef enum {
-    MU_SCHED_ERR_NONE,
-    MU_SCHED_ERR_ILLEGAL_ARG,
-    MU_SCHED_ERR_EMPTY,
-    MU_SCHED_ERR_FULL,
-    MU_SCHED_ERR_NOT_FOUND,
+  MU_SCHED_ERR_NONE,
+  MU_SCHED_ERR_ILLEGAL_ARG,
+  MU_SCHED_ERR_EMPTY,
+  MU_SCHED_ERR_FULL,
+  MU_SCHED_ERR_NOT_FOUND,
 } mu_sched_err_t;
 
 // Signature for clock source function.  Returns the current time.
@@ -98,8 +98,8 @@ typedef mu_time_abs_t (*mu_clock_fn)(void);
 
 // A mu_sched_deferred_task associates a task and a time.
 typedef struct {
-    mu_time_abs_t at;
-    mu_task_t *task;
+  mu_time_abs_t at;
+  mu_task_t *task;
 } mu_sched_deferred_task_t;
 
 /**
@@ -212,6 +212,31 @@ mu_sched_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
  * @brief Schedule a task to be run after a given interval.
  */
 mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
+
+/**
+ * @brief Set the state of the given task before rescheduling it ASAP.
+ */
+void mu_sched_yield(mu_task_t *task, unsigned int state);
+
+/**
+ * @brief Set the state of the given task before rescheduling it to trigger
+ * after a number of tics.
+ */
+void mu_sched_deferred_yield(mu_task_t *task, unsigned int state,
+                             mu_time_rel_t tics);
+
+/**
+ * @brief Set the state of the from task before transferring control to the
+ * to task.
+ */
+void mu_sched_transfer(mu_task_t *from, unsigned int state, mu_task_t *to);
+
+/**
+ * @brief Set the state of the from task, then schedule the to task to run
+ * after a number of tics.
+ */
+void mu_sched_deferred_transfer(mu_task_t *from, unsigned int state,
+                                mu_task_t *to, mu_time_rel_t tics);
 
 /**
  * @brief Call a user-supplied function for each deferred event in the schedule.

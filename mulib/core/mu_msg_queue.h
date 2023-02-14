@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2021-2023 R. Dunbar Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,65 +22,54 @@
  * SOFTWARE.
  */
 
+/**
+ * @file: mu_msg_queue.h
+ *
+ * @brief Single level messaging queue
+ */
+
+#ifndef _MU_MSG_H_
+#define _MU_MSG_H_
+
 // *****************************************************************************
 // Includes
 
 #include "mu_task.h"
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // *****************************************************************************
-// Private types and definitions
+// C++ Compatibility
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // *****************************************************************************
-// Private declarations
+// Public types and definitions
+
+typedef struct {
+  void *obj;
+  bool has_obj;
+  mu_task_t *on_put;
+  mu_task_t *on_get;
+} mu_msg_queue_t;
 
 // *****************************************************************************
-// Local storage
+// Public declarations
 
-mu_task_state_change_hook_fn s_state_change_hook_fn = NULL;
-
-// *****************************************************************************
-// Public code
-
-void mu_task_register_state_change_hook(mu_task_state_change_hook_fn fn) {
-    s_state_change_hook_fn = fn;
-}
-
-mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
-                        unsigned int initial_state,
-                        mu_task_state_name_fn state_name_fn) {
-    task->fn = fn;
-    task->state = initial_state;
-    task->state_name_fn = state_name_fn;
-    return task;
-}
-
-void mu_task_call(mu_task_t *task, void *arg) {
-    if (task != NULL) {
-        task->fn(task, arg);
-    }
-}
-
-mu_task_fn mu_task_get_fn(mu_task_t *task) {
-    return task->fn; }
-
-unsigned int mu_task_get_state(mu_task_t *task) {
-    return task->state; }
-
-void mu_task_set_state(mu_task_t *task, unsigned int state) {
-    if (s_state_change_hook_fn) {
-        s_state_change_hook_fn(task, task->state, state);
-    }
-    task->state = state;
-}
-
-const char *mu_task_state_name(mu_task_t *task, unsigned int state) {
-   if (task->state_name_fn) {
-       return task->state_name_fn(task, state);
-   } else {
-       return NULL;
-   }
-}
+mu_msg_queue_t *mu_msg_queue_init(mu_msg_queue_t *msg, mu_task_t *on_put, mu_task_t *on_get);
+bool mu_msg_queue_can_put(mu_msg_queue_t *msg);
+bool mu_msg_queue_can_get(mu_msg_queue_t *msg);
+void *mu_msg_queue_put(mu_msg_queue_t *msg, void *obj);
+void *mu_msg_queue_get(mu_msg_queue_t *msg);
 
 // *****************************************************************************
-// Private functions
+// End of file
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* #ifndef _MU_MSG_H_ */
