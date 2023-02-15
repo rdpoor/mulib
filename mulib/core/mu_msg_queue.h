@@ -50,20 +50,29 @@ extern "C" {
 // Public types and definitions
 
 typedef struct {
-  void *obj;
-  bool has_obj;
-  mu_task_t *on_put;
-  mu_task_t *on_get;
+  void **storage;     // user-supplied storage for queued items
+  size_t capacity;    // maximum number of items that can be stored
+  size_t count;       // number of items currently in the queue
+  size_t index;       // index of next item to be stored
+  mu_task_t *on_put;  // task to invoke when an item is stored
+  mu_task_t *on_get;  // task to invoke when an item is fetched
 } mu_msg_queue_t;
 
 // *****************************************************************************
 // Public declarations
 
-mu_msg_queue_t *mu_msg_queue_init(mu_msg_queue_t *msg, mu_task_t *on_put, mu_task_t *on_get);
-bool mu_msg_queue_can_put(mu_msg_queue_t *msg);
-bool mu_msg_queue_can_get(mu_msg_queue_t *msg);
-void *mu_msg_queue_put(mu_msg_queue_t *msg, void *obj);
-void *mu_msg_queue_get(mu_msg_queue_t *msg);
+mu_msg_queue_t *mu_msg_queue_init(mu_msg_queue_t *msg_queue,
+                                  void **storage,
+                                  size_t capacity,
+                                  mu_task_t *on_put,
+                                  mu_task_t *on_get);
+mu_msg_queue_t *mu_msg_queue_reset(mu_msg_queue_t *msg_queue);
+size_t mu_msg_queue_capacity(mu_msg_queue_t *msg_queue);
+size_t mu_msg_queue_count(mu_msg_queue_t *msg_queue);
+bool mu_msg_queue_is_empty(mu_msg_queue_t *msg_queue);
+bool mu_msg_queue_is_full(mu_msg_queue_t *msg_queue);
+bool mu_msg_queue_put(mu_msg_queue_t *msg_queue, void *obj);
+bool mu_msg_queue_get(mu_msg_queue_t *msg_queue, void **obj);
 
 // *****************************************************************************
 // End of file

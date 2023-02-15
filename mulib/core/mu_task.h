@@ -49,9 +49,9 @@ extern "C" {
  * structure that contains it.
  */
 #define MU_TASK_CTX(_task_pointer, _ctx_type, _task_slot)                      \
-    ((_ctx_type *)((char *)(1 ? (_task_pointer)                                \
-                              : &((_ctx_type *)0)->_task_slot) -               \
-                   offsetof(_ctx_type, _task_slot)))
+  ((_ctx_type *)((char *)(1 ? (_task_pointer)                                  \
+                            : &((_ctx_type *)0)->_task_slot) -                 \
+                 offsetof(_ctx_type, _task_slot)))
 
 struct _mu_task; // forward declaration
 
@@ -59,12 +59,13 @@ struct _mu_task; // forward declaration
 typedef void (*mu_task_fn)(struct _mu_task *task, void *arg);
 
 // Signature of a function that maps a state to a state string.
-typedef const char *(*mu_task_state_name_fn)(struct _mu_task *task, unsigned int state);
+typedef const char *(*mu_task_state_name_fn)(struct _mu_task *task,
+                                             unsigned int state);
 
 typedef struct _mu_task {
-    mu_task_fn fn;      // the function to call
-    unsigned int state; // the current task state
-    mu_task_state_name_fn state_name_fn; // fn to map state to state name
+  mu_task_fn fn;                       // the function to call
+  unsigned int state;                  // the current task state
+  mu_task_state_name_fn state_name_fn; // fn to map state to state name
 } mu_task_t;
 
 typedef void (*mu_task_state_change_hook_fn)(mu_task_t *task,
@@ -79,7 +80,8 @@ void mu_task_register_state_change_hook(mu_task_state_change_hook_fn fn);
 /**
  * @brief Initialize a task object with its function and context.
  */
-mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
+mu_task_t *mu_task_init(mu_task_t *task,
+                        mu_task_fn fn,
                         unsigned int initial_state,
                         mu_task_state_name_fn state_name_fn);
 

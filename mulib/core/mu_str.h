@@ -142,7 +142,9 @@ int mu_str_compare_cstr(mu_str_t *s1, const char *cstr);
  * Note that MU_STR_END may be used as an argument for start or end, signifying
  * the end (exclusive) of src.
  */
-mu_str_t *mu_str_slice(mu_str_t *dst, mu_str_t *src, ptrdiff_t start,
+mu_str_t *mu_str_slice(mu_str_t *dst,
+                       mu_str_t *src,
+                       ptrdiff_t start,
                        ptrdiff_t end);
 
 /**
@@ -187,7 +189,8 @@ size_t mu_str_find(mu_str_t *haystack, mu_str_t *needle, bool skip_substr);
  *         skip_substr is false, returns index of first byte of needle,
  *         else returns index of last byte of needle.
  */
-size_t mu_str_find_cstr(mu_str_t *haystack, const char *needle,
+size_t mu_str_find_cstr(mu_str_t *haystack,
+                        const char *needle,
                         bool skip_substr);
 
 /**
@@ -212,21 +215,26 @@ size_t mu_str_rfind(mu_str_t *haystack, mu_str_t *needle, bool skip_substr);
  *         skip_substr is false, returns index of first byte of needle,
  *         else returns index of last byte of needle.
  */
-size_t mu_str_rfind_cstr(mu_str_t *haystack, const char *needle,
+size_t mu_str_rfind_cstr(mu_str_t *haystack,
+                         const char *needle,
                          bool skip_substr);
 
 /**
  * @brief Return the index of the first char for which predicate returns
  * break_if, or MU_STR_NOT_FOUND if there was no match.
  */
-size_t mu_str_match(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+size_t mu_str_match(mu_str_t *str,
+                    mu_str_predicate_t predicate,
+                    void *arg,
                     bool break_if);
 
 /**
  * @brief Return the index of the last char for which predicate returns
  * break_if, or MU_STR_NOT_FOUND if there was no match.
  */
-size_t mu_str_rmatch(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+size_t mu_str_rmatch(mu_str_t *str,
+                     mu_str_predicate_t predicate,
+                     void *arg,
                      bool break_if);
 
 /**

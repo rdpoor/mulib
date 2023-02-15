@@ -222,7 +222,8 @@ void mu_sched_yield(mu_task_t *task, unsigned int state);
  * @brief Set the state of the given task before rescheduling it to trigger
  * after a number of tics.
  */
-void mu_sched_deferred_yield(mu_task_t *task, unsigned int state,
+void mu_sched_deferred_yield(mu_task_t *task,
+                             unsigned int state,
                              mu_time_rel_t tics);
 
 /**
@@ -235,8 +236,10 @@ void mu_sched_transfer(mu_task_t *from, unsigned int state, mu_task_t *to);
  * @brief Set the state of the from task, then schedule the to task to run
  * after a number of tics.
  */
-void mu_sched_deferred_transfer(mu_task_t *from, unsigned int state,
-                                mu_task_t *to, mu_time_rel_t tics);
+void mu_sched_deferred_transfer(mu_task_t *from,
+                                unsigned int state,
+                                mu_task_t *to,
+                                mu_time_rel_t tics);
 
 /**
  * @brief Call a user-supplied function for each deferred event in the schedule.

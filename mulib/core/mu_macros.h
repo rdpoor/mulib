@@ -38,38 +38,38 @@ extern "C" {
 // types and definitions
 
 #define MU_MAX(a, b)                                                           \
-    ({                                                                         \
-        __typeof__(a) _a = (a);                                                \
-        __typeof__(b) _b = (b);                                                \
-        _a > _b ? _a : _b;                                                     \
-    })
+  ({                                                                           \
+    __typeof__(a) _a = (a);                                                    \
+    __typeof__(b) _b = (b);                                                    \
+    _a > _b ? _a : _b;                                                         \
+  })
 
 #define MU_MIN(a, b)                                                           \
-    ({                                                                         \
-        __typeof__(a) _a = (a);                                                \
-        __typeof__(b) _b = (b);                                                \
-        _a < _b ? _a : _b;                                                     \
-    })
+  ({                                                                           \
+    __typeof__(a) _a = (a);                                                    \
+    __typeof__(b) _b = (b);                                                    \
+    _a < _b ? _a : _b;                                                         \
+  })
 
 #define MU_ABS(a)                                                              \
-    ({                                                                         \
-        __typeof__(a) _a = (a);                                                \
-        _a < 0 ? -_a : _a;                                                     \
-    })
+  ({                                                                           \
+    __typeof__(a) _a = (a);                                                    \
+    _a < 0 ? -_a : _a;                                                         \
+  })
 
 #define MU_SIGNUM(a)                                                           \
-    ({                                                                         \
-        __typeof__(a) _a = (a);                                                \
-        _a < 0 ? -1 : ((a > 0) ? 1 : 0);                                       \
-    })
+  ({                                                                           \
+    __typeof__(a) _a = (a);                                                    \
+    _a < 0 ? -1 : ((a > 0) ? 1 : 0);                                           \
+  })
 
 #define MU_CLAMP(lo, x, hi)                                                    \
-    ({                                                                         \
-        __typeof__(lo) _lo = (lo);                                             \
-        __typeof__(x) _x = (x);                                                \
-        __typeof__(hi) _hi = (hi);                                             \
-        (_x < _lo) ? _lo : ((_x > _hi) ? _hi : _x);                            \
-    })
+  ({                                                                           \
+    __typeof__(lo) _lo = (lo);                                                 \
+    __typeof__(x) _x = (x);                                                    \
+    __typeof__(hi) _hi = (hi);                                                 \
+    (_x < _lo) ? _lo : ((_x > _hi) ? _hi : _x);                                \
+  })
 
 // *****************************************************************************
 // declarations

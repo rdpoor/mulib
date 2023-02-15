@@ -43,20 +43,21 @@
 // *****************************************************************************
 // public code
 
-mu_spsc_err_t mu_spsc_init(mu_spsc_t *q, mu_spsc_item_t *store,
+mu_spsc_err_t mu_spsc_init(mu_spsc_t *q,
+                           mu_spsc_item_t *store,
                            uint16_t capacity) {
-    if ((capacity == 0) || !IS_POWER_OF_TWO(capacity)) {
-        return MU_SPSC_ERR_SIZE;
-    }
-    q->mask = capacity - 1;
-    q->store = store;
-    return mu_spsc_reset(q);
+  if ((capacity == 0) || !IS_POWER_OF_TWO(capacity)) {
+    return MU_SPSC_ERR_SIZE;
+  }
+  q->mask = capacity - 1;
+  q->store = store;
+  return mu_spsc_reset(q);
 }
 
 mu_spsc_err_t mu_spsc_reset(mu_spsc_t *q) {
-    q->head = 0;
-    q->tail = 0;
-    return MU_SPSC_ERR_NONE;
+  q->head = 0;
+  q->tail = 0;
+  return MU_SPSC_ERR_NONE;
 }
 
 uint16_t mu_spsc_capacity(mu_spsc_t *q) { return q->mask; }
@@ -65,34 +66,34 @@ uint16_t mu_spsc_capacity(mu_spsc_t *q) { return q->mask; }
  * @brief To be called by Producer only: update tail only after setting item.
  */
 mu_spsc_err_t mu_spsc_put(mu_spsc_t *q, mu_spsc_item_t item) {
-    mu_spsc_err_t err = MU_SPSC_ERR_NONE;
-    uint16_t next_tail = (q->tail + 1) & q->mask;
+  mu_spsc_err_t err = MU_SPSC_ERR_NONE;
+  uint16_t next_tail = (q->tail + 1) & q->mask;
 
-    if (next_tail == q->head) {
-        err = MU_SPSC_ERR_FULL;
-    } else {
-        q->store[q->tail] = item;
-        q->tail = next_tail;
-    }
+  if (next_tail == q->head) {
+    err = MU_SPSC_ERR_FULL;
+  } else {
+    q->store[q->tail] = item;
+    q->tail = next_tail;
+  }
 
-    return err;
+  return err;
 }
 
 /**
  * @brief To be called by Consumer only: update head only after fetching item.
  */
 mu_spsc_err_t mu_spsc_get(mu_spsc_t *q, mu_spsc_item_t *item) {
-    mu_spsc_err_t err = MU_SPSC_ERR_NONE;
+  mu_spsc_err_t err = MU_SPSC_ERR_NONE;
 
-    if (q->head == q->tail) {
-        err = MU_SPSC_ERR_EMPTY;
-        *item = NULL;
-    } else {
-        *item = q->store[q->head];
-        q->head = (q->head + 1) & q->mask;
-    }
+  if (q->head == q->tail) {
+    err = MU_SPSC_ERR_EMPTY;
+    *item = NULL;
+  } else {
+    *item = q->store[q->head];
+    q->head = (q->head + 1) & q->mask;
+  }
 
-    return err;
+  return err;
 }
 
 // *****************************************************************************

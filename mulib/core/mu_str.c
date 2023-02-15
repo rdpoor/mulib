@@ -71,18 +71,26 @@ static int strncmp(const char *s1, const char *s2, register size_t n) {
 
 #endif
 
-static bool has_prefix(const uint8_t *s1, size_t s1_len, const uint8_t *s2,
+static bool has_prefix(const uint8_t *s1,
+                       size_t s1_len,
+                       const uint8_t *s2,
                        size_t s2_len);
 
-static bool has_suffix(const uint8_t *s1, size_t s1_len, const uint8_t *s2,
+static bool has_suffix(const uint8_t *s1,
+                       size_t s1_len,
+                       const uint8_t *s2,
                        size_t s2_len);
 
-static size_t mu_str_find_aux(const uint8_t *haystack, size_t haystack_len,
-                              const uint8_t *needle, size_t needle_len,
+static size_t mu_str_find_aux(const uint8_t *haystack,
+                              size_t haystack_len,
+                              const uint8_t *needle,
+                              size_t needle_len,
                               bool skip_substr);
 
-static size_t mu_str_rfind_aux(const uint8_t *haystack, size_t haystack_len,
-                               const uint8_t *needle, size_t needle_len,
+static size_t mu_str_rfind_aux(const uint8_t *haystack,
+                               size_t haystack_len,
+                               const uint8_t *needle,
+                               size_t needle_len,
                                bool skip_substr);
 
 // *****************************************************************************
@@ -126,7 +134,9 @@ int mu_str_compare(mu_str_t *s1, mu_str_t *s2) {
   return len1 - len2;
 }
 
-mu_str_t *mu_str_slice(mu_str_t *dst, mu_str_t *src, ptrdiff_t start,
+mu_str_t *mu_str_slice(mu_str_t *dst,
+                       mu_str_t *src,
+                       ptrdiff_t start,
                        ptrdiff_t end) {
   if (start < 0) {
     // Negative index indexes from end of string
@@ -153,50 +163,64 @@ mu_str_t *mu_str_slice(mu_str_t *dst, mu_str_t *src, ptrdiff_t start,
 }
 
 bool mu_str_has_prefix(mu_str_t *s1, mu_str_t *s2) {
-  return has_prefix(mu_str_bytes(s1), mu_str_length(s1), mu_str_bytes(s2),
-                    mu_str_length(s2));
+  return has_prefix(
+      mu_str_bytes(s1), mu_str_length(s1), mu_str_bytes(s2), mu_str_length(s2));
 }
 
 bool mu_str_has_prefix_cstr(mu_str_t *s1, const char *cstr) {
-  return has_prefix(mu_str_bytes(s1), mu_str_length(s1), (const uint8_t *)cstr,
-                    strlen(cstr));
+  return has_prefix(
+      mu_str_bytes(s1), mu_str_length(s1), (const uint8_t *)cstr, strlen(cstr));
 }
 
 bool mu_str_has_suffix(mu_str_t *s1, mu_str_t *s2) {
-  return has_suffix(mu_str_bytes(s1), mu_str_length(s1), mu_str_bytes(s2),
-                    mu_str_length(s2));
+  return has_suffix(
+      mu_str_bytes(s1), mu_str_length(s1), mu_str_bytes(s2), mu_str_length(s2));
 }
 
 bool mu_str_has_suffix_cstr(mu_str_t *s1, const char *cstr) {
-  return has_suffix(mu_str_bytes(s1), mu_str_length(s1), (const uint8_t *)cstr,
-                    strlen(cstr));
+  return has_suffix(
+      mu_str_bytes(s1), mu_str_length(s1), (const uint8_t *)cstr, strlen(cstr));
 }
 
 size_t mu_str_find(mu_str_t *haystack, mu_str_t *needle, bool skip_substr) {
-  return mu_str_find_aux(mu_str_bytes(haystack), mu_str_length(haystack),
-                         mu_str_bytes(needle), mu_str_length(needle),
+  return mu_str_find_aux(mu_str_bytes(haystack),
+                         mu_str_length(haystack),
+                         mu_str_bytes(needle),
+                         mu_str_length(needle),
                          skip_substr);
 }
 
-size_t mu_str_find_cstr(mu_str_t *haystack, const char *needle,
+size_t mu_str_find_cstr(mu_str_t *haystack,
+                        const char *needle,
                         bool skip_substr) {
-  return mu_str_find_aux(mu_str_bytes(haystack), mu_str_length(haystack),
-                         (const uint8_t *)needle, strlen(needle), skip_substr);
+  return mu_str_find_aux(mu_str_bytes(haystack),
+                         mu_str_length(haystack),
+                         (const uint8_t *)needle,
+                         strlen(needle),
+                         skip_substr);
 }
 
 size_t mu_str_rfind(mu_str_t *haystack, mu_str_t *needle, bool skip_substr) {
-  return mu_str_rfind_aux(mu_str_bytes(haystack), mu_str_length(haystack),
-                          mu_str_bytes(needle), mu_str_length(needle),
+  return mu_str_rfind_aux(mu_str_bytes(haystack),
+                          mu_str_length(haystack),
+                          mu_str_bytes(needle),
+                          mu_str_length(needle),
                           skip_substr);
 }
 
-size_t mu_str_rfind_cstr(mu_str_t *haystack, const char *needle,
+size_t mu_str_rfind_cstr(mu_str_t *haystack,
+                         const char *needle,
                          bool skip_substr) {
-  return mu_str_rfind_aux(mu_str_bytes(haystack), mu_str_length(haystack),
-                          (const uint8_t *)needle, strlen(needle), skip_substr);
+  return mu_str_rfind_aux(mu_str_bytes(haystack),
+                          mu_str_length(haystack),
+                          (const uint8_t *)needle,
+                          strlen(needle),
+                          skip_substr);
 }
 
-size_t mu_str_match(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+size_t mu_str_match(mu_str_t *str,
+                    mu_str_predicate_t predicate,
+                    void *arg,
                     bool break_if) {
   size_t str_len = mu_str_length(str);
   const uint8_t *bytes = mu_str_bytes(str);
@@ -209,7 +233,9 @@ size_t mu_str_match(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
   return MU_STR_NOT_FOUND;
 }
 
-size_t mu_str_rmatch(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+size_t mu_str_rmatch(mu_str_t *str,
+                     mu_str_predicate_t predicate,
+                     void *arg,
                      bool break_if) {
   size_t str_len = mu_str_length(str);
   const uint8_t *bytes = &mu_str_bytes(str)[str_len]; // for predecrement
@@ -247,7 +273,9 @@ mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg) {
 // *****************************************************************************
 // Private (static) code
 
-static bool has_prefix(const uint8_t *s1, size_t s1_len, const uint8_t *s2,
+static bool has_prefix(const uint8_t *s1,
+                       size_t s1_len,
+                       const uint8_t *s2,
                        size_t s2_len) {
   size_t idx;
 
@@ -265,7 +293,9 @@ static bool has_prefix(const uint8_t *s1, size_t s1_len, const uint8_t *s2,
   return idx == s2_len;
 }
 
-static bool has_suffix(const uint8_t *s1, size_t s1_len, const uint8_t *s2,
+static bool has_suffix(const uint8_t *s1,
+                       size_t s1_len,
+                       const uint8_t *s2,
                        size_t s2_len) {
   size_t idx;
 
@@ -287,8 +317,10 @@ static bool has_suffix(const uint8_t *s1, size_t s1_len, const uint8_t *s2,
   return idx == s2_len;
 }
 
-static size_t mu_str_find_aux(const uint8_t *haystack, size_t haystack_len,
-                              const uint8_t *needle, size_t needle_len,
+static size_t mu_str_find_aux(const uint8_t *haystack,
+                              size_t haystack_len,
+                              const uint8_t *needle,
+                              size_t needle_len,
                               bool skip_substr) {
   if (needle_len == 0) {
     // null needle matches immediately
@@ -322,8 +354,10 @@ static size_t mu_str_find_aux(const uint8_t *haystack, size_t haystack_len,
   return MU_STR_NOT_FOUND;
 }
 
-static size_t mu_str_rfind_aux(const uint8_t *haystack, size_t haystack_len,
-                               const uint8_t *needle, size_t needle_len,
+static size_t mu_str_rfind_aux(const uint8_t *haystack,
+                               size_t haystack_len,
+                               const uint8_t *needle,
+                               size_t needle_len,
                                bool skip_substr) {
   if (needle_len == 0) {
     // null needle matches immediately
@@ -364,7 +398,8 @@ static size_t mu_str_rfind_aux(const uint8_t *haystack, size_t haystack_len,
 // *****************************************************************************
 
 // Run this command in to run the standalone tests.
-// gcc -Wall -DTEST_MU_STR -o test_mu_str mu_str.c && ./test_mu_str && rm ./test_mu_str
+// gcc -Wall -DTEST_MU_STR -o test_mu_str mu_str.c && ./test_mu_str && rm
+// ./test_mu_str
 
 #ifdef TEST_MU_STR
 
