@@ -28,8 +28,6 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_time.h"
-
 // *****************************************************************************
 // C++ compatibility
 
@@ -110,16 +108,6 @@ void mu_task_set_state(mu_task_t *task, unsigned int state);
  * @brief Return a string naming the given state.  Returns NULL if not known.
  */
 const char *mu_task_state_name(mu_task_t *task, unsigned int state);
-
-void mu_task_yield(mu_task_t *task, unsigned int state);
-
-void mu_task_deferred_yield(mu_task_t *task, unsigned int state,
-                            mu_time_rel_t tics);
-
-void mu_task_transfer(mu_task_t *task, unsigned int state, mu_task_t *to);
-
-void mu_task_deferred_transfer(mu_task_t *task, unsigned int state,
-                               mu_task_t *to, mu_time_rel_t tics);
 
 #ifdef __cplusplus
 }

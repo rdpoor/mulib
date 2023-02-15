@@ -187,6 +187,28 @@ mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in) {
     return sched_aux(task, at);
 }
 
+void mu_sched_yield(mu_task_t *task, unsigned int state) {
+    mu_task_set_state(task, state);
+    mu_sched_now(task);
+}
+
+void mu_sched_deferred_yield(mu_task_t *task, unsigned int state,
+                             mu_time_rel_t tics) {
+    mu_task_set_state(task, state);
+    mu_sched_defer_for(task, tics);
+}
+
+void mu_sched_transfer(mu_task_t *from, unsigned int state, mu_task_t *to) {
+    mu_task_set_state(from, state);
+    mu_sched_now(to);
+}
+
+void mu_sched_deferred_transfer(mu_task_t *task, unsigned int state,
+                                mu_task_t *to, mu_time_rel_t tics) {
+    mu_task_set_state(from, state);
+    mu_sched_defer_for(to, tics);
+}
+
 // void *mu_sched_visit_deferred_deferred_tasks(
 //     mu_sched_visit_deferred_task_fn user_fn,
 //     void *arg) {
