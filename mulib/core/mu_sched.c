@@ -95,7 +95,7 @@ mu_sched_err_t mu_sched_step(void) {
     // pulled one task from the irq task queue
     asm("nop");
 
-  } else if (mu_msg_queue_get(&s_sched.now_tasks, &s_sched.curr_task) == true) {
+  } else if (mu_msg_queue_get(&s_sched.now_tasks, (void **)&s_sched.curr_task) == true) {
     // pulled one task from the "now" task queue
     asm("nop");
 
@@ -201,7 +201,7 @@ void mu_sched_transfer(mu_task_t *from, unsigned int state, mu_task_t *to) {
   mu_sched_now(to);
 }
 
-void mu_sched_deferred_transfer(mu_task_t *task,
+void mu_sched_deferred_transfer(mu_task_t *from,
                                 unsigned int state,
                                 mu_task_t *to,
                                 mu_time_rel_t tics) {
