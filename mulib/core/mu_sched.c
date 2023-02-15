@@ -31,7 +31,7 @@
 #include "mu_sched.h"
 
 #include "mu_config.h"
-#include "mu_pqueue.h"
+#include "mu_msg_queue.h"
 #include "mu_spsc.h"
 #include "mu_task.h"
 #include "mu_time.h"
@@ -46,7 +46,7 @@
 
 typedef struct {
   mu_spsc_t irq_tasks;        // tasks queued from interrupt level.
-  mu_pqueue_t now_tasks;      // a queue of tasks to be run "now"
+  mu_msg_queue_t now_tasks;   // a queue of tasks to be run "now"
   size_t deferred_task_count; // index of next available slot in deferred_tasks
   mu_task_t *curr_task;       // the task currently being processed.
   mu_clock_fn clock_fn;       // the function to call to get the current time.
@@ -79,7 +79,7 @@ static mu_sched_t s_sched;
 
 void mu_sched_init(void) {
   mu_spsc_init(&s_sched.irq_tasks, s_irq_store, MU_SCHED_MAX_IRQ_TASKS);
-  mu_pqueue_init(&s_sched.now_tasks, s_now_store, MU_SCHED_MAX_NOW_TASKS);
+  mu_msg_queue_init(&s_sched.now_tasks, s_now_store, MU_SCHED_MAX_NOW_TASKS, NULL, NULL);
   s_sched.deferred_task_count = 0;
   s_sched.curr_task = NULL;
   s_sched.clock_fn = mu_time_now;
@@ -95,7 +95,7 @@ mu_sched_err_t mu_sched_step(void) {
     // pulled one task from the irq task queue
     asm("nop");
 
-  } else if ((s_sched.curr_task = mu_pqueue_get(&s_sched.now_tasks)) != NULL) {
+  } else if (mu_msg_queue_get(&s_sched.now_tasks, &s_sched.curr_task) == true) {
     // pulled one task from the "now" task queue
     asm("nop");
 
@@ -160,7 +160,7 @@ mu_sched_err_t mu_sched_remove_deferred_task(mu_task_t *task) {
 
 mu_sched_err_t mu_sched_now(mu_task_t *task) {
   // push task onto the "now" queue
-  if (mu_pqueue_put(&s_sched.now_tasks, task) == NULL) {
+  if (mu_msg_queue_put(&s_sched.now_tasks, task) == false) {
     return MU_SCHED_ERR_FULL;
   } else {
     return MU_SCHED_ERR_NONE;

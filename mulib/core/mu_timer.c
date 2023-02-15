@@ -128,7 +128,7 @@ static void mu_timer_fn(mu_task_t *task, void *arg) {
 /**
 
 gcc -g -Wall -DMU_TIMER_STANDALONE_TESTS -I../posix_platform -o mu_timer_test \
-  mu_timer.c mu_pqueue.c mu_sched.c mu_spsc.c mu_task.c
+  mu_timer.c mu_sched.c mu_spsc.c mu_task.c
 ../posix_platform/mu_time.c && \
   ./mu_timer_test && rm -rf ./mu_timer_test ./mu_timer_test.dSYM
 
