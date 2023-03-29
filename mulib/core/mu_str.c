@@ -52,6 +52,11 @@ static unsigned long strlen(const char *str) {
 }
 #endif
 
+static int str_compare_aux(const uint8_t *b1,
+                           size_t len1,
+                           const uint8_t *b2,
+                           size_t len2);
+
 static bool has_prefix(const uint8_t *s1,
                        size_t s1_len,
                        const uint8_t *s2,
@@ -103,16 +108,16 @@ int mu_str_compare(mu_str_t *s1, mu_str_t *s2) {
   const uint8_t *b2 = mu_str_bytes(s2);
   size_t len2 = mu_str_length(s2);
 
-  size_t len = (len1 < len2) ? len1 : len2;
+  return str_compare_aux(b1, len1, b2, len2);
+}
 
-  for (int i = 0; i < len; i++) {
-    int d = b1[i] - b2[i];
-    if (d != 0) {
-      return d;
-    }
-  }
-  // The first N bytes of s1 and s2 are equal: return value based on lengths.
-  return len1 - len2;
+int mu_str_compare_cstr(mu_str_t *s1, const char *cstr) {
+  const uint8_t *b1 = mu_str_bytes(s1);
+  size_t len1 = mu_str_length(s1);
+  const uint8_t *b2 = (const uint8_t *)cstr;
+  size_t len2 = strlen(cstr);
+
+  return str_compare_aux(b1, len1, b2, len2);
 }
 
 mu_str_t *mu_str_slice(mu_str_t *dst,
@@ -253,6 +258,19 @@ mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg) {
 
 // *****************************************************************************
 // Private (static) code
+
+static int str_compare_aux(const uint8_t *b1, size_t len1, const uint8_t *b2, size_t len2) {
+  size_t len = (len1 < len2) ? len1 : len2;
+
+  for (int i = 0; i < len; i++) {
+    int d = b1[i] - b2[i];
+    if (d != 0) {
+      return d;
+    }
+  }
+  // The first N bytes of s1 and s2 are equal: return value based on lengths.
+  return len1 - len2;
+}
 
 static bool has_prefix(const uint8_t *s1,
                        size_t s1_len,
