@@ -52,24 +52,10 @@ static unsigned long strlen(const char *str) {
 }
 #endif
 
-#ifndef strncmp
-static int strncmp(const char *s1, const char *s2, register size_t n) {
-  unsigned char u1, u2;
-
-  while (n-- > 0) {
-    u1 = (unsigned char)*s1++;
-    u2 = (unsigned char)*s2++;
-    if (u1 != u2) {
-      return u1 - u2;
-    }
-    if (u1 == '\0') {
-      return 0;
-    }
-  }
-  return 0;
-}
-
-#endif
+static int str_compare_aux(const uint8_t *b1,
+                           size_t len1,
+                           const uint8_t *b2,
+                           size_t len2);
 
 static bool has_prefix(const uint8_t *s1,
                        size_t s1_len,
@@ -122,16 +108,16 @@ int mu_str_compare(mu_str_t *s1, mu_str_t *s2) {
   const uint8_t *b2 = mu_str_bytes(s2);
   size_t len2 = mu_str_length(s2);
 
-  size_t len = (len1 < len2) ? len1 : len2;
+  return str_compare_aux(b1, len1, b2, len2);
+}
 
-  for (int i = 0; i < len; i++) {
-    int d = b1[i] - b2[i];
-    if (d != 0) {
-      return d;
-    }
-  }
-  // The first N bytes of s1 and s2 are equal: return value based on lengths.
-  return len1 - len2;
+int mu_str_compare_cstr(mu_str_t *s1, const char *cstr) {
+  const uint8_t *b1 = mu_str_bytes(s1);
+  size_t len1 = mu_str_length(s1);
+  const uint8_t *b2 = (const uint8_t *)cstr;
+  size_t len2 = strlen(cstr);
+
+  return str_compare_aux(b1, len1, b2, len2);
 }
 
 mu_str_t *mu_str_slice(mu_str_t *dst,
@@ -273,6 +259,19 @@ mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg) {
 // *****************************************************************************
 // Private (static) code
 
+static int str_compare_aux(const uint8_t *b1, size_t len1, const uint8_t *b2, size_t len2) {
+  size_t len = (len1 < len2) ? len1 : len2;
+
+  for (int i = 0; i < len; i++) {
+    int d = b1[i] - b2[i];
+    if (d != 0) {
+      return d;
+    }
+  }
+  // The first N bytes of s1 and s2 are equal: return value based on lengths.
+  return len1 - len2;
+}
+
 static bool has_prefix(const uint8_t *s1,
                        size_t s1_len,
                        const uint8_t *s2,
@@ -333,7 +332,7 @@ static size_t mu_str_find_aux(const uint8_t *haystack,
   // of needle.  Micro-optimization: We stop searching when we get within
   // needle_len bytes of the end of haystack, since beyond that, the full-length
   // search will always fail.
-  for (int i = 0; i < haystack_len - needle_len; i++) {
+  for (int i = 0; i <= haystack_len - needle_len; i++) {
     const uint8_t *h2 = &haystack[i];
     if (*h2 == *needle) {
       // first byte matches.  Do the rest of the bytes match?
@@ -398,12 +397,31 @@ static size_t mu_str_rfind_aux(const uint8_t *haystack,
 // *****************************************************************************
 
 // Run this command in to run the standalone tests.
-// gcc -Wall -DTEST_MU_STR -o test_mu_str mu_str.c && ./test_mu_str && rm
-// ./test_mu_str
+// gcc -g -Wall -DTEST_MU_STR -o test_mu_str mu_str.c && ./test_mu_str && rm ./test_mu_str
 
 #ifdef TEST_MU_STR
 
 #include <stdio.h>
+
+// Avoid dragging in all of string.h
+#ifndef strncmp
+static int strncmp(const char *s1, const char *s2, register size_t n) {
+  unsigned char u1, u2;
+
+  while (n-- > 0) {
+    u1 = (unsigned char)*s1++;
+    u2 = (unsigned char)*s2++;
+    if (u1 != u2) {
+      return u1 - u2;
+    }
+    if (u1 == '\0') {
+      return 0;
+    }
+  }
+  return 0;
+}
+
+#endif
 
 #define ASSERT(e) assert(e, #e, __FILE__, __LINE__)
 static void assert(bool expr, const char *str, const char *file, int line) {
@@ -656,6 +674,14 @@ void test_mu_str(void) {
     ASSERT(mu_str_rfind_cstr(&s1, "cd", true) == 10);
     ASSERT(mu_str_rfind_cstr(&s1, "cdX", false) == MU_STR_NOT_FOUND);
     ASSERT(mu_str_rfind_cstr(&s1, "cdX", true) == MU_STR_NOT_FOUND);
+  } while (false);
+
+  // regression test
+  do {
+    mu_str_t x;
+    mu_str_init_cstr(&x, "A\r\n");
+    size_t idx = mu_str_find_cstr(&x, "\r\n", false);
+    ASSERT(idx == 1);
   } while (false);
 
   // size_t mu_str_match(mu_str_t *str, mu_str_predicate_t pred, void *arg);
@@ -924,7 +950,7 @@ void test_parse_url(void) {
   ASSERT(params.use_tls == true);
 
   // These are the valid chars that end a port #
-  // #?/\
+  // "#?/\"
 
   // pathologies
   ASSERT(parse_http_params(&params, "") == NULL);
