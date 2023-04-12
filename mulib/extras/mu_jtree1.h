@@ -25,7 +25,7 @@
  */
 
 /**
- * @brief Parse, tokenize and traverse JSON-formatted strings in-place.
+ * @brief Parse and traverse JSON-formatted strings in-place.
 
 mu-jtree will parse this JSON string:
 
@@ -40,12 +40,14 @@ into 10 tokens as follows:
                 |  |   |     | "b" : true, "c" : null   | 2.0
                 |  |   |     | +--^  +---^ +--^  +---^  | +--^
                 |  |   |     | |     |     |     |      | |
-token context   ^  ^   ^     ^ ^     ^     ^     ^      ^ ^
-token index     0  1   2     3 4     5     6     7      8 9
-token depth     0  1   1     1 2     2     2     2      1 2
-parent          -  0   0     0 3     3     3     3      0 8
-children        1  -   -     4 -     -     -     -      9 -
-sibling         -  2   3     8 5     6     7     -      - -
+token string    ^  ^   ^     ^ ^     ^     ^     ^      ^ ^
+token idx:      0  1   2     3 4     5     6     7      8 9
+token type:     A  I   S     O S     T     S     N      A F
+child count:    4  0   0     4 0     0     0     0      1 0
+sibling count:  0  3   2     1 3     2     1     0      0 0
+token parent:   x  0   0     0 3     3     3     3      0 8
+token sibling:  x  2   3     8 5     6     7     x      x x
+token children: 1  x   x     4 x     x     x     x      9 x
  */
 
 #ifndef _MU_JTREE_H_
@@ -92,16 +94,16 @@ typedef enum {
   MU_JTREE_TYPE_NULL,      // null value
 } mu_jtree_token_type_t;
 
-typedef struct _mu_jtree_token {
-  mu_jtree_token_type_t type;       // the token type
-  mu_str_t contents;                // a string that spans the token's text
-  int depth;                        // for tree-structure traversal
+typedef struct {
+  mu_jtree_token_type_t type; // the token type
+  size_t link;                // 0 = no sibling, 1 = no child, n = next sibling
+  mu_str_t contents;          // a string that spans the token's text
 } mu_jtree_token_t;
 
 typedef struct {
   mu_jtree_token_t *tokens; // user supplied array of tokens
-  int token_capacity;    // # of tokens in array
-  int token_count;       // # of tokens in use
+  size_t token_capacity;    // # of tokens in array
+  size_t token_count;       // # of tokens in use
 } mu_jtree_t;
 
 // *****************************************************************************
@@ -116,27 +118,25 @@ typedef struct {
  * @return jtree.
  */
 mu_jtree_t *mu_jtree_init(mu_jtree_t *jtree, mu_jtree_token_t *tokens,
-                          int capacity);
+                          size_t capacity);
 
 /**
  * @brief Parse a JSON string into its component tokens.
  *
  * @param jtree A mu_jtree object.
- * @param json A JSON string represented in UTF-8 encoding.
- * @param length The number of bytes in the JSON string.
+ * @param json A mu_str string of the JSON to be parsed.
  * @return An error code of the result of parsing.
  */
-mu_jtree_err_t mu_jtree_parse(mu_jtree_t *jtree,
-                              const uint8_t *json,
-                              int length);
+mu_jtree_err_t mu_jtree_parse(mu_jtree_t *jtree, mu_str_t *json);
 
+/**
+ * @brief Parse a null-terminated JSON string into its component tokens.
+ *
+ * @param jtree A mu_jtree object.
+ * @param json A null-terminated string of the JSON to be parsed.
+ * @return An error code of the result of parsing.
+ */
 mu_jtree_err_t mu_jtree_parse_cstr(mu_jtree_t *jtree, const char *json);
-
-mu_jtree_err_t mu_jtree_parse_mu_str(mu_jtree_t *jtree, mu_str_t *json);
-
-bool mu_jtree_match(mu_jtree_t *target,
-                    mu_jtree_t *pattern,
-                    bool allow_extras);
 
 /**
  * @brief Get the maximum number of tokens available for mu_jtree_parse
@@ -144,17 +144,18 @@ bool mu_jtree_match(mu_jtree_t *target,
  * @param jtree A previoulsy initialized mu_jtree object.
  * @return The maximum number of mu_jtree_token_t elements.
  */
-static inline int mu_jtree_token_capacity(mu_jtree_t *jtree) {
+static inline size_t mu_jtree_token_capacity(mu_jtree_t *jtree) {
   return jtree->token_capacity;
 }
 
 /**
- * @brief Get the number of tokens resulting from a call to mu_jtree_parse()
+ * @brief Get the number of tokens resulting from a call to mu_jtree_parse() or
+ * mu_jtree_parse_cstr().
  *
  * @param jtree A previously parsed mu_jtree object.
  * @return The number of mu_jtree_token_t elements.
  */
-static inline int mu_jtree_token_count(mu_jtree_t *jtree) {
+static inline size_t mu_jtree_token_count(mu_jtree_t *jtree) {
   return jtree->token_count;
 }
 
@@ -163,34 +164,29 @@ static inline int mu_jtree_token_count(mu_jtree_t *jtree) {
  *
  * @param tree A previoulsy parsed mu_jtree object.
  * @param index The index of the token to reference.
- * @return the referenced token, or NULL if index is out of range.
+ * @return the referenced token, or NULL if index is greater than or equal to
+ *         the number of tokens returned by mu_jtree_token_count().
  */
 static inline mu_jtree_token_t *mu_jtree_token_ref(mu_jtree_t *jtree,
-                                                   int index) {
-  return index < mu_jtree_token_count(jtree) ? &jtree->tokens[index] : NULL;
+                                                   size_t idx) {
+  return index < mu_jtree_token_count() ? &jtree->tokens[idx] : NULL;
 }
 
 /**
  * @brief Return the number of children for the given token.
- *
- * Note: this will return zero for any tokens other than MU_JTREE_TYPE_ARRAY and
- * MU_JTREE_TYPE_OBJECT.
  */
-int mu_jtree_children_count(mu_jtree_t *jtree, mu_jtree_token_t *token);
+size_t mu_jtree_children_count(mu_jtree_t *jtree, mu_jtree_token_t *token);
 
 /**
  * @brief Return the first child of the given token, or NULL if there are no
  * children.
- *
- * Note: this will return NULL for any tokens other than MU_JTREE_TYPE_ARRAY and
- * MU_JTREE_TYPE_OBJECT.
  */
 mu_jtree_token_t *mu_jtree_children(mu_jtree_t *jtree, mu_jtree_token_t *token);
 
 /**
  * @brief Return the number of siblings of the given token.
  */
-int mu_jtree_sibling_count(mu_jtree_t *jtree, mu_jtree_token_t *token);
+size_t mu_jtree_sibling_count(mu_jtree_t *jtree, mu_jtree_token_t *token);
 
 /**
  * @brief Return the next sibling of the given token, or NULL if there are no
@@ -205,10 +201,7 @@ mu_jtree_token_t *mu_jtree_sibling(mu_jtree_t *jtree, mu_jtree_token_t *token);
 mu_jtree_token_t *mu_jtree_parent(mu_jtree_t *jtree, mu_jtree_token_t *token);
 
 /**
- * @brief Extract a subtree from a parsed jtree.
- *
- * Note: this will return NULL unless the given token is of type
- * MU_JTREE_TYPE_ARRAY or MU_JTREE_TYPE_OBJECT.
+ * @brief Return a sub-tree.
  *
  * @param subtree A jtree object to hold the subtree.
  * @param jtree The jtree object
