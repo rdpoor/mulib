@@ -259,6 +259,17 @@ mu_str_t *mu_str_rtrim(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
  */
 mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
 
+/**
+ * @brief Copy the contents of a mu_str plus a null terminator to a buffer.
+ *
+ * @param str The mu_str to copy
+ * @param buf A byte array to hold the null-terminated string.
+ * @param capacity The size of buf
+ * @return true if buf is large enough to hold the bytes plus the null
+ *         termination, false otherwise.
+ */
+bool mu_str_to_cstr(mu_str_t *str, char *buf, size_t capacity);
+
 // *****************************************************************************
 // End of file
 

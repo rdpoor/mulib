@@ -42,7 +42,6 @@
 // Private (forward) declarations
 
 // Avoid requiring string.h
-#ifndef strlen
 static unsigned long strlen(const char *str) {
   unsigned long len = 0;
   while (*str++ != '\0') {
@@ -50,7 +49,6 @@ static unsigned long strlen(const char *str) {
   }
   return len;
 }
-#endif
 
 static int str_compare_aux(const uint8_t *b1,
                            size_t len1,
@@ -256,6 +254,19 @@ mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg) {
   return mu_str_rtrim(mu_str_ltrim(str, predicate, arg), predicate, arg);
 }
 
+bool mu_str_to_cstr(mu_str_t *str, char *buf, size_t capacity) {
+  size_t str_length = mu_str_length(str);
+  const uint8_t *bytes = mu_str_bytes(str);
+  if (str_length >= capacity) {
+    return false;
+  }
+  for (int i=0; i<str_length; i++) {
+    buf[i] = (char)bytes[i];
+  }
+  buf[str_length] = '\0';
+  return true;
+}
+
 // *****************************************************************************
 // Private (static) code
 
@@ -404,7 +415,6 @@ static size_t mu_str_rfind_aux(const uint8_t *haystack,
 #include <stdio.h>
 
 // Avoid dragging in all of string.h
-#ifndef strncmp
 static int strncmp(const char *s1, const char *s2, register size_t n) {
   unsigned char u1, u2;
 
@@ -420,8 +430,6 @@ static int strncmp(const char *s1, const char *s2, register size_t n) {
   }
   return 0;
 }
-
-#endif
 
 #define ASSERT(e) assert(e, #e, __FILE__, __LINE__)
 static void assert(bool expr, const char *str, const char *file, int line) {
@@ -745,6 +753,21 @@ void test_mu_str(void) {
     ASSERT(&s1 == mu_str_trim(&s1, is_whitespace, NULL));
     ASSERT(cstr_eq(&s1, "abcde"));
   } while (false);
+
+  do {
+    mu_str_t s1;
+    char buf[5];  // 4 chars max (plus null termination)
+
+    mu_str_init_cstr(&s1, "abcd");
+    ASSERT(mu_str_to_cstr(&s1, buf, sizeof(buf)) == true);
+    ASSERT(buf[0] == 'a');  // strcmp avoidance...
+    ASSERT(buf[1] == 'b');
+    ASSERT(buf[2] == 'c');
+    ASSERT(buf[3] == 'd');
+
+    mu_str_init_cstr(&s1, "abcde");
+    ASSERT(mu_str_to_cstr(&s1, buf, sizeof(buf)) == false);
+  } while(false);
 
   printf("\n...tests complete\n");
 }
