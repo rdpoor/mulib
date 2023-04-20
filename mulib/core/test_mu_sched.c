@@ -71,7 +71,7 @@ void test_mu_sched_reset_clears_deferred_task_queue(void) {
 void test_mu_sched_reset_does_not_affect_other_state(void) {
   // Given a scheduler with non-default values for other state variables
   mu_spsc_put(&s_sched.irq_tasks, NULL);
-  mu_msg_queue_put(&s_sched.now_tasks, NULL);
+  mu_mqueue_put(&s_sched.now_tasks, NULL);
   s_sched.curr_task = (mu_task_t*) 0xDEADBEEF;
   s_sched.clock_fn = NULL;
   s_sched.idle_task = (mu_task_t*) 0xBEEFDEAD;
@@ -81,7 +81,7 @@ void test_mu_sched_reset_does_not_affect_other_state(void) {
   
   // Then the other state variables should not be affected
   ASSERT(mu_spsc_get(&s_sched.irq_tasks, NULL) == MU_SPSC_ERR_EMPTY);
-  ASSERT(mu_msg_queue_get(&s_sched.now_tasks, NULL) == false);
+  ASSERT(mu_mqueue_get(&s_sched.now_tasks, NULL) == false);
   ASSERT(s_sched.curr_task == NULL);
   ASSERT(s_sched.clock_fn != NULL);
   ASSERT(s_sched.idle_task == (mu_task_t*) 0xBEEFDEAD);

@@ -1,7 +1,9 @@
 /**
+ * @file test_mu_timer.c
+ *
  * MIT License
  *
- * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2022 - 2023 R. Dunbar Poor
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,59 +22,33 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- */
-
-/**
- * @file mu_config.h
  *
- * @brief Platform specific definitions and declarations required by mulib.
- *
- * If you are porting mulib to a specific platform, create the required
- * definitions and declarations in mu_config.h and mu_time.h and implementation
- * in mu_time.c.  If you are using mulib in your project, you must find (or
- & create) the appropriate mu_config and mu_time files for your config.
  */
-
-#ifndef _MU_CONFIG_H_
-#define _MU_CONFIG_H_
 
 // *****************************************************************************
 // Includes
 
-// *****************************************************************************
-// C++ Compatibility
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "test_support.h"
+#include <stdbool.h>
+#include <stdio.h>
 
 // *****************************************************************************
-// Public types and definitions
-
-// Optional: un-comment this if your config supports floating point operations
-#define MU_CONFIG_HAS_FLOAT
-
-// Optional: Define the number of events that may be scheduled in mu_sched.
-// Leave commented to accept the default.
-// #define MU_CONFIG_MAX_EVENTS <n>
-
-// Optional: Uncomment the following to generate profiling functions for mu_task
-// and mu_sched, at the expense of larger storage and slightly slower executiion
-// times.
-// define MU_CONFIG_PROFILING_TASKS
-
-// Optional: If implementing power management, the minimum time the system will
-// sleep for.
-// #define MU_CONFIG_SLEEP_TIME_MIN mu_time_ms_to_rel(1)
+// Local (private) types and definitions
 
 // *****************************************************************************
-// Public declarations
+// Local (private, static) forward declarations
 
 // *****************************************************************************
-// End of file
+// Local (private, static) storage
 
-#ifdef __cplusplus
+// *****************************************************************************
+// Public code
+
+void _mu_assert(bool expr, const char *str, const char *file, int line) {
+  if (!expr) {
+    printf("\nassertion %s failed at %s:%d", str, file, line);
+  }
 }
-#endif
 
-#endif /* #ifndef _MU_CONFIG_H_ */
+// *****************************************************************************
+// Local (private, static) code

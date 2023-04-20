@@ -28,6 +28,8 @@
 // *****************************************************************************
 // Includes
 
+#include "mu_time.h"
+
 // *****************************************************************************
 // C++ compatibility
 
@@ -156,12 +158,12 @@ mu_task_t *mu_task_get_current_task(void);
 /**
  * @brief Set the state of the given task and wait for another task to call it.
  */
-mu_task_err mu_task_wait(mu_task_t *task, mu_task_state_t next_state);
+mu_task_err_t mu_task_wait(mu_task_t *task, mu_task_state_t next_state);
 
 /**
  * @brief Set the state of the given task before rescheduling it ASAP.
  */
-mu_task_err mu_task_yield(mu_task_t *task, mu_task_state_t next_state);
+mu_task_err_t mu_task_yield(mu_task_t *task, mu_task_state_t next_state);
 
 /**
  * @brief Schedule a task from interrupt level in the "asap" queue.

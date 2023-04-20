@@ -88,12 +88,6 @@ extern "C" {
 // Signature for clock source function.  Returns the current time.
 typedef mu_time_abs_t (*mu_clock_fn)(void);
 
-// A mu_sched_deferred_task associates a task and a time.
-typedef struct {
-  mu_time_abs_t at;
-  mu_task_t *task;
-} mu_sched_deferred_task_t;
-
 /**
  * @brief Signature for a function passed to mu_sched_visit_events.
  *

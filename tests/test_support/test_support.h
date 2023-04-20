@@ -1,9 +1,7 @@
 /**
- * @file test_mu_spsc.c
- *
  * MIT License
  *
- * Copyright (c) 2022 - 2023 R. Dunbar Poor
+ * Copyright (c) 2021-2023 R. Dunbar Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,29 +20,44 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
  */
+
+/**
+ * @file: test_support.h
+ *
+ * @brief Support for mulib unit tests
+ */
+
+#ifndef _TEST_SUPPORT_H_
+#define _TEST_SUPPORT_H_
 
 // *****************************************************************************
 // Includes
 
-#include "mu_spsc.h"
-#include "test_support.h"
+#include <stdbool.h>
 
 // *****************************************************************************
-// Local (private) types and definitions
+// C++ Compatibility
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // *****************************************************************************
-// Local (private, static) forward declarations
+// Public types and definitions
+
+#define MU_ASSERT(e) _mu_assert(e, #e, __FILE__, __LINE__)
 
 // *****************************************************************************
-// Local (private, static) storage
+// Public declarations
+
+void _mu_assert(bool expr, const char *str, const char *file, int line);
 
 // *****************************************************************************
-// Public code
+// End of file
 
-void test_mu_spsc(void) {
+#ifdef __cplusplus
 }
+#endif
 
-// *****************************************************************************
-// Local (private, static) code
+#endif /* #ifndef _TEST_SUPPORT_H_ */

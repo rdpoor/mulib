@@ -1,7 +1,9 @@
 /**
+ * @file test_mu_time.c
+ *
  * MIT License
  *
- * Copyright (c) 2021-2022 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2022 - 2023 R. Dunbar Poor
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,73 +22,29 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ *
  */
 
 // *****************************************************************************
 // Includes
 
-#include "mu_config.h"
 #include "mu_time.h"
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <time.h>
+#include "test_support.h"
 
 // *****************************************************************************
-// Private types and definitions
+// Local (private) types and definitions
 
 // *****************************************************************************
-// Private (static) storage
+// Local (private, static) forward declarations
 
 // *****************************************************************************
-// Private (forward) declarations
+// Local (private, static) storage
 
 // *****************************************************************************
 // Public code
 
-void mu_time_init(void) {}
-
-mu_time_abs_t mu_time_now(void) { return clock(); }
-
-mu_time_abs_t mu_time_offset(mu_time_abs_t t, mu_time_rel_t dt) {
-  return t + dt;
+void test_mu_time(void) {
 }
-
-mu_time_rel_t mu_time_difference(mu_time_abs_t t1, mu_time_abs_t t2) {
-  return t1 - t2;
-}
-
-bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2) {
-  return (t1 - t2) > MU_TIME_REL_MAX;
-}
-
-bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2) { return t1 == t2; }
-
-bool mu_time_follows(mu_time_abs_t t1, mu_time_abs_t t2) {
-  return (t1 - t2) < MU_TIME_REL_MAX;
-}
-
-int mu_time_rel_to_ms(mu_time_rel_t dt) {
-  // TODO: reinstate integer rounding fn
-  return (dt * 1000UL) / MU_TIME_TICKS_PER_SECOND;
-}
-
-mu_time_rel_t mu_time_ms_to_rel(int ms) {
-  // TODO: reinstate integer rounding fn
-  return ms * MU_TIME_TICKS_PER_SECOND / 1000UL;
-}
-
-#ifdef MU_PLATFORM_HAS_FLOAT
-
-mu_time_seconds_t mu_time_rel_to_s(mu_time_rel_t dt) {
-  return dt / (mu_time_seconds_t)MU_TIME_TICKS_PER_SECOND;
-}
-
-mu_time_seconds_t mu_time_s_to_rel(MU_FLOAT s) {
-  return s * MU_TIME_TICKS_PER_SECOND;
-}
-
-#endif
 
 // *****************************************************************************
-// Private (static) code
+// Local (private, static) code

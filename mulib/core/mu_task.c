@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2020-2023 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,8 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
     task->state = initial_state;
 #ifdef MU_TASK_EXTENDED
     task->task_name_fn = task_name_fn;
-    task->task_state_name_fn = state_name_fn, task->called_fn = called_fn;
+    task->task_state_name_fn = state_name_fn;
+    task->called_fn = called_fn;
     task->state_changed_fn = state_changed_fn;
 #endif
     return task;
@@ -103,12 +104,12 @@ mu_task_t *mu_task_get_current_task(void) {
     return mu_sched_get_current_task();
 }
 
-mu_task_err mu_task_wait(mu_task_t *task, mu_task_state_t next_state) {
+mu_task_err_t mu_task_wait(mu_task_t *task, mu_task_state_t next_state) {
     mu_task_set_state(task, next_state);
     return MU_TASK_ERR_NONE;
 }
 
-mu_task_err mu_task_yield(mu_task_t *task, mu_task_state_t next_state) {
+mu_task_err_t mu_task_yield(mu_task_t *task, mu_task_state_t next_state) {
     mu_task_set_state(task, next_state);
     return mu_sched_now(task);
 }
