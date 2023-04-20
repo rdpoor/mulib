@@ -38,10 +38,21 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
+typedef unsigned int mu_task_state_t;
+
+typedef enum {
+    MU_TASK_ERR_NONE,
+    MU_TASK_ERR_SCHED_FULL,
+    MU_TASK_ERR_NOT_FOUND,
+} mu_task_err_t;
+
 /**
- * A `mu_task` is a function that can be called later.  It comprises a function
+ * A `mu_task` is a function that can be deferred.  It comprises a function
  * pointer (`mu_task_fn`) embedded within a context (`void *ctx`).  When called,
- * function is passed the task object itself.
+ * the task object itself is passed as an argument to the function.
+ *
+ * The MU_TASK_CTX macro returns a reference to the context surrounding a task
+ * pointer.
  */
 
 /**
@@ -49,44 +60,62 @@ extern "C" {
  * structure that contains it.
  */
 #define MU_TASK_CTX(_task_pointer, _ctx_type, _task_slot)                      \
-  ((_ctx_type *)((char *)(1 ? (_task_pointer)                                  \
-                            : &((_ctx_type *)0)->_task_slot) -                 \
-                 offsetof(_ctx_type, _task_slot)))
+    ((_ctx_type *)((char *)(1 ? (_task_pointer)                                \
+                              : &((_ctx_type *)0)->_task_slot) -               \
+                   offsetof(_ctx_type, _task_slot)))
 
 struct _mu_task; // forward declaration
 
 // The signature of a mu_task function.
 typedef void (*mu_task_fn)(struct _mu_task *task, void *arg);
 
-// Signature of a function that maps a state to a state string.
+#ifdef MU_TASK_EXTENDED
+
+// Signature of a function that maps a task to its name
+typedef const char *(*mu_task_name_fn)(struct _mu_task *task);
+
+// Signature of a function that maps a task's state to its state name.
 typedef const char *(*mu_task_state_name_fn)(struct _mu_task *task,
-                                             unsigned int state);
+                                             mu_task_state_t state);
+
+// Signature of a function that gets called when a task is called.
+typedef const char *(*mu_task_called_fn)(struct _mu_task *task);
+
+// Signature of a function that gets called when a task's state is changed
+typedef const char *(*mu_task_state_changed_fn)(struct _mu_task *task);
+
+#endif
 
 typedef struct _mu_task {
-  mu_task_fn fn;                       // the function to call
-  unsigned int state;                  // the current task state
-  mu_task_state_name_fn state_name_fn; // fn to map state to state name
+    mu_task_fn fn;         // the function to call
+    mu_task_state_t state; // the current task state
+#ifdef MU_TASK_EXTENDED
+    mu_task_name_fn task_name_fn;              // fn to map task to task name
+    mu_task_state_name_fn state_name_fn;       // fn to map state to state name
+    mu_task_called_fn called_fn;               // fn to call when task is called
+    mu_task_state_changed_fn state_changed_fn; // fn to call when state is set
+#endif
 } mu_task_t;
-
-typedef void (*mu_task_state_change_hook_fn)(mu_task_t *task,
-                                             unsigned int prev_state,
-                                             unsigned int state);
 
 // *****************************************************************************
 // Public declarations
 
-void mu_task_register_state_change_hook(mu_task_state_change_hook_fn fn);
-
 /**
  * @brief Initialize a task object with its function and context.
  */
-mu_task_t *mu_task_init(mu_task_t *task,
-                        mu_task_fn fn,
-                        unsigned int initial_state,
-                        mu_task_state_name_fn state_name_fn);
+mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
+                        mu_task_state_t initial_state
+#ifdef MU_TASK_EXTENDED
+                        ,
+                        mu_task_name_fn task_name_fn,
+                        mu_task_state_name_fn state_name_fn,
+                        mu_task_called_fn called_fn,
+                        mu_task_state_changed_fn state_changed_fn
+#endif
+);
 
 /**
- * @brief Invoke the deferred function.
+ * @brief Invoke the task.
  * Note: Task may be NULL, in which case this is a no-op.
  */
 void mu_task_call(mu_task_t *task, void *arg);
@@ -97,19 +126,76 @@ void mu_task_call(mu_task_t *task, void *arg);
 mu_task_fn mu_task_get_fn(mu_task_t *task);
 
 /**
- * @brief Return the state variable of this task.
+ * @brief Return the state of the task.
  */
-unsigned int mu_task_get_state(mu_task_t *task);
+mu_task_state_t mu_task_get_state(mu_task_t *task);
 
 /**
- * @brief Set the state variable of this task.
+ * @brief Set the state of the task.
  */
-void mu_task_set_state(mu_task_t *task, unsigned int state);
+void mu_task_set_state(mu_task_t *task, mu_task_state_t state);
+
+#ifdef MU_TASK_EXTENDED
+/**
+ * @brief Return the name of the task as a null-terminated string.
+ */
+const char *mu_task_name(mu_task_t *task);
 
 /**
- * @brief Return a string naming the given state.  Returns NULL if not known.
+ * @brief Return the state name as a null-terminated string.
  */
-const char *mu_task_state_name(mu_task_t *task, unsigned int state);
+const char *mu_task_state_name(mu_task_t *task, mu_task_state_t state);
+
+#endif
+
+/**
+ * @brief Return the current task being processed, or NULL if none.
+ */
+mu_task_t *mu_task_get_current_task(void);
+
+/**
+ * @brief Set the state of the given task and wait for another task to call it.
+ */
+mu_task_err mu_task_wait(mu_task_t *task, mu_task_state_t next_state);
+
+/**
+ * @brief Set the state of the given task before rescheduling it ASAP.
+ */
+mu_task_err mu_task_yield(mu_task_t *task, mu_task_state_t next_state);
+
+/**
+ * @brief Schedule a task from interrupt level in the "asap" queue.
+ */
+mu_task_err_t mu_task_sched_from_isr(mu_task_t *task);
+
+/**
+ * @brief Schedule a task to be run after a given interval.
+ */
+mu_task_err_t mu_task_defer_for(mu_task_t *task, mu_task_state_t next_state,
+                                mu_time_rel_t in);
+
+/**
+ * @brief Schedule a task to be run after a given interval.
+ */
+mu_task_err_t mu_task_defer_until(mu_task_t *task, mu_task_state_t next_state,
+                                  mu_time_abs_t at);
+
+/**
+ * @brief Remove a deferred task from the scheduler.
+ *
+ * Note: this will not remove a task in the "asap" queue.
+ */
+mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task);
+
+/**
+ * @brief Set the from_task state before transferring control to the to_task.
+ *
+ * NOTE: this essentially does the following, but a bit more efficiently:
+ *    mu_task_set_state(from_task, next_state);
+ *    mu_task_yield(to_task, mu_task_get_state(to_task));
+ */
+mu_task_err_t mu_task_transfer(mu_task_t *from_task, mu_task_state_t next_state,
+                               mu_task_t *to_task);
 
 #ifdef __cplusplus
 }

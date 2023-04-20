@@ -29,15 +29,15 @@ mu_sched implements a discrete time, run-to-completion scheduler.  A
 mu_task can be scheduled to run at some point in the future through the
 following calls:
 
-   mu_sched_err_t mu_sched_now(mu_task_t *task);
-   mu_sched_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
-   mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
+   mu_task_err_t mu_sched_now(mu_task_t *task);
+   mu_task_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
+   mu_task_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
 
 Each of these functions add a task to the scheduler's queue.
 
 mu_sched also supports safely scheduling a task from interrupt level:
 
-   mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
+   mu_task_err_t mu_sched_from_isr(mu_task_t *task);
 
 Any task scheduled from interrupt level is saved in an interrupt safe
 "single producer, single consumer" queue.  Upon returning from interrupt level,
@@ -46,7 +46,7 @@ to the regular schedule as if mu_sched_now() was called.
 
 The function
 
-   mu_sched_err_t mu_sched_step(void);
+   mu_task_err_t mu_sched_step(void);
 
 is where all the magic happens.  The scheduler examines the first task in
 the queue, and if its start time has arrived, the task is removed from the
@@ -84,14 +84,6 @@ extern "C" {
 #ifndef MU_SCHED_MAX_NOW_TASKS
 #define MU_SCHED_MAX_NOW_TASKS 20
 #endif
-
-typedef enum {
-  MU_SCHED_ERR_NONE,
-  MU_SCHED_ERR_ILLEGAL_ARG,
-  MU_SCHED_ERR_EMPTY,
-  MU_SCHED_ERR_FULL,
-  MU_SCHED_ERR_NOT_FOUND,
-} mu_sched_err_t;
 
 // Signature for clock source function.  Returns the current time.
 typedef mu_time_abs_t (*mu_clock_fn)(void);
@@ -138,7 +130,7 @@ void mu_sched_reset(void);
  * @brief Process the next runnable task or -- if none are runnable -- the idle
  * task.
  */
-mu_sched_err_t mu_sched_step(void);
+void mu_sched_step(void);
 
 /**
  * @brief Return the current clock source.
@@ -171,109 +163,14 @@ mu_task_t *mu_sched_get_idle_task(void);
  */
 void mu_sched_set_idle_task(mu_task_t *task);
 
-/**
- * @brief Return the current task being processed, or NULL if none.
- */
 mu_task_t *mu_sched_get_current_task(void);
 
-/**
- * @brief Return the next deferred task to be run or NULL if there isn't one.
- */
-mu_sched_deferred_task_t *mu_sched_peek_next_deferred_task(void);
+mu_task_err_t mu_sched_now(mu_task_t *task);
+mu_task_err_t mu_sched_from_isr(mu_task_t *task);
+mu_task_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
+mu_task_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
+mu_task_err_t mu_sched_remove_deferred_task(mu_task_t *task);
 
-/**
- * @brief Remove a scheduled task.
- *
- * @param task The task to be removed.
- * @return MU_SCHED_ERR_NOT_FOUND if the task was not present in the schedule,
- *         MU_SCHED_ERR_NONE otherwise.
- */
-mu_sched_err_t mu_sched_remove_deferred_task(mu_task_t *task);
-
-/**
- * @brief Schedule a task to be run as soon as possible.
- *
- * Note: If there are other runnable tasks, the new task will be scheduled after
- * those have run.
- */
-mu_sched_err_t mu_sched_now(mu_task_t *task);
-
-/**
- * @brief Schedule a task from interrupt level.
- */
-mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
-
-/**
- * @brief Schedule a task to be run at a particular time in the future.
- */
-mu_sched_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
-
-/**
- * @brief Schedule a task to be run after a given interval.
- */
-mu_sched_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
-
-/**
- * @brief Set the state of the given task before rescheduling it ASAP.
- */
-void mu_sched_yield(mu_task_t *task, unsigned int state);
-
-/**
- * @brief Set the state of the given task before rescheduling it to trigger
- * after a number of tics.
- */
-void mu_sched_deferred_yield(mu_task_t *task,
-                             unsigned int state,
-                             mu_time_rel_t tics);
-
-/**
- * @brief Set the state of the from task before transferring control to the
- * to task.
- */
-void mu_sched_transfer(mu_task_t *from, unsigned int state, mu_task_t *to);
-
-/**
- * @brief Set the state of the from task, then schedule the to task to run
- * after a number of tics.
- */
-void mu_sched_deferred_transfer(mu_task_t *from,
-                                unsigned int state,
-                                mu_task_t *to,
-                                mu_time_rel_t tics);
-
-/**
- * @brief Call a user-supplied function for each deferred event in the schedule.
- *
- * The user-supplied function has the signature:
- *
- *    mu_task_t *user_fn(mu_sched_deferred_task_t *event, void *arg)
- *
- * Traversing the list continues until all events have been visited, or the
- * user function returns a non-null value.
- *
- * @param user_fn The function to call with each event in the schedule.
- * @param arg The value supplied as the second argument to the user fun.
- * @return A non-null value returned by the user function, or NULL otherwise.
- */
-// void *mu_sched_visit_deferred_events(mu_sched_visit_event_fn user_fn, void
-// *arg);
-
-/**
- * @brief Call a user-supplied function for each immediate task in the schedule.
- *
- * The user-supplied function has the signature:
- *
- *    mu_task_t *user_fn(mu_task_t *task, void *arg)
- *
- * Traversing the list continues until all immediate tasks have been visited, or
- * the user function returns a non-null value.
- *
- * @param user_fn The function to call with each task the immediate queue.
- * @param arg The value supplied as the second argument to the user fun.
- * @return A non-null value returned by the user function, or NULL otherwise.
- */
-// void *mu_sched_visit_immediate_tasks(mu_sched_visit_task_fn user_fn, void
-// *arg);
 
 #ifdef __cplusplus
 }

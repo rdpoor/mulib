@@ -1,0 +1,62 @@
+cmake_minimum_required(VERSION 3.10)
+
+# Set the project name
+project(MulibTests)
+
+set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mulib/core")
+set(PLATFORM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mulib/platform")
+set(TESTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mulib/tests)
+set(CORE_TESTS_DIR "${TESTS_DIR}/core")
+set(TEST_SUPPORT_DIR "${TESTS_DIR}/test_support")
+
+# Include the core and test_support directories
+include_directories(${SOURCE_DIR} ${PLATFORM_DIR} ${TEST_SUPPORT_DIR})
+
+# Core library
+set(CORE_SRC
+    ${SOURCE_DIR}/mu_msg_queue.c
+    ${SOURCE_DIR}/mu_sched.c
+    ${SOURCE_DIR}/mu_spsc.c
+    ${SOURCE_DIR}/mu_str.c
+    ${SOURCE_DIR}/mu_task.c
+    ${SOURCE_DIR}/mu_timer.c
+)
+
+# Platform
+set(PLATFOR_SRC
+    ${PLATFORM_DIR}mu_time.c
+)
+
+add_library(core STATIC ${CORE_SRC})
+
+# Test support library
+set(TEST_SUPPORT_SRC
+    ${TEST_SUPPORT_DIR}/test_support.c
+)
+
+add_library(test_support STATIC ${TEST_SUPPORT_SRC})
+
+# Create the executable for testing
+add_executable(test_mulib_core
+    tests/core/test_mulib_core.c
+    tests/core/test_mu_msg_queue.c
+    tests/core/test_mu_sched.c
+    tests/core/test_mu_str.c
+    tests/core/test_mu_spsc.c
+    tests/core/test_mu_task.c
+    tests/core/test_mu_time.c
+    src/mu_msg_queue.c
+    src/mu_sched.c
+    src/mu_str.c
+    src/mu_spsc.c
+    src/mu_task.c
+    src/mu_time.c
+
+# Link any required libraries
+target_link_libraries(test_mulib_core core test_support)
+
+# Enable testing
+enable_testing()
+
+# Add the test to be executed
+add_test(NAME test_mulib_core COMMAND test_mulib_core)
