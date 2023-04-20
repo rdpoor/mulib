@@ -30,6 +30,7 @@
 
 #include "mu_macros.h"
 #include "test_support.h"
+#include <stdio.h>
 
 // *****************************************************************************
 // Local (private) types and definitions
@@ -44,6 +45,43 @@
 // Public code
 
 void test_mu_macros(void) {
+    printf("\nStarting test_mu_macros...");
+
+    // printf("Running test_MU_MAX...\n");
+    MU_ASSERT(MU_MAX(1, 2) == 2);
+    MU_ASSERT(MU_MAX(-1, -2) == -1);
+    MU_ASSERT(MU_MAX(3.2, 3.0) == 3.2);
+    MU_ASSERT(MU_MAX(0, 0) == 0);
+
+    // printf("Running test_MU_MIN...\n");
+    MU_ASSERT(MU_MIN(1, 2) == 1);
+    MU_ASSERT(MU_MIN(-1, -2) == -2);
+    MU_ASSERT(MU_MIN(3.2, 3.0) == 3.0);
+    MU_ASSERT(MU_MIN(0, 0) == 0);
+
+    // printf("Running test_MU_ABS...\n");
+    MU_ASSERT(MU_ABS(5) == 5);
+    MU_ASSERT(MU_ABS(-5) == 5);
+    MU_ASSERT(MU_ABS(0) == 0);
+    MU_ASSERT(MU_ABS(3.5) == 3.5);
+    MU_ASSERT(MU_ABS(-3.5) == 3.5);
+
+    // printf("Running test_MU_SIGNUM...\n");
+    MU_ASSERT(MU_SIGNUM(5) == 1);
+    MU_ASSERT(MU_SIGNUM(-5) == -1);
+    MU_ASSERT(MU_SIGNUM(0) == 0);
+    MU_ASSERT(MU_SIGNUM(3.5) == 1);
+    MU_ASSERT(MU_SIGNUM(-3.5) == -1);
+
+    // printf("Running test_MU_CLAMP...\n");
+    MU_ASSERT(MU_CLAMP(1, 2, 3) == 2);
+    MU_ASSERT(MU_CLAMP(1, 0, 3) == 1);
+    MU_ASSERT(MU_CLAMP(1, 4, 3) == 3);
+    MU_ASSERT(MU_CLAMP(-5, 0, 5) == 0);
+    MU_ASSERT(MU_CLAMP(0, 5, 0) == 0);
+
+    printf("\nCompleted test_mu_macros...");
+
 }
 
 // *****************************************************************************

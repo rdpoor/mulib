@@ -29,7 +29,10 @@
 // Includes
 
 #include "test_support.h"
+
+#include "mu_task.h"
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 
 // *****************************************************************************
@@ -37,6 +40,8 @@
 
 // *****************************************************************************
 // Local (private, static) forward declarations
+
+static void counting_obj_fn(mu_task_t *task, void *arg);
 
 // *****************************************************************************
 // Local (private, static) storage
@@ -50,5 +55,33 @@ void _mu_assert(bool expr, const char *str, const char *file, int line) {
   }
 }
 
+counting_obj_t *counting_obj_init(counting_obj_t *counting_obj) {
+	mu_task_init(&counting_obj->task, counting_obj_fn, (mu_task_state_t)0);
+	return counting_obj_reset(counting_obj);
+}
+
+mu_task_t *counting_obj_task(counting_obj_t *counting_obj) {
+	return &counting_obj->task;
+}
+
+counting_obj_t *counting_obj_reset(counting_obj_t *counting_obj) {
+	counting_obj->call_count = 0;
+	return counting_obj;
+}
+
+int counting_obj_get_call_count(counting_obj_t *counting_obj) {
+	return counting_obj->call_count;
+}
+
+int counting_obj_increment_call_count(counting_obj_t *counting_obj) {
+	counting_obj->call_count += 1;
+	return counting_obj_get_call_count(counting_obj);
+}
+
 // *****************************************************************************
 // Local (private, static) code
+
+static void counting_obj_fn(mu_task_t *task, void *arg) {
+	counting_obj_t *self = MU_TASK_CTX(task, counting_obj_t, task);
+	counting_obj_increment_call_count(self);
+}

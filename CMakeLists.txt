@@ -1,8 +1,6 @@
-# mkdir build
-# cd build
-# cmake ..
-# make
-# ctest
+# cmake -S . -B build
+# (cd build && make && ./test_mulib_core)
+# rm -rf build
 
 cmake_minimum_required(VERSION 3.10)
 

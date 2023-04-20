@@ -55,12 +55,12 @@ extern "C" {
 // Public types and definitions
 
 typedef struct {
-  void **storage;     // user-supplied storage for queued items
-  size_t capacity;    // maximum number of items that can be stored
-  size_t count;       // number of items currently in the queue
-  size_t index;       // index of next item to be stored
-  mu_task_t *on_put;  // task to invoke when an item is stored
-  mu_task_t *on_get;  // task to invoke when an item is fetched
+    void **storage;    // user-supplied storage for queued items
+    size_t capacity;   // maximum number of items that can be stored
+    size_t count;      // number of items currently in the queue
+    size_t index;      // index of next item to be stored
+    mu_task_t *on_put; // task to invoke when an item is stored
+    mu_task_t *on_get; // task to invoke when an item is fetched
 } mu_mqueue_t;
 
 // *****************************************************************************
@@ -78,11 +78,9 @@ typedef struct {
  *        May be null, in which case no notification is made.
  * @return mqueue
  */
-mu_mqueue_t *mu_mqueue_init(mu_mqueue_t *mqueue,
-                                  void **storage,
-                                  size_t capacity,
-                                  mu_task_t *on_put,
-                                  mu_task_t *on_get);
+mu_mqueue_t *mu_mqueue_init(mu_mqueue_t *mqueue, void **storage,
+                            size_t capacity, mu_task_t *on_put,
+                            mu_task_t *on_get);
 
 /**
  * @brief Remove all items from the queue.

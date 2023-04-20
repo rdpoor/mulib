@@ -34,6 +34,7 @@
 // *****************************************************************************
 // Includes
 
+#include "mu_task.h"
 #include <stdbool.h>
 
 // *****************************************************************************
@@ -48,10 +49,24 @@ extern "C" {
 
 #define MU_ASSERT(e) _mu_assert(e, #e, __FILE__, __LINE__)
 
+/**
+ * @brief Define a object that counts how many times it has been called.
+ */
+typedef struct {
+    mu_task_t task;
+    int call_count;
+} counting_obj_t;
+
 // *****************************************************************************
 // Public declarations
 
 void _mu_assert(bool expr, const char *str, const char *file, int line);
+
+counting_obj_t *counting_obj_init(counting_obj_t *counting_obj);
+mu_task_t *counting_obj_task(counting_obj_t *counting_obj);
+counting_obj_t *counting_obj_reset(counting_obj_t *counting_obj);
+int counting_obj_get_call_count(counting_obj_t *counting_obj);
+int counting_obj_increment_call_count(counting_obj_t *counting_obj);
 
 // *****************************************************************************
 // End of file
