@@ -80,17 +80,17 @@ static mu_task_err_t sched_aux(mu_task_t *task, mu_time_abs_t at);
 // *****************************************************************************
 // Local (private, static) storage
 
-static void *s_irq_store[MU_SCHED_MAX_IRQ_TASKS];
-static void *s_now_store[MU_SCHED_MAX_NOW_TASKS];
-static deferred_task_t s_deferred_tasks[MU_SCHED_MAX_DEFERRED_TASKS];
+static void *s_irq_store[MU_CONFIG_SCHED_MAX_IRQ_TASKS];
+static void *s_now_store[MU_CONFIG_SCHED_MAX_ASAP_TASKS];
+static deferred_task_t s_deferred_tasks[MU_CONFIG_SCHED_MAX_DEFERRED_TASKS];
 static mu_sched_t s_sched;
 
 // *****************************************************************************
 // Public code
 
 void mu_sched_init(void) {
-    mu_spsc_init(&s_sched.irq_tasks, s_irq_store, MU_SCHED_MAX_IRQ_TASKS);
-    mu_mqueue_init(&s_sched.asap_tasks, s_now_store, MU_SCHED_MAX_NOW_TASKS,
+    mu_spsc_init(&s_sched.irq_tasks, s_irq_store, MU_CONFIG_SCHED_MAX_IRQ_TASKS);
+    mu_mqueue_init(&s_sched.asap_tasks, s_now_store, MU_CONFIG_SCHED_MAX_ASAP_TASKS,
                    NULL, NULL);
     s_sched.deferred_task_count = 0;
     s_sched.curr_task = NULL;
@@ -242,7 +242,7 @@ static mu_task_t *fetch_runnable_deferred_task(void) {
 static mu_task_err_t sched_aux(mu_task_t *task, mu_time_abs_t at) {
     deferred_task_t *deferred_task;
 
-    if (s_sched.deferred_task_count == MU_SCHED_MAX_DEFERRED_TASKS) {
+    if (s_sched.deferred_task_count == MU_CONFIG_SCHED_MAX_DEFERRED_TASKS) {
         return MU_TASK_ERR_SCHED_FULL;
     }
 

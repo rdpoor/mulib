@@ -76,7 +76,7 @@ mu_time_rel_t mu_time_ms_to_rel(int ms) {
   return ms * MU_TIME_TICKS_PER_SECOND / (mu_time_rel_t)1000;
 }
 
-#ifdef MU_PLATFORM_HAS_FLOAT
+#ifdef MU_CONFIG_HAS_FLOAT
 
 mu_time_seconds_t mu_time_rel_to_s(mu_time_rel_t dt) {
   return dt / (mu_time_seconds_t)MU_TIME_TICKS_PER_SECOND;

@@ -26,6 +26,8 @@
 // Includes
 
 #include "mu_task.h"
+
+#include "mu_config.h"
 #include "mu_sched.h"
 #include <stddef.h>
 
@@ -43,7 +45,7 @@
 
 mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
                         mu_task_state_t initial_state
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
                         ,
                         mu_task_name_fn task_name_fn,
                         mu_task_state_name_fn state_name_fn,
@@ -53,7 +55,7 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
 ) {
     task->fn = fn;
     task->state = initial_state;
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
     task->task_name_fn = task_name_fn;
     task->task_state_name_fn = state_name_fn;
     task->called_fn = called_fn;
@@ -64,7 +66,7 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
 
 void mu_task_call(mu_task_t *task, void *arg) {
     if (task != NULL) {
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
         task->called_fn(task);
 #endif
         task->fn(task, arg);
@@ -76,13 +78,13 @@ mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
 unsigned int mu_task_get_state(mu_task_t *task) { return task->state; }
 
 void mu_task_set_state(mu_task_t *task, unsigned int state) {
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
     task->state_changed_fn(task, state);
 #endif
     task->state = state;
 }
 
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
 const char *mu_task_name(mu_task_t *task) {
     if (task->task_name_fn) {
         return task->task_name_fn(task);

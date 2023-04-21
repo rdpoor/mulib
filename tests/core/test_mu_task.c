@@ -26,7 +26,7 @@
  */
 
 /**
-NOTE: mu_task can be compiled with or without MU_TASK_EXTENDED in effect,
+NOTE: mu_task can be compiled with or without MU_CONFIG_EXTENDED_TASK in effect,
 so we really need two sets of tests.  This is addressed in:
 
 https://stackoverflow.com/questions/50638724/how-to-compile-source-files-with-different-2-flags-in-cmake

@@ -1,6 +1,23 @@
-# cmake -S . -B build
-# (cd build && make && ./test_mulib_core)
-# rm -rf build
+# SYNOPSIS:
+#   cmake -S . -B build
+#   (cd build && make && ./test_mulib_core)
+#   rm -rf build
+#
+# TODO 1:
+# mu_task can be compiled with or without MU_CONFIG_EXTENDED_TASK in effect,
+# so we really need two sets of tests.  This is addressed in:
+# https://stackoverflow.com/questions/50638724/how-to-compile-source-files-with-different-2-flags-in-cmake
+# In particular, here's the trick for CMake:
+#   # compiles source.cpp with -DSOME_DEF=1
+#   add_library(obj1 OBJECT source.cpp)
+#   # This is the "modern" syntax for setting preprocessor definitions:
+#   target_compile_definitions(obj1 PRIVATE SOME_DEF=1)
+#   # compiles source.cpp with -DSOME_DEF=2
+#   add_library(obj2 OBJECT source.cpp)
+#
+# TODO 2:
+# incorporate fff.h, notably to isolate mu_test_task and mu_test_timer from
+# mu_sched.
 
 cmake_minimum_required(VERSION 3.10)
 
@@ -58,7 +75,6 @@ add_executable(test_mulib_core
     mulib/core/mu_task.c
     mulib/core/mu_timer.c
     mulib/platform/mu_time.c
-
 )
 
 # Link any required libraries

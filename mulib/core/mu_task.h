@@ -28,6 +28,7 @@
 // *****************************************************************************
 // Includes
 
+#include "mu_config.h"
 #include "mu_time.h"
 #include <stddef.h>   // offsetof
 
@@ -72,7 +73,7 @@ struct _mu_task; // forward declaration
 // The signature of a mu_task function.
 typedef void (*mu_task_fn)(struct _mu_task *task, void *arg);
 
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
 
 // Signature of a function that maps a task to its name
 typedef const char *(*mu_task_name_fn)(struct _mu_task *task);
@@ -92,7 +93,7 @@ typedef const char *(*mu_task_state_changed_fn)(struct _mu_task *task);
 typedef struct _mu_task {
     mu_task_fn fn;         // the function to call
     mu_task_state_t state; // the current task state
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
     mu_task_name_fn task_name_fn;              // fn to map task to task name
     mu_task_state_name_fn state_name_fn;       // fn to map state to state name
     mu_task_called_fn called_fn;               // fn to call when task is called
@@ -108,7 +109,7 @@ typedef struct _mu_task {
  */
 mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
                         mu_task_state_t initial_state
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
                         ,
                         mu_task_name_fn task_name_fn,
                         mu_task_state_name_fn state_name_fn,
@@ -138,7 +139,7 @@ mu_task_state_t mu_task_get_state(mu_task_t *task);
  */
 void mu_task_set_state(mu_task_t *task, mu_task_state_t state);
 
-#ifdef MU_TASK_EXTENDED
+#ifdef MU_CONFIG_EXTENDED_TASK
 /**
  * @brief Return the name of the task as a null-terminated string.
  */

@@ -147,7 +147,7 @@ int mu_time_rel_to_ms(mu_time_rel_t dt);
  */
 mu_time_rel_t mu_time_ms_to_rel(int ms);
 
-#ifdef MU_PLATFORM_HAS_FLOAT
+#ifdef MU_CONFIG_HAS_FLOAT
 /**
  * @brief Convert a duration to seconds.
  *

@@ -50,20 +50,30 @@ extern "C" {
 // Public types and definitions
 
 // Optional: un-comment this if your config supports floating point operations
-#define MU_CONFIG_HAS_FLOAT
+// #define MU_CONFIG_HAS_FLOAT
 
-// Optional: Define the number of events that may be scheduled in mu_sched.
+#ifdef MU_CONFIG_HAS_FLOAT
+// If your config supports floats, choose one or the other
+// #define MU_FLOAT double
+#define MU_FLOAT float
+#endif
+
+// Optional: Define the number of deferred events that may be scheduled.
 // Leave commented to accept the default.
-// #define MU_CONFIG_MAX_EVENTS <n>
+// #define MU_CONFIG_SCHED_MAX_DEFERRED_TASKS 20
 
-// Optional: Uncomment the following to generate profiling functions for mu_task
-// and mu_sched, at the expense of larger storage and slightly slower executiion
-// times.
-// define MU_CONFIG_PROFILING_TASKS
+// Optional: Define the number of interrupt events that may be scheduled.
+// Leave commented to accept the default.
+// #define MU_CONFIG_SCHED_MAX_IRQ_TASKS 8 // must be a power of two!
 
-// Optional: If implementing power management, the minimum time the system will
-// sleep for.
-// #define MU_CONFIG_SLEEP_TIME_MIN mu_time_ms_to_rel(1)
+// Optional: Define the number of immediate events that may be scheduled.
+// Leave commented to accept the default.
+// #define MU_CONFIG_SCHED_MAX_ASAP_TASKS 20
+
+// Optional: Uncomment the following to use the expanded form of mu_task that
+// supports notifications on calls and state changes.  The expanded form will
+// use more memory and run slightly slower.
+// #define MU_CONFIG_EXTENDED_TASK
 
 // *****************************************************************************
 // Public declarations

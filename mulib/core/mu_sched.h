@@ -64,6 +64,7 @@ extern "C" {
 // *****************************************************************************
 // Includes
 
+#include "mu_config.h"
 #include "mu_task.h"
 #include "mu_time.h"
 #include <stdbool.h>
@@ -80,16 +81,16 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
-#ifndef MU_SCHED_MAX_DEFERRED_TASKS
-#define MU_SCHED_MAX_DEFERRED_TASKS 20
+#ifndef MU_CONFIG_SCHED_MAX_DEFERRED_TASKS
+#define MU_CONFIG_SCHED_MAX_DEFERRED_TASKS 20
 #endif
 
-#ifndef MU_SCHED_MAX_IRQ_TASKS
-#define MU_SCHED_MAX_IRQ_TASKS 8 // must be a power of two!
+#ifndef MU_CONFIG_SCHED_MAX_IRQ_TASKS
+#define MU_CONFIG_SCHED_MAX_IRQ_TASKS 8 // must be a power of two!
 #endif
 
-#ifndef MU_SCHED_MAX_NOW_TASKS
-#define MU_SCHED_MAX_NOW_TASKS 20
+#ifndef MU_CONFIG_SCHED_MAX_ASAP_TASKS
+#define MU_CONFIG_SCHED_MAX_ASAP_TASKS 20
 #endif
 
 // Signature for clock source function.  Returns the current time.
