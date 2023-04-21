@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2022 R. Dunbar Poor
+ * Copyright (c) 2022-2023 R. Dunbar Poor
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -44,20 +44,19 @@
 // *****************************************************************************
 // Local (private) types and definitions
 
-// A mu_sched_deferred_task associates a task and a time.
+// A deferred_task associates a task and a time.
 typedef struct {
     mu_time_abs_t at;
     mu_task_t *task;
 } deferred_task_t;
 
 typedef struct {
-    mu_spsc_t irq_tasks;      // tasks queued from interrupt level.
-    mu_mqueue_t now_tasks; // a queue of tasks to be run "now"
-    size_t
-        deferred_task_count; // index of next available slot in deferred_tasks
-    mu_task_t *curr_task;    // the task currently being processed.
-    mu_clock_fn clock_fn;    // the function to call to get the current time.
-    mu_task_t *idle_task;    // the task to run when nothing else is runnable.
+    mu_spsc_t irq_tasks;        // tasks queued from interrupt level.
+    mu_mqueue_t asap_tasks;     // tasks to be run "as soon as possible"
+    size_t deferred_task_count; // number of deferred tasks in queue
+    mu_task_t *curr_task;       // task currently being processed.
+    mu_clock_fn clock_fn;       // function to call to get the current time.
+    mu_task_t *idle_task;       // task to run when nothing else is runnable.
 } mu_sched_t;
 
 // *****************************************************************************
@@ -91,8 +90,8 @@ static mu_sched_t s_sched;
 
 void mu_sched_init(void) {
     mu_spsc_init(&s_sched.irq_tasks, s_irq_store, MU_SCHED_MAX_IRQ_TASKS);
-    mu_mqueue_init(&s_sched.now_tasks, s_now_store, MU_SCHED_MAX_NOW_TASKS,
-                      NULL, NULL);
+    mu_mqueue_init(&s_sched.asap_tasks, s_now_store, MU_SCHED_MAX_NOW_TASKS,
+                   NULL, NULL);
     s_sched.deferred_task_count = 0;
     s_sched.curr_task = NULL;
     s_sched.clock_fn = mu_time_now;
@@ -108,8 +107,8 @@ void mu_sched_step(void) {
         // pulled one task from the irq task queue
         asm("nop");
 
-    } else if (mu_mqueue_get(&s_sched.now_tasks,
-                                (void **)&s_sched.curr_task) == true) {
+    } else if (mu_mqueue_get(&s_sched.asap_tasks,
+                             (void **)&s_sched.curr_task) == true) {
         // pulled one task from the "now" task queue
         asm("nop");
 
@@ -141,9 +140,9 @@ void mu_sched_set_idle_task(mu_task_t *task) { s_sched.idle_task = task; }
 
 mu_task_t *mu_sched_get_current_task(void) { return s_sched.curr_task; }
 
-mu_task_err_t mu_sched_now(mu_task_t *task) {
+mu_task_err_t mu_sched_asap(mu_task_t *task) {
     // push task onto the "now" queue
-    if (mu_mqueue_put(&s_sched.now_tasks, task) == false) {
+    if (mu_mqueue_put(&s_sched.asap_tasks, task) == false) {
         return MU_TASK_ERR_SCHED_FULL;
     } else {
         return MU_TASK_ERR_NONE;
@@ -228,7 +227,7 @@ static mu_task_t *fetch_runnable_deferred_task(void) {
     mu_time_abs_t now = mu_sched_get_current_time();
 
     deferred_task = peek_next_deferred_task();
-    if (deferred_task && !mu_time_follows(deferred_task->at, now)) {
+    if (deferred_task && !mu_time_precedes(now, deferred_task->at)) {
         // A deferred_task's time has arrived.
         // NOTE: normally it would be an error to decrement the
         // deferred_task_count before the task is consumed, but this is

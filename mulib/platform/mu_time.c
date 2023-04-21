@@ -57,23 +57,23 @@ mu_time_rel_t mu_time_difference(mu_time_abs_t t1, mu_time_abs_t t2) {
 }
 
 bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2) {
-  return (t1 - t2) > MU_TIME_REL_MAX;
+  return mu_time_difference(t1, t2) < 0;
 }
 
 bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2) { return t1 == t2; }
 
 bool mu_time_follows(mu_time_abs_t t1, mu_time_abs_t t2) {
-  return (t1 - t2) < MU_TIME_REL_MAX;
+  return mu_time_difference(t1, t2) > 0;
 }
 
 int mu_time_rel_to_ms(mu_time_rel_t dt) {
   // TODO: reinstate integer rounding fn
-  return (dt * 1000UL) / MU_TIME_TICKS_PER_SECOND;
+  return (dt * (mu_time_rel_t)1000) / MU_TIME_TICKS_PER_SECOND;
 }
 
 mu_time_rel_t mu_time_ms_to_rel(int ms) {
   // TODO: reinstate integer rounding fn
-  return ms * MU_TIME_TICKS_PER_SECOND / 1000UL;
+  return ms * MU_TIME_TICKS_PER_SECOND / (mu_time_rel_t)1000;
 }
 
 #ifdef MU_PLATFORM_HAS_FLOAT

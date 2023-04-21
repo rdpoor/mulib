@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2020-2022 R. D. Poor <rdpoor@gmail.com>
+ * Copyright (c) 2020-2023 R. D. Poor <rdpoor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@
 // Includes
 
 #include "mu_time.h"
+#include <stddef.h>   // offsetof
 
 // *****************************************************************************
 // C++ compatibility

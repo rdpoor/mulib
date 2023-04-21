@@ -111,7 +111,7 @@ mu_task_err_t mu_task_wait(mu_task_t *task, mu_task_state_t next_state) {
 
 mu_task_err_t mu_task_yield(mu_task_t *task, mu_task_state_t next_state) {
     mu_task_set_state(task, next_state);
-    return mu_sched_now(task);
+    return mu_sched_asap(task);
 }
 
 mu_task_err_t mu_task_sched_from_isr(mu_task_t *task) {
@@ -137,7 +137,7 @@ mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task) {
 mu_task_err_t mu_task_transfer(mu_task_t *from_task, mu_task_state_t next_state,
                                mu_task_t *to_task) {
     mu_task_set_state(from_task, next_state);
-    return mu_sched_now(to_task);
+    return mu_sched_asap(to_task);
 }
 
 // *****************************************************************************

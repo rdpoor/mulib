@@ -53,13 +53,9 @@ extern "C" {
 
 #define MU_TIME_TICKS_PER_SECOND CLOCKS_PER_SEC
 
-// Required: define a data type to hold absolute time.
-typedef clock_t mu_time_abs_t;
-
-// Required: define a data type to hold relative time, i.e. an interval between
-// two absolute times.  Note that this may be negative.
-typedef clock_t mu_time_rel_t;
-
+_Static_assert(sizeof(clock_t) == 8, "Please fix mu_time_abs_t typedef");
+typedef uint64_t mu_time_abs_t;
+typedef int64_t mu_time_rel_t;
 
 #define MU_TIME_REL_MAX ((1LU << ((sizeof(clock_t) * 8) - 1LU)) - 1LU)
 

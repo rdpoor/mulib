@@ -63,12 +63,12 @@ void mu_timer_init(mu_timer_t *timer) {
 }
 
 void mu_timer_start(mu_timer_t *timer,
-                    uint32_t delay_ms,
+                    uint32_t delay_tics,
                     bool periodic,
                     mu_task_t *on_completion) {
   mu_timer_stop(timer);
   mu_time_abs_t now = mu_sched_get_clock_source()(); // function pointers, whoo!
-  timer->delay_tics = mu_time_ms_to_rel(delay_ms);
+  timer->delay_tics = delay_tics;
   timer->delay_until = mu_time_offset(now, timer->delay_tics);
   timer->periodic = periodic;
   timer->state = MU_TIMER_STATE_RUNNING;
@@ -115,7 +115,7 @@ static void mu_timer_fn(mu_task_t *task, void *arg) {
       self->state = MU_TIMER_STATE_IDLE;
     }
     // Invoke on-completion task.
-    mu_sched_now(self->on_completion);
+    mu_task_call(self->on_completion, NULL);
   } break;
 
   case MU_TIMER_STATE_ERROR: {

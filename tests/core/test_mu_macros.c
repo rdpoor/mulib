@@ -80,7 +80,7 @@ void test_mu_macros(void) {
     MU_ASSERT(MU_CLAMP(-5, 0, 5) == 0);
     MU_ASSERT(MU_CLAMP(0, 5, 0) == 0);
 
-    printf("\nCompleted test_mu_macros...");
+    printf("\n   Completed test_mu_macros.");
 
 }
 

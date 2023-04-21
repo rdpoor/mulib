@@ -85,7 +85,7 @@ void mu_timer_init(mu_timer_t *timer);
  * @param on_completion The task to call upon timeout.  May be NULL.
  */
 void mu_timer_start(mu_timer_t *timer,
-                    uint32_t delay_ms,
+                    uint32_t delay_tics,
                     bool periodic,
                     mu_task_t *on_completion);
 

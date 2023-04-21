@@ -151,7 +151,7 @@ void test_mu_mqueue(void) {
     MU_ASSERT(counting_obj_get_call_count(&on_put) == 5);
     MU_ASSERT(counting_obj_get_call_count(&on_get) == 5);
 
-    printf("\nCompleted test_mu_mqueue...");
+    printf("\n   Completed test_mu_mqueue.");
 }
 
 // *****************************************************************************
