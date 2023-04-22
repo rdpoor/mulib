@@ -83,10 +83,11 @@ typedef const char *(*mu_task_state_name_fn)(struct _mu_task *task,
                                              mu_task_state_t state);
 
 // Signature of a function that gets called when a task is called.
-typedef const char *(*mu_task_called_fn)(struct _mu_task *task);
+typedef void (*mu_task_called_fn)(struct _mu_task *task);
 
 // Signature of a function that gets called when a task's state is changed
-typedef const char *(*mu_task_state_changed_fn)(struct _mu_task *task);
+typedef void (*mu_task_state_changed_fn)(struct _mu_task *task,
+                                         mu_task_state_t new_state);
 
 #endif
 

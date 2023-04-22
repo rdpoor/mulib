@@ -107,13 +107,13 @@ void mu_sched_step(void) {
         // pulled one task from the irq task queue
         asm("nop");
 
+    } else if ((s_sched.curr_task = fetch_runnable_deferred_task()) != NULL) {
+        // pulled one runnable task from the deferred task queue
+        asm("nop");
+
     } else if (mu_mqueue_get(&s_sched.asap_tasks,
                              (void **)&s_sched.curr_task) == true) {
         // pulled one task from the "now" task queue
-        asm("nop");
-
-    } else if ((s_sched.curr_task = fetch_runnable_deferred_task()) != NULL) {
-        // pulled one runnable task from the deferred task queue
         asm("nop");
 
     } else {

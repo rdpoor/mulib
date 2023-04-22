@@ -57,8 +57,8 @@ static void mu_timer_fn(mu_task_t *task, void *arg);
 void mu_timer_init(mu_timer_t *timer) {
 #ifndef MU_CONFIG_EXTENDED_TASK
   mu_task_init(&timer->task, mu_timer_fn, MU_TIMER_STATE_IDLE);
-#elif
-  mu_task_init(&timer->task, mu_timer_fn, MU_TIMER_STATE_IDLE, NULL, NULL);
+#else
+  mu_task_init(&timer->task, mu_timer_fn, MU_TIMER_STATE_IDLE, NULL, NULL, NULL, NULL);
 #endif
 }
 

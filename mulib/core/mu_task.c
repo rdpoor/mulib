@@ -57,7 +57,7 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
     task->state = initial_state;
 #ifdef MU_CONFIG_EXTENDED_TASK
     task->task_name_fn = task_name_fn;
-    task->task_state_name_fn = state_name_fn;
+    task->state_name_fn = state_name_fn;
     task->called_fn = called_fn;
     task->state_changed_fn = state_changed_fn;
 #endif
@@ -67,7 +67,9 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
 void mu_task_call(mu_task_t *task, void *arg) {
     if (task != NULL) {
 #ifdef MU_CONFIG_EXTENDED_TASK
-        task->called_fn(task);
+        if(task->called_fn) {
+            task->called_fn(task);
+        }
 #endif
         task->fn(task, arg);
     }
@@ -79,26 +81,34 @@ unsigned int mu_task_get_state(mu_task_t *task) { return task->state; }
 
 void mu_task_set_state(mu_task_t *task, unsigned int state) {
 #ifdef MU_CONFIG_EXTENDED_TASK
-    task->state_changed_fn(task, state);
+    if (task->state_changed_fn) {
+        task->state_changed_fn(task, state);
+    }
 #endif
     task->state = state;
 }
 
 #ifdef MU_CONFIG_EXTENDED_TASK
 const char *mu_task_name(mu_task_t *task) {
+    const char *name = NULL;
     if (task->task_name_fn) {
-        return task->task_name_fn(task);
-    } else {
-        return NULL:
+        name = task->task_name_fn(task);
     }
+    if (name == NULL) {
+        name = "unnamed task";
+    }
+    return name;
 }
 
 const char *mu_task_state_name(mu_task_t *task, mu_task_state_t state) {
+    const char *name = NULL;
     if (task->state_name_fn) {
-        return task->state_name_fn(task);
-    } else {
-        return NULL:
+        name = task->state_name_fn(task, state);
     }
+    if (name == NULL) {
+        name = "unknown state";
+    }
+    return name;
 }
 #endif
 
@@ -117,7 +127,7 @@ mu_task_err_t mu_task_yield(mu_task_t *task, mu_task_state_t next_state) {
 }
 
 mu_task_err_t mu_task_sched_from_isr(mu_task_t *task) {
-    return mu_task_sched_from_isr(task);
+    return mu_sched_from_isr(task);
 }
 
 mu_task_err_t mu_task_defer_for(mu_task_t *task, mu_task_state_t next_state,
@@ -139,6 +149,11 @@ mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task) {
 mu_task_err_t mu_task_transfer(mu_task_t *from_task, mu_task_state_t next_state,
                                mu_task_t *to_task) {
     mu_task_set_state(from_task, next_state);
+#ifdef MU_CONFIG_EXTENDED_TASK
+    if (to_task != NULL && to_task->called_fn) {
+        to_task->called_fn(to_task);
+    }
+#endif
     return mu_sched_asap(to_task);
 }
 
