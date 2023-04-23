@@ -70,11 +70,6 @@ extern "C" {
 // Leave commented to accept the default.
 // #define MU_CONFIG_SCHED_MAX_ASAP_TASKS 20
 
-// Optional: Uncomment the following to use the expanded form of mu_task that
-// supports notifications on calls and state changes.  The expanded form will
-// use more memory and run slightly slower.
-// #define MU_CONFIG_EXTENDED_TASK
-
 // *****************************************************************************
 // Public declarations
 

@@ -30,7 +30,7 @@
 
 #include "mu_config.h"
 #include "mu_time.h"
-#include <stddef.h>   // offsetof
+#include <stddef.h> // offsetof
 
 // *****************************************************************************
 // C++ compatibility
@@ -45,9 +45,9 @@ extern "C" {
 typedef unsigned int mu_task_state_t;
 
 typedef enum {
-    MU_TASK_ERR_NONE,
-    MU_TASK_ERR_SCHED_FULL,
-    MU_TASK_ERR_NOT_FOUND,
+  MU_TASK_ERR_NONE,
+  MU_TASK_ERR_SCHED_FULL,
+  MU_TASK_ERR_NOT_FOUND,
 } mu_task_err_t;
 
 /**
@@ -64,43 +64,28 @@ typedef enum {
  * structure that contains it.
  */
 #define MU_TASK_CTX(_task_pointer, _ctx_type, _task_slot)                      \
-    ((_ctx_type *)((char *)(1 ? (_task_pointer)                                \
-                              : &((_ctx_type *)0)->_task_slot) -               \
-                   offsetof(_ctx_type, _task_slot)))
+  ((_ctx_type *)((char *)(1 ? (_task_pointer)                                  \
+                            : &((_ctx_type *)0)->_task_slot) -                 \
+                 offsetof(_ctx_type, _task_slot)))
 
 struct _mu_task; // forward declaration
 
 // The signature of a mu_task function.
 typedef void (*mu_task_fn)(struct _mu_task *task, void *arg);
 
-#ifdef MU_CONFIG_EXTENDED_TASK
-
-// Signature of a function that maps a task to its name
-typedef const char *(*mu_task_name_fn)(struct _mu_task *task);
-
-// Signature of a function that maps a task's state to its state name.
-typedef const char *(*mu_task_state_name_fn)(struct _mu_task *task,
-                                             mu_task_state_t state);
-
-// Signature of a function that gets called when a task is called.
-typedef void (*mu_task_called_fn)(struct _mu_task *task);
-
-// Signature of a function that gets called when a task's state is changed
-typedef void (*mu_task_state_changed_fn)(struct _mu_task *task,
-                                         mu_task_state_t new_state);
-
-#endif
-
 typedef struct _mu_task {
-    mu_task_fn fn;         // the function to call
-    mu_task_state_t state; // the current task state
-#ifdef MU_CONFIG_EXTENDED_TASK
-    mu_task_name_fn task_name_fn;              // fn to map task to task name
-    mu_task_state_name_fn state_name_fn;       // fn to map state to state name
-    mu_task_called_fn called_fn;               // fn to call when task is called
-    mu_task_state_changed_fn state_changed_fn; // fn to call when state is set
-#endif
+  mu_task_fn fn;         // the function to call
+  mu_task_state_t state; // the current task state
 } mu_task_t;
+
+// The signature of a mu_task_on_task_transfer() function
+typedef void (*mu_task_transfer_hook)(mu_task_t *from_task,
+                                      mu_task_t *to_task);
+
+// The signature of a mu_task_on_state_change() function
+typedef void (*mu_task_state_change_hook)(mu_task_t *task,
+                                          mu_task_state_t from_state,
+                                          mu_task_state_t to_state);
 
 // *****************************************************************************
 // Public declarations
@@ -109,15 +94,17 @@ typedef struct _mu_task {
  * @brief Initialize a task object with its function and context.
  */
 mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
-                        mu_task_state_t initial_state
-#ifdef MU_CONFIG_EXTENDED_TASK
-                        ,
-                        mu_task_name_fn task_name_fn,
-                        mu_task_state_name_fn state_name_fn,
-                        mu_task_called_fn called_fn,
-                        mu_task_state_changed_fn state_changed_fn
-#endif
-);
+                        mu_task_state_t initial_state);
+
+/**
+ * @brief Install a user function that gets called whenever the task changes.
+ */
+void mu_task_set_task_transfer_hook(mu_task_transfer_hook fn);
+
+/**
+ * @brief Install a user function that gets called whenever the state changes.
+ */
+void mu_task_set_state_change_hook(mu_task_state_change_hook fn);
 
 /**
  * @brief Invoke the task.
@@ -139,19 +126,6 @@ mu_task_state_t mu_task_get_state(mu_task_t *task);
  * @brief Set the state of the task.
  */
 void mu_task_set_state(mu_task_t *task, mu_task_state_t state);
-
-#ifdef MU_CONFIG_EXTENDED_TASK
-/**
- * @brief Return the name of the task as a null-terminated string.
- */
-const char *mu_task_name(mu_task_t *task);
-
-/**
- * @brief Return the state name as a null-terminated string.
- */
-const char *mu_task_state_name(mu_task_t *task, mu_task_state_t state);
-
-#endif
 
 /**
  * @brief Return the current task being processed, or NULL if none.
@@ -196,10 +170,11 @@ mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task);
  * @brief Set the from_task state before transferring control to the to_task.
  *
  * NOTE: this essentially does the following, but a bit more efficiently:
- *    mu_task_set_state(from_task, next_state);
+ *    mu_task_set_state(from_task, final_state);
  *    mu_task_yield(to_task, mu_task_get_state(to_task));
  */
-mu_task_err_t mu_task_transfer(mu_task_t *from_task, mu_task_state_t next_state,
+mu_task_err_t mu_task_transfer(mu_task_t *from_task,
+                               mu_task_state_t final_state,
                                mu_task_t *to_task);
 
 #ifdef __cplusplus

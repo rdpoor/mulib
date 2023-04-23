@@ -40,77 +40,49 @@
 // *****************************************************************************
 // Local storage
 
+static mu_task_transfer_hook s_task_transfer_hook = NULL;
+
+static mu_task_state_change_hool s_state_change_hook = NULL;
+
 // *****************************************************************************
 // Public code
 
 mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
-                        mu_task_state_t initial_state
-#ifdef MU_CONFIG_EXTENDED_TASK
-                        ,
-                        mu_task_name_fn task_name_fn,
-                        mu_task_state_name_fn state_name_fn,
-                        mu_task_called_fn called_fn,
-                        mu_task_state_changed_fn state_changed_fn
-#endif
-) {
+                        mu_task_state_t initial_state) {
     task->fn = fn;
     task->state = initial_state;
-#ifdef MU_CONFIG_EXTENDED_TASK
-    task->task_name_fn = task_name_fn;
-    task->state_name_fn = state_name_fn;
-    task->called_fn = called_fn;
-    task->state_changed_fn = state_changed_fn;
-#endif
     return task;
 }
 
 void mu_task_call(mu_task_t *task, void *arg) {
-    if (task != NULL) {
-#ifdef MU_CONFIG_EXTENDED_TASK
-        if(task->called_fn) {
-            task->called_fn(task);
-        }
-#endif
-        task->fn(task, arg);
+    // Ignore null tasks
+    if (task == NULL) {
+        return;
     }
+    // Handle user hook, if given and if task has changed
+    if (s_task_transfer_hook != NULL) {
+        mu_task_t *prev_task = mu_task_get_current_task();
+        if (prev_task != task) {
+            s_task_transfer_hook(prev_task, task);
+        }
+    }
+    // Invoke the task
+    task->fn(task, arg);
 }
 
 mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
 
 unsigned int mu_task_get_state(mu_task_t *task) { return task->state; }
 
-void mu_task_set_state(mu_task_t *task, unsigned int state) {
-#ifdef MU_CONFIG_EXTENDED_TASK
-    if (task->state_changed_fn) {
-        task->state_changed_fn(task, state);
+void mu_task_set_state(mu_task_t *task, mu_task_state_t state) {
+    mu_task_state_t prev_state = mu_task_get_state(task);
+    if (state != prev_state) {
+        if (s_state_change_hook != NULL) {
+            s_state_change_hook(task, prev_state, state);
+        }
+        task->state = state;
     }
-#endif
-    task->state = state;
 }
-
-#ifdef MU_CONFIG_EXTENDED_TASK
-const char *mu_task_name(mu_task_t *task) {
-    const char *name = NULL;
-    if (task->task_name_fn) {
-        name = task->task_name_fn(task);
-    }
-    if (name == NULL) {
-        name = "unnamed task";
-    }
-    return name;
-}
-
-const char *mu_task_state_name(mu_task_t *task, mu_task_state_t state) {
-    const char *name = NULL;
-    if (task->state_name_fn) {
-        name = task->state_name_fn(task, state);
-    }
-    if (name == NULL) {
-        name = "unknown state";
-    }
-    return name;
-}
-#endif
 
 mu_task_t *mu_task_get_current_task(void) {
     return mu_sched_get_current_task();
@@ -146,14 +118,10 @@ mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task) {
     return mu_sched_remove_deferred_task(task);
 }
 
-mu_task_err_t mu_task_transfer(mu_task_t *from_task, mu_task_state_t next_state,
+mu_task_err_t mu_task_transfer(mu_task_t *from_task,
+                               mu_task_state_t final_state,
                                mu_task_t *to_task) {
     mu_task_set_state(from_task, next_state);
-#ifdef MU_CONFIG_EXTENDED_TASK
-    if (to_task != NULL && to_task->called_fn) {
-        to_task->called_fn(to_task);
-    }
-#endif
     return mu_sched_asap(to_task);
 }
 
