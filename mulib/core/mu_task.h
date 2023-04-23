@@ -76,6 +76,7 @@ typedef void (*mu_task_fn)(struct _mu_task *task, void *arg);
 typedef struct _mu_task {
   mu_task_fn fn;         // the function to call
   mu_task_state_t state; // the current task state
+  void *user_info;       // user-supplied info
 } mu_task_t;
 
 // The signature of a mu_task_on_task_transfer() function
@@ -94,7 +95,8 @@ typedef void (*mu_task_state_change_hook)(mu_task_t *task,
  * @brief Initialize a task object with its function and context.
  */
 mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
-                        mu_task_state_t initial_state);
+                        mu_task_state_t initial_state
+                        void *user_info);
 
 /**
  * @brief Install a user function that gets called whenever the task changes.
@@ -126,6 +128,16 @@ mu_task_state_t mu_task_get_state(mu_task_t *task);
  * @brief Set the state of the task.
  */
 void mu_task_set_state(mu_task_t *task, mu_task_state_t state);
+
+/**
+ * @brief Get the user-supplied info.
+ */
+void *mu_task_get_user_info(mu_task_t *task);
+
+/**
+ * @brief Set the user-supplied info.
+ */
+void mu_task_set_user_info(mu_task_t *task, void *user_info);
 
 /**
  * @brief Return the current task being processed, or NULL if none.

@@ -92,6 +92,14 @@ void mu_task_set_state(mu_task_t *task, mu_task_state_t state) {
     }
 }
 
+void *mu_task_get_user_info(mu_task_t *task) {
+    return task->user_info;
+}
+
+void mu_task_set_user_info(mu_task_t *task, void *user_info) {
+    task->user_info = user_info;
+}
+
 mu_task_t *mu_task_get_current_task(void) {
     return mu_sched_get_current_task();
 }
