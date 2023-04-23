@@ -42,7 +42,7 @@
 
 static mu_task_transfer_hook s_task_transfer_hook = NULL;
 
-static mu_task_state_change_hool s_state_change_hook = NULL;
+static mu_task_state_change_hook s_state_change_hook = NULL;
 
 // *****************************************************************************
 // Public code
@@ -52,6 +52,14 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
     task->fn = fn;
     task->state = initial_state;
     return task;
+}
+
+void mu_task_set_task_transfer_hook(mu_task_transfer_hook fn) {
+    s_task_transfer_hook = fn;
+}
+
+void mu_task_set_state_change_hook(mu_task_state_change_hook fn) {
+    s_state_change_hook = fn;
 }
 
 void mu_task_call(mu_task_t *task, void *arg) {
@@ -121,7 +129,7 @@ mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task) {
 mu_task_err_t mu_task_transfer(mu_task_t *from_task,
                                mu_task_state_t final_state,
                                mu_task_t *to_task) {
-    mu_task_set_state(from_task, next_state);
+    mu_task_set_state(from_task, final_state);
     return mu_sched_asap(to_task);
 }
 

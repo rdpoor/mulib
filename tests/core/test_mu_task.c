@@ -65,8 +65,16 @@ typedef struct {
 
 static void test_fn(mu_task_t *task, void *arg);
 
+static void task_transfer_hook(mu_task_t *prev_task, mu_task_t *next_task);
+
+static void task_state_change_hook(mu_task_t *task, mu_task_state_t prev_state,
+                                   mu_task_state_t next_state);
+
 // *****************************************************************************
 // Local (private, static) storage
+
+int s_transfer_hook_count;
+int s_state_change_hook_count;
 
 // *****************************************************************************
 // Public code
@@ -153,6 +161,20 @@ void test_mu_task(void) {
     MU_ASSERT(mu_task_get_state(&ctx1.task) == 27);
     MU_ASSERT(mu_task_get_state(&ctx2.task) == 222);
 
+    // with mu_task_state_change_hook
+    // TODO: test this feature, probably with fff
+
+    // with mu_task_state_change_hook
+    mu_task_set_state_change_hook(task_state_change_hook);
+    mu_task_init(&ctx1.task, test_fn, 1);
+    s_state_change_hook_count = 0;
+    // should get called when state changes
+    mu_task_set_state(&ctx1.task, 2);
+    MU_ASSERT(s_state_change_hook_count == 1);
+    // should not called when state stays the same
+    mu_task_set_state(&ctx1.task, 2);
+    MU_ASSERT(s_state_change_hook_count == 1);
+
     printf("\n   Completed test_mu_task.");
 }
 
@@ -163,4 +185,13 @@ static void test_fn(mu_task_t *task, void *arg) {
     test_ctx_t *self = MU_TASK_CTX(task, test_ctx_t, task);
     (void)arg;
     self->call_count += 1;
+}
+
+static void task_transfer_hook(mu_task_t *prev_task, mu_task_t *next_task) {
+    s_transfer_hook_count += 1;
+}
+
+static void task_state_change_hook(mu_task_t *task, mu_task_state_t prev_state,
+                                   mu_task_state_t next_state) {
+    s_state_change_hook_count += 1;
 }
