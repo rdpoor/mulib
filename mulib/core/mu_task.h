@@ -79,14 +79,13 @@ typedef struct _mu_task {
   void *user_info;       // user-supplied info
 } mu_task_t;
 
-// The signature of a mu_task_on_task_transfer() function
-typedef void (*mu_task_transfer_hook)(mu_task_t *from_task,
-                                      mu_task_t *to_task);
+// The signature of a mu_task_call_hook() function
+typedef void (*mu_task_call_hook)(mu_task_t *task);
 
-// The signature of a mu_task_on_state_change() function
-typedef void (*mu_task_state_change_hook)(mu_task_t *task,
-                                          mu_task_state_t from_state,
-                                          mu_task_state_t to_state);
+// The signature of a mu_task_set_state_hook() function
+typedef void (*mu_task_set_state_hook)(mu_task_t *task,
+                                       mu_task_state_t prev_state,
+                                       mu_task_state_t state);
 
 // *****************************************************************************
 // Public declarations
@@ -95,22 +94,24 @@ typedef void (*mu_task_state_change_hook)(mu_task_t *task,
  * @brief Initialize a task object with its function and context.
  */
 mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
-                        mu_task_state_t initial_state
+                        mu_task_state_t initial_state,
                         void *user_info);
 
 /**
- * @brief Install a user function that gets called whenever the task changes.
+ * @brief Install a user hook that gets called prior to calling a task.
  */
-void mu_task_set_task_transfer_hook(mu_task_transfer_hook fn);
+void mu_task_install_call_hook(mu_task_call_hook fn);
 
 /**
- * @brief Install a user function that gets called whenever the state changes.
+ * @brief Install a user hook that gets called prior to setting the task state.
  */
-void mu_task_set_state_change_hook(mu_task_state_change_hook fn);
+void mu_task_install_set_state_hook(mu_task_set_state_hook fn);
 
 /**
  * @brief Invoke the task.
  * Note: Task may be NULL, in which case this is a no-op.
+ * Note: If a mu_task_call_hook is installed, the user hook is called prior to
+ * calling the task.
  */
 void mu_task_call(mu_task_t *task, void *arg);
 
@@ -126,6 +127,10 @@ mu_task_state_t mu_task_get_state(mu_task_t *task);
 
 /**
  * @brief Set the state of the task.
+ * Note: The call has no effect if the task's current state equals the new
+ * state.
+ * Note: If a mu_task_set_state_hook is installed, the user hook is called prior
+ * to setting the state.
  */
 void mu_task_set_state(mu_task_t *task, mu_task_state_t state);
 
@@ -142,7 +147,7 @@ void mu_task_set_user_info(mu_task_t *task, void *user_info);
 /**
  * @brief Return the current task being processed, or NULL if none.
  */
-mu_task_t *mu_task_get_current_task(void);
+mu_task_t *mu_task_current_task(void);
 
 /**
  * @brief Set the state of the given task and wait for another task to call it.

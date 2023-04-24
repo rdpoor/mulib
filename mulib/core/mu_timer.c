@@ -55,15 +55,11 @@ static void mu_timer_fn(mu_task_t *task, void *arg);
 // Public code
 
 void mu_timer_init(mu_timer_t *timer) {
-#ifndef MU_CONFIG_EXTENDED_TASK
-  mu_task_init(&timer->task, mu_timer_fn, MU_TIMER_STATE_IDLE);
-#else
-  mu_task_init(&timer->task, mu_timer_fn, MU_TIMER_STATE_IDLE, NULL, NULL, NULL, NULL);
-#endif
+  mu_task_init(&timer->task, mu_timer_fn, MU_TIMER_STATE_IDLE, NULL);
 }
 
 void mu_timer_start(mu_timer_t *timer,
-                    uint32_t delay_tics,
+                    mu_time_rel_t delay_tics,
                     bool periodic,
                     mu_task_t *on_completion) {
   mu_timer_stop(timer);

@@ -40,6 +40,8 @@
 // *****************************************************************************
 // Private (forward) declarations
 
+static bool access_queue(mu_mqueue_t *mqueue, void **element, bool fetch);
+
 // *****************************************************************************
 // Public code
 
@@ -69,9 +71,9 @@ bool mu_mqueue_is_full(mu_mqueue_t *mqueue) {
     return mqueue->count == mqueue->capacity;
 }
 
-bool mu_mqueue_put(mu_mqueue_t *mqueue, void *obj) {
+bool mu_mqueue_put(mu_mqueue_t *mqueue, void *element) {
     if (!mu_mqueue_is_full(mqueue)) {
-        mqueue->storage[mqueue->index] = obj;
+        mqueue->storage[mqueue->index] = element;
         mqueue->index = (mqueue->index + 1) % mqueue->capacity;
         mqueue->count += 1;
         mu_task_call(mqueue->on_put, NULL);
@@ -81,25 +83,35 @@ bool mu_mqueue_put(mu_mqueue_t *mqueue, void *obj) {
     }
 }
 
-bool mu_mqueue_get(mu_mqueue_t *mqueue, void **obj) {
+bool mu_mqueue_get(mu_mqueue_t *mqueue, void **element) {
+    return access_queue(mqueue, element, true);
+}
+
+bool mu_mqueue_peek(mu_mqueue_t *mqueue, void **element) {
+    return access_queue(mqueue, element, false);
+}
+
+// *****************************************************************************
+// Private (static) code
+
+static bool access_queue(mu_mqueue_t *mqueue, void **element, bool fetch) {
     if (!mu_mqueue_is_empty(mqueue)) {
         // idx = (index - count) MOD capacity, using unsigned arithmetic
         size_t idx = mqueue->capacity + mqueue->index - mqueue->count;
         if (idx >= mqueue->capacity) {
             idx -= mqueue->capacity;
         }
-        *obj = mqueue->storage[idx];
-        mqueue->count -= 1;
-        mu_task_call(mqueue->on_get, NULL);
+        *element = mqueue->storage[idx];
+        if (fetch) {
+            mqueue->count -= 1;
+            mu_task_call(mqueue->on_get, NULL);
+        }
         return true;
     } else {
-        *obj = NULL;
+        *element = NULL;
         return false;
     }
 }
-
-// *****************************************************************************
-// Private (static) code
 
 // *****************************************************************************
 // *****************************************************************************

@@ -156,6 +156,22 @@ bool mu_mqueue_put(mu_mqueue_t *mqueue, void *element);
  */
 bool mu_mqueue_get(mu_mqueue_t *mqueue, void **element);
 
+/**
+ * @brief Return the head of the queue.
+ *
+ * If the queue is not empty before the call to mu_mqueue_get():
+ * - The element at the head of the queue is returned by reference
+ * - The function returns true
+ *
+ * If the queue is empty before the call to mu_mqueue_get():
+ * - The function returns false
+ *
+ * @param mqueue The queue set up by a previous call to Mu_mqueue_init()
+ * @param element A pointer to the location to receive the element
+ * @return True if the element was present, false otherwise.
+ */
+bool mu_mqueue_peek(mu_mqueue_t *mqueue, void **element);
+
 // *****************************************************************************
 // End of file
 

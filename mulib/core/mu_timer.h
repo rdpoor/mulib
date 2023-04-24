@@ -80,12 +80,12 @@ void mu_timer_init(mu_timer_t *timer);
  * without notifying on_completion.
  *
  * @param timer Previously initialized by timer_init().
- * @param timeout_ms The number of milliseconds for the timer to run.
+ * @param delay_tics The number of tics before the timer expires.
  * @param periodic If true, the timer repeats periodically, else is one shot.
- * @param on_completion The task to call upon timeout.  May be NULL.
+ * @param on_completion The task to call upon expiration.  May be NULL.
  */
 void mu_timer_start(mu_timer_t *timer,
-                    uint32_t delay_tics,
+                    mu_time_rel_t delay_tics,
                     bool periodic,
                     mu_task_t *on_completion);
 

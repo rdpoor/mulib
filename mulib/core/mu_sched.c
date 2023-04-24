@@ -138,7 +138,23 @@ mu_task_t *mu_sched_get_idle_task(void) { return s_sched.idle_task; }
 
 void mu_sched_set_idle_task(mu_task_t *task) { s_sched.idle_task = task; }
 
-mu_task_t *mu_sched_get_current_task(void) { return s_sched.curr_task; }
+mu_task_t *mu_sched_current_task(void) { return s_sched.curr_task; }
+
+mu_task_t *mu_sched_peek_next_task(void) {
+    mu_task_t *task = NULL;
+
+    deferred_task_t *deferred_task = peek_next_deferred_task();
+    if (deferred_task) {
+        return deferred_task->task;
+    }
+
+    if (!mu_mqueue_peek(&s_sched.asap_tasks, (void **)&task)) {
+        // peek failed
+        return NULL;
+    } else {
+        return task;
+    }
+}
 
 mu_task_err_t mu_sched_asap(mu_task_t *task) {
     // push task onto the "now" queue

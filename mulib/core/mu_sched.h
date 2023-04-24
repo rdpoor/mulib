@@ -149,7 +149,14 @@ void mu_sched_set_idle_task(mu_task_t *task);
 /**
  * @brief Return the task currently being run or NULL if none are active.
  */
-mu_task_t *mu_sched_get_current_task(void);
+mu_task_t *mu_sched_current_task(void);
+
+/**
+ * @brief Return the next task to be processed, or NULL if none.
+ *
+ * Note: this consults the asap and deferreds queues but not the irq queue.
+ */
+mu_task_t *mu_sched_peek_next_task(void);
 
 /**
  * @brief Schedule a task to run as soon as possible.
