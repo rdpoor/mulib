@@ -82,13 +82,16 @@ mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
 unsigned int mu_task_get_state(mu_task_t *task) { return task->state; }
 
 void mu_task_set_state(mu_task_t *task, mu_task_state_t state) {
-    mu_task_state_t prev_state = mu_task_get_state(task);
-    if (state != prev_state) {
-        if (s_set_state_hook != NULL) {
-            s_set_state_hook(task, prev_state, state);
-        }
-        task->state = state;
+    // Ignore null tasks
+    if (task == NULL) {
+        return;
     }
+    // Call user hook if set
+    if (s_set_state_hook != NULL) {
+        s_set_state_hook(task, state);
+    }
+    // set the state
+    task->state = state;
 }
 
 void *mu_task_get_user_info(mu_task_t *task) {
