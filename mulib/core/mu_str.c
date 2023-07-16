@@ -67,6 +67,8 @@ static size_t mu_str_rfind_aux(const uint8_t *haystack, size_t haystack_len,
                                const uint8_t *needle, size_t needle_len,
                                bool skip_substr);
 
+static bool is_decimal(uint8_t byte);
+
 // *****************************************************************************
 // Public code
 
@@ -274,7 +276,7 @@ bool mu_str_to_cstr(mu_str_t *str, char *buf, size_t capacity) {
     }
 
 DEFINE_INT_PARSER(mu_str_parse_int, int)
-DEFINE_UINT_PARSER(mu_str_parse_int, unsigned int)
+DEFINE_UINT_PARSER(mu_str_parse_unsigned_int, unsigned int)
 DEFINE_INT_PARSER(mu_str_parse_int8, int8_t)
 DEFINE_UINT_PARSER(mu_str_parse_uint8, uint8_t)
 DEFINE_INT_PARSER(mu_str_parse_int16, int16_t)

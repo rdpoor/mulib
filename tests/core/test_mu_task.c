@@ -91,9 +91,9 @@ void test_mu_task(void) {
     MU_ASSERT(MU_TASK_CTX(&ctx2.task, test_ctx_t, task) == &ctx2);
 
     // mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
-    //                         mu_task_state_t initial_state);
-    MU_ASSERT(mu_task_init(&ctx1.task, test_fn, 1) == &ctx1.task);
-    MU_ASSERT(mu_task_init(&ctx2.task, test_fn, 2) == &ctx2.task);
+    //                         mu_task_state_t initial_state, void *arg);
+    MU_ASSERT(mu_task_init(&ctx1.task, test_fn, 1, NULL) == &ctx1.task);
+    MU_ASSERT(mu_task_init(&ctx2.task, test_fn, 2, NULL) == &ctx2.task);
 
     // void mu_task_call(mu_task_t *task, void *arg);
     ctx1.call_count = 0;
@@ -165,8 +165,8 @@ void test_mu_task(void) {
     // TODO: test this feature, probably with fff
 
     // with mu_task_state_change_hook
-    mu_task_set_state_change_hook(task_state_change_hook);
-    mu_task_init(&ctx1.task, test_fn, 1);
+    mu_task_install_set_state_hook(task_state_change_hook);
+    mu_task_init(&ctx1.task, test_fn, 1, NULL);
     s_state_change_hook_count = 0;
     // should get called when state changes
     mu_task_set_state(&ctx1.task, 2);
