@@ -56,7 +56,7 @@ void _mu_assert(bool expr, const char *str, const char *file, int line) {
 }
 
 counting_obj_t *counting_obj_init(counting_obj_t *counting_obj) {
-	mu_task_init(&counting_obj->task, counting_obj_fn, (mu_task_state_t)0);
+	mu_task_init(&counting_obj->task, counting_obj_fn, (mu_task_state_t)0, NULL);
 	return counting_obj_reset(counting_obj);
 }
 

@@ -65,15 +65,14 @@ typedef struct {
 
 static void test_fn(mu_task_t *task, void *arg);
 
-static void task_transfer_hook(mu_task_t *prev_task, mu_task_t *next_task);
+static void task_call_hook(mu_task_t *task);
 
-static void task_state_change_hook(mu_task_t *task, mu_task_state_t prev_state,
-                                   mu_task_state_t next_state);
+static void task_state_change_hook(mu_task_t *task, mu_task_state_t state);
 
 // *****************************************************************************
 // Local (private, static) storage
 
-int s_transfer_hook_count;
+int s_call_hook_count;
 int s_state_change_hook_count;
 
 // *****************************************************************************
@@ -91,9 +90,9 @@ void test_mu_task(void) {
     MU_ASSERT(MU_TASK_CTX(&ctx2.task, test_ctx_t, task) == &ctx2);
 
     // mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
-    //                         mu_task_state_t initial_state);
-    MU_ASSERT(mu_task_init(&ctx1.task, test_fn, 1) == &ctx1.task);
-    MU_ASSERT(mu_task_init(&ctx2.task, test_fn, 2) == &ctx2.task);
+    //                         mu_task_state_t initial_state, void *arg);
+    MU_ASSERT(mu_task_init(&ctx1.task, test_fn, 1, NULL) == &ctx1.task);
+    MU_ASSERT(mu_task_init(&ctx2.task, test_fn, 2, NULL) == &ctx2.task);
 
     // void mu_task_call(mu_task_t *task, void *arg);
     ctx1.call_count = 0;
@@ -164,15 +163,26 @@ void test_mu_task(void) {
     // with mu_task_state_change_hook
     // TODO: test this feature, probably with fff
 
+    // with mu_task_call_hook
+    mu_task_install_call_hook(task_call_hook);
+    mu_task_init(&ctx1.task, test_fn, 1, NULL);
+    s_call_hook_count = 0;
+    // call_hook should get called
+    mu_task_call(&ctx1.task, 0);
+    MU_ASSERT(s_call_hook_count == 1);
+    // call_hook should get called with null task
+    mu_task_call(NULL, 0);
+    MU_ASSERT(s_call_hook_count == 1);
+
     // with mu_task_state_change_hook
-    mu_task_set_state_change_hook(task_state_change_hook);
-    mu_task_init(&ctx1.task, test_fn, 1);
+    mu_task_install_set_state_hook(task_state_change_hook);
+    mu_task_init(&ctx1.task, test_fn, 1, NULL);
     s_state_change_hook_count = 0;
     // should get called when state changes
     mu_task_set_state(&ctx1.task, 2);
     MU_ASSERT(s_state_change_hook_count == 1);
-    // should not called when state stays the same
-    mu_task_set_state(&ctx1.task, 2);
+    // set_state_hook should not get called with null task
+    mu_task_set_state(NULL, 2);
     MU_ASSERT(s_state_change_hook_count == 1);
 
     printf("\n   Completed test_mu_task.");
@@ -187,11 +197,10 @@ static void test_fn(mu_task_t *task, void *arg) {
     self->call_count += 1;
 }
 
-static void task_transfer_hook(mu_task_t *prev_task, mu_task_t *next_task) {
-    s_transfer_hook_count += 1;
+static void task_call_hook(mu_task_t *task) {
+    s_call_hook_count += 1;
 }
 
-static void task_state_change_hook(mu_task_t *task, mu_task_state_t prev_state,
-                                   mu_task_state_t next_state) {
+static void task_state_change_hook(mu_task_t *task, mu_task_state_t state) {
     s_state_change_hook_count += 1;
 }

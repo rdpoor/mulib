@@ -83,9 +83,7 @@ typedef struct _mu_task {
 typedef void (*mu_task_call_hook)(mu_task_t *task);
 
 // The signature of a mu_task_set_state_hook() function
-typedef void (*mu_task_set_state_hook)(mu_task_t *task,
-                                       mu_task_state_t prev_state,
-                                       mu_task_state_t state);
+typedef void (*mu_task_set_state_hook)(mu_task_t *task, mu_task_state_t state);
 
 // *****************************************************************************
 // Public declarations

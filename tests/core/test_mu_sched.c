@@ -201,13 +201,13 @@ void test_mu_sched(void) {
     MU_ASSERT(counting_obj_get_call_count(&s_obj1) == 0);
     MU_ASSERT(counting_obj_get_call_count(&s_obj2) == 1);
 
-    // mu_task_t *mu_sched_get_current_task(void);
+    // mu_task_t *mu_sched_current_task(void);
     mu_sched_asap(&s_basic_task);
-    // verify that mu_sched_get_current_task() == &s_basic_task
+    // verify that mu_sched_current_task() == &s_basic_task
     // see body of basic_task_fn
     mu_sched_step();
-    // check that mu_sched_get_current_task() is null outside of a step() call
-    MU_ASSERT(mu_sched_get_current_task() == NULL);
+    // check that mu_sched_current_task() is null outside of a step() call
+    MU_ASSERT(mu_sched_current_task() == NULL);
 
     printf("\n   Completed test_mu_sched.");
 }
@@ -223,7 +223,7 @@ static void setup(void) {
     mu_sched_set_idle_task(s_idle_task);
     mu_sched_set_clock_source(get_test_time);
     set_test_time(0);
-    mu_task_init(&s_basic_task, basic_task_fn, (mu_task_state_t)9);
+    mu_task_init(&s_basic_task, basic_task_fn, (mu_task_state_t)9, NULL);
 }
 
 static mu_time_abs_t get_test_time(void) {
@@ -236,5 +236,5 @@ static void set_test_time(mu_time_abs_t time) {
 
 static void basic_task_fn(mu_task_t *task, void *arg) {
     (void)arg;
-    MU_ASSERT(mu_sched_get_current_task() == task);
+    MU_ASSERT(mu_sched_current_task() == task);
 }
