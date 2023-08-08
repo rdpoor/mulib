@@ -26,12 +26,12 @@
  */
 
 /**
-NOTE: mu_task can be compiled with or without MU_CONFIG_EXTENDED_TASK in effect,
-so we really need two sets of tests.  This is addressed in:
+NOTE: see
 
 https://stackoverflow.com/questions/50638724/how-to-compile-source-files-with-different-2-flags-in-cmake
 
-In particular, here's the trick for CMake:
+for creating tests for multiple confitgurations.  In particular, here's the
+trick for CMake:
 
 # compiles source.cpp with -DSOME_DEF=1
 add_library(obj1 OBJECT source.cpp)

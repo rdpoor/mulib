@@ -37,24 +37,21 @@
 // *****************************************************************************
 // Private types and definitions
 
-#define MU_TIMEOUT_STATES(M)                                                  \
-    M(MU_TIMEOUT_STATE_IDLE)                                                  \
-    M(MU_TIMEOUT_STATE_ARMED)                                                 \
-    M(MU_TIMEOUT_STATE_EXPIRED)
-
-#define EXPAND_STATE_ENUMS(_name) _name,
-typedef enum { MU_TIMEOUT_STATES(EXPAND_STATE_ENUMS) } mu_timeout_state_t;
+typedef enum {
+    MU_TIMEOUT_STATE_IDLE,
+    MU_TIMEOUT_STATE_ARMED,
+    MU_TIMEOUT_STATE_EXPIRED
+} mu_timeout_state_t;
 
 // *****************************************************************************
 // Private (static) storage
 
-#define EXPAND_STATE_NAMES(_name) #_name,
-static const char *s_state_names[] = {MU_TIMEOUT_STATES(EXPAND_STATE_NAMES)};
-#define N_STATES (sizeof(s_state_names) / sizeof(s_state_names[0]))
-
 // *****************************************************************************
 // Private (static, forward) declarations
 
+/**
+ * @brief Return a reference to mu_timeout's task.
+ */
 static inline mu_task_t *mu_timeout_task(mu_timeout_t *mu_timeout) {
     return &mu_timeout->task;
 }

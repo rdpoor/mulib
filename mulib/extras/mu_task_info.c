@@ -29,9 +29,9 @@
 
 #include "mu_task_info.h"
 
-#include "mulib/extras/mu_log.h"
-#include "mulib/core/mu_task.h"
 #include "mulib/core/mu_sched.h"
+#include "mulib/core/mu_task.h"
+#include "mulib/extras/mu_log.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -61,8 +61,7 @@ static void task_call_hook(mu_task_t *task);
 /**
  * @brief Called when a tasks state variable changes.
  */
-static void state_change_hook(mu_task_t *task, mu_task_state_t from_state,
-                              mu_task_state_t to_state);
+static void state_change_hook(mu_task_t *task, mu_task_state_t to_state);
 
 // *****************************************************************************
 // Public code
@@ -78,7 +77,8 @@ const char *mu_task_info_task_name(mu_task_t *task) {
     const char *task_name = NULL;
 
     // Fetch the user_info associated with this task.
-    if (task && (info = (mu_task_info_t *)mu_task_get_user_info(task)) != NULL) {
+    if (task &&
+        (info = (mu_task_info_t *)mu_task_get_user_info(task)) != NULL) {
         task_name = info->task_name;
     }
     if (task_name == NULL) {
@@ -92,7 +92,8 @@ const char *mu_task_info_state_name(mu_task_t *task, mu_task_state_t state) {
     mu_task_info_t *info = NULL;
     const char *state_name = NULL;
 
-    if (task && (info = (mu_task_info_t *)mu_task_get_user_info(task)) != NULL) {
+    if (task &&
+        (info = (mu_task_info_t *)mu_task_get_user_info(task)) != NULL) {
         if (state < info->n_states) {
             state_name = info->state_names[state];
         } else {
@@ -122,8 +123,7 @@ static void task_call_hook(mu_task_t *task) {
     }
 }
 
-static void state_change_hook(mu_task_t *task, mu_task_state_t from_state,
-                              mu_task_state_t to_state) {
+static void state_change_hook(mu_task_t *task, mu_task_state_t to_state) {
     // If transitioning to another state, log state names at MU_LOG_DEBUG level
     if (!mu_log_is_reporting(MU_LOG_LEVEL_DEBUG)) {
         return;
@@ -131,7 +131,8 @@ static void state_change_hook(mu_task_t *task, mu_task_state_t from_state,
 
     if (mu_task_get_user_info(task) != NULL) {
         const char *task_name = mu_task_info_task_name(task);
-        const char *from_state_name = mu_task_info_state_name(task, from_state);
+        const char *from_state_name =
+            mu_task_info_state_name(task, mu_task_get_state(task));
         const char *to_state_name = mu_task_info_state_name(task, to_state);
         MU_LOG_DEBUG("%s: %s => %s", task_name, from_state_name, to_state_name);
     }
