@@ -337,4 +337,4 @@ static void test_mu_log(void) {
 
 int main(void) { test_mu_log(); }
 
-#endif // #ifdef TEST_MU_MQUEUE
+#endif // #ifdef TEST_MU_LOG
