@@ -30,8 +30,8 @@ mu_task can be scheduled to run at some point in the future through the
 following calls:
 
    mu_task_err_t mu_sched_asap(mu_task_t *task);
-   mu_task_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
-   mu_task_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
+   mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS_T at);
+   mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL_T in);
 
 Each of these functions add a task to the scheduler's queue.
 
@@ -39,9 +39,9 @@ mu_sched also supports safely scheduling a task from interrupt level:
 
    mu_task_err_t mu_sched_from_isr(mu_task_t *task);
 
-Any task scheduled from interrupt level is saved in an interrupt safe
-"single producer, single consumer" queue.  Upon returning from interrupt level,
-the next time mu_sched_step() is called, any tasks on the queue are added
+Any task scheduled from interrupt level is saved in an interrupt safe SPSC
+(single producer, single consumer) queue.  Upon returning to the foreground,
+the next time mu_sched_step() is called, any tasks on the SPSC queue are added
 to the regular schedule as if mu_sched_asap() was called.
 
 The function
@@ -94,7 +94,7 @@ extern "C" {
 #endif
 
 // Signature for clock source function.  Returns the current time.
-typedef mu_time_abs_t (*mu_clock_fn)(void);
+typedef MU_TIME_ABS_T (*mu_clock_fn)(void);
 
 // *****************************************************************************
 // Public declarations
@@ -132,7 +132,7 @@ void mu_sched_set_clock_source(mu_clock_fn clock_fn);
 /**
  * @brief Return the scheduler's idea of time according to the clock source.
  */
-mu_time_abs_t mu_sched_get_current_time(void);
+MU_TIME_ABS_T mu_sched_get_current_time(void);
 
 /**
  * @brief Return the idle task.
@@ -171,12 +171,12 @@ mu_task_err_t mu_sched_from_isr(mu_task_t *task);
 /**
  * @brief Schedule a task to run at the specified time in the future.
  */
-mu_task_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at);
+mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS_T at);
 
 /**
  * @brief Schedule a task to run after the specified delay.
  */
-mu_task_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in);
+mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL_T in);
 
 /**
  * @brief Remove a deferred task from the schedule.

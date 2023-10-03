@@ -46,7 +46,7 @@
 
 // A deferred_task associates a task and a time.
 typedef struct {
-    mu_time_abs_t at;
+    MU_TIME_ABS_T at;
     mu_task_t *task;
 } deferred_task_t;
 
@@ -75,7 +75,7 @@ static mu_task_t *fetch_runnable_deferred_task(void);
 /**
  * @brief Schedule the given task at the given time.
  */
-static mu_task_err_t sched_aux(mu_task_t *task, mu_time_abs_t at);
+static mu_task_err_t defer_aux(mu_task_t *task, MU_TIME_ABS_T at);
 
 // *****************************************************************************
 // Local (private, static) storage
@@ -122,7 +122,7 @@ void mu_sched_step(void) {
     }
 
     // invoke the task.
-    mu_task_call(s_sched.curr_task, NULL);
+    mu_task_call(s_sched.curr_task);
     s_sched.curr_task = NULL;
 }
 
@@ -132,7 +132,7 @@ void mu_sched_set_clock_source(mu_clock_fn clock_fn) {
     s_sched.clock_fn = clock_fn;
 }
 
-mu_time_abs_t mu_sched_get_current_time(void) { return s_sched.clock_fn(); }
+MU_TIME_ABS_T mu_sched_get_current_time(void) { return s_sched.clock_fn(); }
 
 mu_task_t *mu_sched_get_idle_task(void) { return s_sched.idle_task; }
 
@@ -173,13 +173,13 @@ mu_task_err_t mu_sched_from_isr(mu_task_t *task) {
     }
 }
 
-mu_task_err_t mu_sched_defer_until(mu_task_t *task, mu_time_abs_t at) {
-    return sched_aux(task, at);
+mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS_T at) {
+    return defer_aux(task, at);
 }
 
-mu_task_err_t mu_sched_defer_for(mu_task_t *task, mu_time_rel_t in) {
-    mu_time_abs_t at = mu_time_offset(mu_sched_get_current_time(), in);
-    return sched_aux(task, at);
+mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL_T in) {
+    MU_TIME_ABS_T at = mu_time_offset(mu_sched_get_current_time(), in);
+    return defer_aux(task, at);
 }
 
 mu_task_err_t mu_sched_remove_deferred_task(mu_task_t *task) {
@@ -203,30 +203,6 @@ mu_task_err_t mu_sched_remove_deferred_task(mu_task_t *task) {
     return err;
 }
 
-#if 0
-// ChatGPT's rewrite:
-mu_task_err_t mu_sched_remove_deferred_task(mu_task_t *task) {
-  mu_task_err_t err = MU_TASK_ERR_NOT_FOUND;
-  deferred_task_t *candidate;
-
-  deferred_task_t *last = s_deferred_tasks + s_sched.deferred_task_count;
-  for (candidate = s_deferred_tasks; candidate < last; candidate++) {
-    if (candidate->task == task) {
-      // use memmove to close slot at i-1
-      size_t to_move = last - candidate - 1;
-      if (to_move > 0) {
-        deferred_task_t *src = candidate + 1;
-        memmove(candidate, src, to_move * sizeof(deferred_task_t));
-      }
-      s_sched.deferred_task_count--;
-      err = MU_TASK_ERR_NONE;
-      break;  // inappropriate if task appears more than once.
-    }
-  }
-  return err;
-}
-#endif
-
 // *****************************************************************************
 // Local (private, static) code
 
@@ -240,7 +216,7 @@ static deferred_task_t *peek_next_deferred_task(void) {
 
 static mu_task_t *fetch_runnable_deferred_task(void) {
     deferred_task_t *deferred_task;
-    mu_time_abs_t now = mu_sched_get_current_time();
+    MU_TIME_ABS_T now = mu_sched_get_current_time();
 
     deferred_task = peek_next_deferred_task();
     if (deferred_task && !mu_time_precedes(now, deferred_task->at)) {
@@ -255,7 +231,7 @@ static mu_task_t *fetch_runnable_deferred_task(void) {
     }
 }
 
-static mu_task_err_t sched_aux(mu_task_t *task, mu_time_abs_t at) {
+static mu_task_err_t defer_aux(mu_task_t *task, MU_TIME_ABS_T at) {
     deferred_task_t *deferred_task;
 
     if (s_sched.deferred_task_count == MU_CONFIG_SCHED_MAX_DEFERRED_TASKS) {

@@ -71,7 +71,7 @@ typedef enum {
 struct _mu_task; // forward declaration
 
 // The signature of a mu_task function.
-typedef void (*mu_task_fn)(struct _mu_task *task, void *arg);
+typedef void (*mu_task_fn)(struct _mu_task *task);
 
 typedef struct _mu_task {
   mu_task_fn fn;         // the function to call
@@ -79,11 +79,11 @@ typedef struct _mu_task {
   void *user_info;       // user-supplied info
 } mu_task_t;
 
-// The signature of a mu_task_call_hook() function
-typedef void (*mu_task_call_hook)(mu_task_t *task);
-
 // The signature of a mu_task_set_state_hook() function
 typedef void (*mu_task_set_state_hook)(mu_task_t *task, mu_task_state_t state);
+
+// The signature of a mu_task_call_hook() function
+typedef void (*mu_task_call_hook)(mu_task_t *task);
 
 // *****************************************************************************
 // Public declarations
@@ -96,14 +96,14 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
                         void *user_info);
 
 /**
- * @brief Install a user hook that gets called prior to calling a task.
- */
-void mu_task_install_call_hook(mu_task_call_hook fn);
-
-/**
  * @brief Install a user hook that gets called prior to setting the task state.
  */
 void mu_task_install_set_state_hook(mu_task_set_state_hook fn);
+
+/**
+ * @brief Install a user hook that gets called prior to calling a task.
+ */
+void mu_task_install_call_hook(mu_task_call_hook fn);
 
 /**
  * @brief Invoke the task.
@@ -111,7 +111,7 @@ void mu_task_install_set_state_hook(mu_task_set_state_hook fn);
  * Note: If a mu_task_call_hook is installed, the user hook is called prior to
  * calling the task.
  */
-void mu_task_call(mu_task_t *task, void *arg);
+void mu_task_call(mu_task_t *task);
 
 /**
  * @brief Return the function of this task.
@@ -130,7 +130,7 @@ mu_task_state_t mu_task_get_state(mu_task_t *task);
  * Note: If a mu_task_set_state_hook is installed, the user hook is called prior
  * to setting the state.
  */
-void mu_task_set_state(mu_task_t *task, mu_task_state_t state);
+mu_task_t *mu_task_set_state(mu_task_t *task, mu_task_state_t state);
 
 /**
  * @brief Get the user-supplied info.
@@ -148,49 +148,37 @@ void mu_task_set_user_info(mu_task_t *task, void *user_info);
 mu_task_t *mu_task_current_task(void);
 
 /**
- * @brief Set the state of the given task and wait for another task to call it.
+ * @brief Do nothing.  This is syntactic sugar to show that a task is waiting
+ * for another task to invoke it.
  */
-mu_task_err_t mu_task_wait(mu_task_t *task, mu_task_state_t next_state);
+mu_task_err_t mu_task_wait(mu_task_t *task);
 
 /**
- * @brief Set the state of the given task before rescheduling it ASAP.
+ * @brief Put the task in the "immediate" queue for execution.
  */
-mu_task_err_t mu_task_yield(mu_task_t *task, mu_task_state_t next_state);
+mu_task_err_t mu_task_enqueue(mu_task_t *task, mu_task_state_t next_state);
 
 /**
- * @brief Schedule a task from interrupt level in the "asap" queue.
+ * @brief Schedule a task from interrupt level in the "immediate" queue.
  */
-mu_task_err_t mu_task_sched_from_isr(mu_task_t *task);
-
-/**
- * @brief Schedule a task to be run after a given interval.
- */
-mu_task_err_t mu_task_defer_for(mu_task_t *task, mu_task_state_t next_state,
-                                mu_time_rel_t in);
+mu_task_err_t mu_task_enqueue_from_isr(mu_task_t *task);
 
 /**
  * @brief Schedule a task to be run after a given interval.
  */
-mu_task_err_t mu_task_defer_until(mu_task_t *task, mu_task_state_t next_state,
-                                  mu_time_abs_t at);
+mu_task_err_t mu_task_defer_for(mu_task_t *task, mu_time_rel_t in);
+
+/**
+ * @brief Schedule a task to be run after a given interval.
+ */
+mu_task_err_t mu_task_defer_until(mu_task_t *task, mu_time_abs_t at);
 
 /**
  * @brief Remove a deferred task from the scheduler.
  *
- * Note: this will not remove a task in the "asap" queue.
+ * Note: this only remove a deferred task, not an enqueued task.
  */
-mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task);
-
-/**
- * @brief Set the from_task state before transferring control to the to_task.
- *
- * NOTE: this essentially does the following, but a bit more efficiently:
- *    mu_task_set_state(from_task, final_state);
- *    mu_task_yield(to_task, mu_task_get_state(to_task));
- */
-mu_task_err_t mu_task_transfer(mu_task_t *from_task,
-                               mu_task_state_t final_state,
-                               mu_task_t *to_task);
+mu_task_err_t mu_task_cancel(mu_task_t *task);
 
 #ifdef __cplusplus
 }

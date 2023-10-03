@@ -23,10 +23,21 @@
  */
 
 /**
-* @file mu_time.h
-*
-* @brief POSIX specific declarations for mulib time functions.
+ * @file mu_time.h
+ *
+ * @brief Declaration of the time functions required by mu_sched.
+ *
+ * Note: each platform must provide two additional files:
+ *
+ * "mu_time_impl.h" defines platform specific definitios of:
+ *   MU_TIME_ABS_T (absolute time type)
+ *   MU_TIME_REL_T (relative time / duration time type)
+ *
+ * "mu_time_impl.c" defines platform specific implementations of each of the
+ * functions declared below.
+ *
  */
+
 
 #ifndef _MU_TIME_H_
 #define _MU_TIME_H_
@@ -34,9 +45,8 @@
 // *****************************************************************************
 // Includes
 
-#include "mu_time.h"
+#include "mu_time_impl.h"
 
-#include "mu_config.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
@@ -51,13 +61,17 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
-#define MU_TIME_TICKS_PER_SECOND CLOCKS_PER_SEC
+#ifndef MU_TIME_ABS_T
+#error mu_time_impl.h must define MU_TIME_ABS_T
+#endif
 
-_Static_assert(sizeof(clock_t) == 8, "Please fix mu_time_abs_t typedef");
-typedef uint64_t mu_time_abs_t;
-typedef int64_t mu_time_rel_t;
+#ifndef MU_TIME_REL_T
+#error mu_time_impl.h must define MU_TIME_REL_T
+#endif
 
-#define MU_TIME_REL_MAX ((1LU << ((sizeof(clock_t) * 8) - 1LU)) - 1LU)
+#ifndef MU_TIME_REL_MAX
+#error mu_time_impl.h must define MU_TIME_REL_MAX
+#endif
 
 // *****************************************************************************
 // Public declarations
@@ -72,7 +86,7 @@ void mu_time_init(void);
  *
  * @return The current absolute time.
  */
-mu_time_abs_t mu_time_now(void);
+MU_TIME_ABS_T mu_time_now(void);
 
 /**
  * @brief Add a time and a duration.
@@ -84,7 +98,7 @@ mu_time_abs_t mu_time_now(void);
  * @param dt a duration object
  * @return t1 offset by dt
  */
-mu_time_abs_t mu_time_offset(mu_time_abs_t t, mu_time_rel_t dt);
+MU_TIME_ABS_T mu_time_offset(MU_TIME_ABS_T t, MU_TIME_REL_T dt);
 
 /**
  * @brief Take the difference between two time objects
@@ -96,19 +110,19 @@ mu_time_abs_t mu_time_offset(mu_time_abs_t t, mu_time_rel_t dt);
  * @param t2 A time object
  * @return (t1-t2) as a relative time
  */
-mu_time_rel_t mu_time_difference(mu_time_abs_t t1, mu_time_abs_t t2);
+MU_TIME_REL_T mu_time_difference(MU_TIME_ABS_T t1, MU_TIME_ABS_T t2);
 
 /**
- * @brief Return true if t1 is strictly before t2
+ * @brief Return true if t1 precedes t2
  *
- * Note that if you want to know if t1 is before or equal to t2, you can use the
- * construct `!mu_time_follows(t2, t1)``
+ * Note that if you want to know if t1 precedes or is equal to t2, you can use
+ * the construct `!mu_time_follows(t2, t1)``
  *
  * @param t1 A time object
  * @param t2 A time object
  * @return true if t1 is strictly before t2, false otherwise.
  */
-bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2);
+bool mu_time_precedes(MU_TIME_ABS_T t1, MU_TIME_ABS_T t2);
 
 /**
  * @brief Return true if t1 is equal to t2
@@ -117,54 +131,35 @@ bool mu_time_precedes(mu_time_abs_t t1, mu_time_abs_t t2);
  * @param t2 A time object
  * @return true if t1 equals t2, false otherwise.
  */
-bool mu_time_equals(mu_time_abs_t t1, mu_time_abs_t t2);
+bool mu_time_equals(MU_TIME_ABS_T t1, MU_TIME_ABS_T t2);
 
 /**
- * @brief Return true if t1 is strictly after t2
+ * @brief Return true if t1 follows t2
  *
- * Note that if you want to know if t1 is equal to or after t2, you can use the
+ * Note that if you want to know if t1 is equal to follows t2, you can use the
  * construct `!mu_time_precedes(t2, t1)``
  *
  * @param t1 A time object
  * @param t2 A time object
  * @return true if t1 is strictly after t2, false otherwise.
  */
-bool mu_time_follows(mu_time_abs_t t1, mu_time_abs_t t2);
+bool mu_time_follows(MU_TIME_ABS_T t1, MU_TIME_ABS_T t2);
 
 /**
- * @brief Convert a mu_time_rel_t to milliseconds;
+ * @brief Convert a MU_TIME_REL_T to milliseconds;
  *
  * @param dt A relative time object
  * @return dt converted to milliseconds
  */
-int mu_time_rel_to_ms(mu_time_rel_t dt);
+int mu_time_rel_to_ms(MU_TIME_REL_T dt);
 
 /**
- * @brief Convert milliseconds to a mu_time_rel_t
+ * @brief Convert milliseconds to a MU_TIME_REL_T
  *
  * @param ms A relative time in milliseconds
- * @return milliseconds converted to mu_time_rel_t
+ * @return milliseconds converted to MU_TIME_REL_T
  */
-mu_time_rel_t mu_time_ms_to_rel(int ms);
-
-#ifdef MU_CONFIG_HAS_FLOAT
-/**
- * @brief Convert a duration to seconds.
- *
- * @param dt A relative time
- * @return dt converted to seconds
- */
-MU_FLOAT mu_time_rel_to_s(mu_time_rel_t dt);
-
-/**
- * @brief Convert seconds to a duration.
- *
- * @param s A relative time in seconds
- * @return seconds converted to mu_time_rel_t
- */
-mu_time_rel_t mu_time_s_to_rel(MU_FLOAT s);
-#endif
-
+MU_TIME_REL_T mu_time_ms_to_rel(int ms);
 
 // *****************************************************************************
 // End of file

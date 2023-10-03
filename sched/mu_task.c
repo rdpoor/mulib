@@ -40,9 +40,9 @@
 // *****************************************************************************
 // Local storage
 
-static mu_task_call_hook s_call_hook = NULL;
-
 static mu_task_set_state_hook s_set_state_hook = NULL;
+
+static mu_task_call_hook s_call_hook = NULL;
 
 // *****************************************************************************
 // Public code
@@ -56,15 +56,15 @@ mu_task_t *mu_task_init(mu_task_t *task, mu_task_fn fn,
     return task;
 }
 
-void mu_task_install_call_hook(mu_task_call_hook fn) {
-    s_call_hook = fn;
-}
-
 void mu_task_install_set_state_hook(mu_task_set_state_hook fn) {
     s_set_state_hook = fn;
 }
 
-void mu_task_call(mu_task_t *task, void *arg) {
+void mu_task_install_call_hook(mu_task_call_hook fn) {
+    s_call_hook = fn;
+}
+
+void mu_task_call(mu_task_t *task) {
     // Ignore null tasks
     if (task == NULL) {
         return;
@@ -74,24 +74,24 @@ void mu_task_call(mu_task_t *task, void *arg) {
         s_call_hook(task);
     }
     // Invoke the task
-    task->fn(task, arg);
+    task->fn(task);
 }
 
 mu_task_fn mu_task_get_fn(mu_task_t *task) { return task->fn; }
 
 unsigned int mu_task_get_state(mu_task_t *task) { return task->state; }
 
-void mu_task_set_state(mu_task_t *task, mu_task_state_t state) {
-    // Ignore null tasks
-    if (task == NULL) {
-        return;
+mu_task_t *mu_task_set_state(mu_task_t *task, mu_task_state_t state) {
+    if (task != NULL) {
+        // Ignore null tasks
+        if (s_set_state_hook != NULL) {
+            // Call user hook if set
+            s_set_state_hook(task, state);
+        }
+        // set the state
+        task->state = state;
     }
-    // Call user hook if set
-    if (s_set_state_hook != NULL) {
-        s_set_state_hook(task, state);
-    }
-    // set the state
-    task->state = state;
+    return task;
 }
 
 void *mu_task_get_user_info(mu_task_t *task) {
@@ -106,33 +106,27 @@ mu_task_t *mu_task_current_task(void) {
     return mu_sched_current_task();
 }
 
-mu_task_err_t mu_task_wait(mu_task_t *task, mu_task_state_t next_state) {
-    mu_task_set_state(task, next_state);
+mu_task_err_t mu_task_wait(mu_task_t *task) {
     return MU_TASK_ERR_NONE;
 }
 
-mu_task_err_t mu_task_yield(mu_task_t *task, mu_task_state_t next_state) {
-    mu_task_set_state(task, next_state);
+mu_task_err_t mu_task_enqueue(mu_task_t *task) {
     return mu_sched_asap(task);
 }
 
-mu_task_err_t mu_task_sched_from_isr(mu_task_t *task) {
+mu_task_err_t mu_task_enqueu_from_isr(mu_task_t *task) {
     return mu_sched_from_isr(task);
 }
 
-mu_task_err_t mu_task_defer_for(mu_task_t *task, mu_task_state_t next_state,
-                                mu_time_rel_t in) {
-    mu_task_set_state(task, next_state);
+mu_task_err_t mu_task_defer_for(mu_task_t *task, mu_time_rel_t in) {
     return mu_sched_defer_for(task, in);
 }
 
-mu_task_err_t mu_task_defer_until(mu_task_t *task, mu_task_state_t next_state,
-                                  mu_time_abs_t at) {
-    mu_task_set_state(task, next_state);
+mu_task_err_t mu_task_defer_until(mu_task_t *task, mu_time_abs_t at) {
     return mu_sched_defer_until(task, at);
 }
 
-mu_task_err_t mu_task_remove_deferred_task(mu_task_t *task) {
+mu_task_err_t mu_task_cancel(mu_task_t *task) {
     return mu_sched_remove_deferred_task(task);
 }
 
