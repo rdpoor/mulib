@@ -43,30 +43,58 @@ Open Source license.
 (And in case you're wondering about the pronunciation, "MOO-lib" is preferred
 over "MEW-lib": cows, not kittens.)
 
-## Getting Started
+## Directory Structure (in progress)
 
-Click on one of the links, depending on what you're looking for:
+```
+mulib/
+  README.md             # mulib overview: installation, usage, philosophy...
 
-* [**Browse the `mulib` tutorial code.**](#browse_tutorials)
-* [**Run a `mulib` example application.**](#running_examples)
-* [**Create a `mulib`-based application.**](#create_a_project)
-* [**Port `mulib` to a new processor or platform.**](#porting_mulib)
+  mu_schedule/          # Sources, unit tests and documentation for mulib scheduler
+    README.md           # Overview and documentation for the scheduler
+    src/                # These are the files for a complete scheduler
+      mu_sched_conf.h   # compile time configuration parameters
+      mu_mqueue.[ch]
+      mu_sched.[ch]
+      mu_spsc.[ch]
+      mu_task.[ch]
+      mu_time.h         # NOTE: each implementation will provide mu_time.c "elsewhere"
+    test/               # unit tests for the scheduler.
+      Makefile          # testing makefile
+      fff.h             # fake / mock / stub framework
+      unity.[ch]        # test runner
+      unity_internals.h # test runner
+      test_mu_mqueue.c
+      test_mu_sched.c
+      ... etc
 
-## Browse the `mulib` code examples.<a name="browse_tutorials"></a>
+  mu_string/            # sources, unit tests and documentation for mulib string manipulation
+    README.md           # overview and documentation for mu_string package
+    src/                # these are the only files you need to include in your project
+      mu_str.[ch]
+    test/
+      Makefile          # testing makefile
+      fff.h             # fake / mock / stub framework
+      unity.[ch]        # test runner
+      unity_internals.h # test runner
+      test_mu_str.c     # unit tests for the mu_string package
 
-Work In Progress: link to https://github.com/rdpoor/mulib-examples/tree/main/tutorials
+  mu_extras/            # generally useful utilities for embedded systems
+    README.md           # overview and documentation for the mulib extras package
+    src/                # pick and choose the files you want
+      mu_http.[ch]      # generate and parse HTTP messages
+      mu_json.[ch]      # generate and parse JSON strings
+      mu_log.[ch]       # low-overhead logger (TRACE, DEBUG, INFO, WARN, ERROR)
+      mu_macros.h       # clean, well-written utility macros (MU_MIN, MU_MAX, ...)
+      mu_task_info.[ch] # task tracing utility (track state transitions, etc)
+      mu_timer.[ch]     # one-shot delay or repeating mu_task trigger
+    test/               # unit tests for the extras package
+      Makefile          # testing makefile
+      fff.h             # fake / mock / stub framework
+      unity.[ch]        # test runner
+      unity_internals.h # test runner
+      test_mu_http.c
+      test_mu_json.c
 
-## Run a `mulib` example application.<a name="running_examples"></a>
+  examples/             # code examples and complete projects.  Details TBD
 
-Work In Progress: link to https://github.com/rdpoor/mulib-examples
-
-## Create a `mulib`-based application.<a name="create_a_project"></a>
-
-Work In Progress: link to https://github.com/rdpoor/mulib-examples/platforms,
-which will be a repository for /platform directories for various platforms.
-
-## Port `mulib` to a new processor or platform.<a name="porting_mulib"></a>
-
-Work In Progress: link to https://github.com/rdpoor/mulib-examples/porting,
-suggest copying an existing platform and modifying it and/or using the template
-files.
+```
