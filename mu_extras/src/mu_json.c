@@ -1,5 +1,5 @@
 /**
- * @file mu_task_info.h
+ * @file mu_json.c
  *
  * MIT License
  *
@@ -24,65 +24,25 @@
  * SOFTWARE.
  */
 
-/**
- * @brief Debugging aid: Log task transitions and state transitions.
- */
-
-#ifndef _MU_TASK_INFO_H_
-#define _MU_TASK_INFO_H_
-
 // *****************************************************************************
 // Includes
 
-#include "mulib/core/mu_task.h"
-#include <stddef.h>
-#include <stdint.h>
+#include "mu_json.h"
 
 // *****************************************************************************
-// C++ compatibility
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+// Private types and definitions
 
 // *****************************************************************************
-// Public types and definitions
-
-typedef struct {
-    const char *task_name;    // string name of this task
-    const char **state_names; // array of state names for this task
-    size_t n_states;          // number of states
-} mu_task_info_t;
+// Private (static) storage
 
 // *****************************************************************************
-// Public declarations
+// Private (static, forward) declarations
 
-/**
- * @brief Install mu_task_info hooks to log task and state transitions.
- *
- * Call once at startup.
- *
- * If MU_LOG_LEVEL is set to MU_LOG_DEBUG or lower, all transitions from
- * one state to another will be logged.  In addition, all transitions from
- * one task to another will be logged.
- */
-void mu_task_info_init(void);
+// *****************************************************************************
+// Public code
 
-/**
- * @brief Return the task name associated with a task.
- */
-const char *mu_task_info_task_name(mu_task_t *task);
-
-/**
- * @brief Return the state name associated with a task.
- */
-const char *mu_task_info_state_name(mu_task_t *task, mu_task_state_t state);
+// *****************************************************************************
+// Private (static) code
 
 // *****************************************************************************
 // End of file
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* #ifndef _MU_TASK_INFO_H_ */

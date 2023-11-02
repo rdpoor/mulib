@@ -1,29 +1,24 @@
+# Compile and run unit tests
 CC := gcc
 
-LIB_DIR := ../src
+MULIB_DIR := ../src
 TEST_DIR := .
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 
-LIB_SOURCES := \
-	$(LIB_DIR)/mu_str.c
-LIB_HEADERS :=
+MULIB_SOURCES := \
+	$(MULIB_DIR)/mu_str.c
 
 UNIT_TESTS := \
 	$(BIN_DIR)/test_mu_str
 
-TEST_HEADERS := \
-	fff.h \
-	unity.h \
-	unity_internals.h
-
-LIB_OBJECTS := $(patsubst $(LIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(LIB_SOURCES))
+MULIB_OBJECTS := $(patsubst $(MULIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(MULIB_SOURCES))
 TEST_OBJECTS := $(patsubst $(BIN_DIR)/%,$(OBJ_DIR)/%.o,$(UNIT_TESTS))
 
-CFLAGS := -Wall -O2 -I$(LIB_DIR) -I$(TEST_DIR)  # Compiler flags
-LDFLAGS :=                                      # Linker flags
+CFLAGS := -Wall -O2 -I$(MULIB_DIR) -I$(TEST_DIR)  # Compiler flags
+LDFLAGS :=                                        # Linker flags
 
-.PHONY: run_tests clean build_dirs_exist
+.PHONY: run_tests clean make_build_dirs
 
 all: run_tests
 
@@ -37,24 +32,16 @@ make_build_dirs:
 clean:
 	rm -rvf $(OBJ_DIR) $(BIN_DIR)
 
-info:
-	@echo LIB_SOURCES = $(LIB_SOURCES)
-	@echo UNIT_TESTS = $(UNIT_TESTS)
-	@echo LIB_OBJECTS = $(LIB_OBJECTS)
-	@echo TEST_OBJECTS = $(TEST_OBJECTS)
-
-
-
-# the dependencies for each unit test executable are listed explicitly in order
-# to guarantee separation of interests: test_mu_foo depends only on mu_foo.o
-
-$(BIN_DIR)/test_mu_str: $(OBJ_DIR)/test_mu_str.o $(OBJ_DIR)/mu_str.o $(OBJ_DIR)/unity.o
-	$(CC) $(LDFLAGS) $^ -o $@
-
-# generic rule for compiling LIB_SOURCES
-$(OBJ_DIR)/%.o: $(LIB_DIR)/%.c
+# generic rule for compiling MULIB_SOURCES
+$(OBJ_DIR)/%.o: $(MULIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # generic rule for compiling TEST_SOURCES
 $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# the rule for buildiung each unit test executable is listed explicitly in order
+# to guarantee separation of interests: test_mu_foo depends only on mu_foo.o
+
+$(BIN_DIR)/test_mu_str: $(OBJ_DIR)/test_mu_str.o $(OBJ_DIR)/mu_str.o $(OBJ_DIR)/unity.o
+	$(CC) $(LDFLAGS) $^ -o $@
