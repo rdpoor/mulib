@@ -132,6 +132,9 @@ typedef enum {
     MU_JSON_TOKEN_TYPE_NULL,    // null
 } mu_json_token_type_t;
 
+#define MU_JSON_PARSER_BAD_FORMAT -1
+#define MU_JSON_PARSER_OVERFLOW -2
+
 typedef struct {
     mu_str_t str;              // slice of the original JSON string
     mu_json_token_type_t type; // token type

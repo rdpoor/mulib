@@ -47,7 +47,7 @@ extern "C" {
 // Public types and definitions
 
 /**
- * @brief Signature for the mu_htt_writer_fn, used by mu_http_write_rqst() and
+ * @brief Signature for the mu_http_writer_fn, used by mu_http_write_rqst() and
  *        mu_http_write_resp() functions.
  *
  * @param ch A byte to be written.

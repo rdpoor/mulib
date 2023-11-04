@@ -18,11 +18,11 @@ TEST_OBJECTS := $(patsubst $(BIN_DIR)/%,$(OBJ_DIR)/%.o,$(UNIT_TESTS))
 CFLAGS := -Wall -O2 -I$(MULIB_DIR) -I$(TEST_DIR)  # Compiler flags
 LDFLAGS :=                                        # Linker flags
 
-.PHONY: run_tests clean make_build_dirs
+.PHONY: run_unit_tests clean make_build_dirs
 
-all: run_tests
+all: run_unit_tests
 
-run_tests: make_build_dirs $(UNIT_TESTS)
+run_unit_tests: make_build_dirs $(UNIT_TESTS)
 	@$(foreach exec, $(UNIT_TESTS), ./$(exec);)
 
 # assure that the build directories exist

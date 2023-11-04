@@ -24,6 +24,11 @@
  * SOFTWARE.
  */
 
+/**
+ * IMPLEMENTATION
+ * Based on JSON parser in https://github.com/douglascrockford/JSON-c
+ */
+
 // *****************************************************************************
 // Includes
 
@@ -40,6 +45,12 @@
 
 // *****************************************************************************
 // Public code
+
+int mu_json_parse_cstr(const char *json, mu_json_token_t *tokens,
+                       size_t max_tokens) {
+    // stub
+    return MU_JSON_PARSER_BAD_FORMAT;
+}
 
 // *****************************************************************************
 // Private (static) code
