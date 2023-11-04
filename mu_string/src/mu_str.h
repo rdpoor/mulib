@@ -26,6 +26,9 @@
  * @file: mu_str.h
  *
  * @brief Safe, in-place string operations without the null terminator.
+ *
+ * A mu_str represents a slice of a string of bytes, represented by a pointer
+ * the first byte of the string and the number of bytes in the string.
  */
 
 #ifndef _MU_STR_H_
@@ -34,6 +37,7 @@
 // *****************************************************************************
 // Includes
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -48,18 +52,21 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
-#define MU_STR_END PTRDIFF_MAX
-#define MU_STR_NOT_FOUND PTRDIFF_MAX
+#define MU_STR_END INT_MAX
+#define MU_STR_NOT_FOUND INT_MAX
 
 typedef struct {
-  const uint8_t *bytes; // pointer to read-only byte buffer
-  size_t len;           // length of buffer in bytes
+    const uint8_t *bytes; // pointer to read-only byte buffer
+    int len;              // length of buffer in bytes
 } mu_str_t;
 
 /**
- * @brief The signature for a user-supplied predicate to mu_str_match (q.v.).
+ * @brief The signature for a user-supplied predicate to mu_str_match (q.v.) and
+ * other string-searching functions (mu_str_trim, etc).
  *
- * The function should return true on a match, false otherwise.
+ * @param byte The one-byte character being examined.
+ * @param arg The user argument passed to the string-searching function.
+ * @return true on a match, false otherwise.
  */
 typedef bool (*mu_str_predicate_t)(uint8_t byte, void *arg);
 
@@ -69,7 +76,7 @@ typedef bool (*mu_str_predicate_t)(uint8_t byte, void *arg);
 /**
  * @brief Initialize a mu_str with a readonly data buffer and a length.
  */
-mu_str_t *mu_str_init(mu_str_t *str, const uint8_t *bytes, size_t len);
+mu_str_t *mu_str_init(mu_str_t *str, const uint8_t *bytes, int len);
 
 /**
  * @brief Initialize a mu_str with null-terminated C-style string.
@@ -84,7 +91,7 @@ const uint8_t *mu_str_bytes(mu_str_t *str);
 /**
  * @brief Return the number of bytes in the mu_str's data buffer.
  */
-size_t mu_str_length(mu_str_t *str);
+int mu_str_length(mu_str_t *str);
 
 /**
  * @brief Return true if there are no bytes in the mu_str's data buffer.
@@ -114,7 +121,7 @@ mu_str_t *mu_str_copy(mu_str_t *dst, mu_str_t *src);
 int mu_str_compare(mu_str_t *s1, mu_str_t *s2);
 
 /**
- * @brief Compare a mu_str against a null-terminate C-style string.
+ * @brief Compare a mu_str against a null-terminated C-style string.
  *
  * mu_str_compare compares the first N bytes of s1 and cstr, where N is the
  * lesser of mu_str_length(s1) and strlen(cstr), and returns:
@@ -142,10 +149,24 @@ int mu_str_compare_cstr(mu_str_t *s1, const char *cstr);
  * Note that MU_STR_END may be used as an argument for start or end, signifying
  * the end (exclusive) of src.
  */
-mu_str_t *mu_str_slice(mu_str_t *dst,
-                       mu_str_t *src,
-                       ptrdiff_t start,
-                       ptrdiff_t end);
+mu_str_t *mu_str_slice(mu_str_t *dst, mu_str_t *src, int start, int end);
+
+/**
+ * @brief Slice a string into two substrings.
+ *
+ * @param left The left substring, i.e. all bytes to the left of index.
+ * @param right The right subtring, i.e. all bytes the right of index.
+ * @param src The string being sliced.
+ * @param index Index into src, referencing the last byte (exclusive) of left
+ * and the first byte (inclusive) of right.  If index is negative, it indexes
+ * from the end of src.
+ * @return src.
+ *
+ * Note: either left or right may equal src.  If both are equal to src, the
+ * results are undefined.
+ */
+mu_str_t *mu_str_bisect(mu_str_t *left, mu_str_t *right, mu_str_t *src,
+                        int index);
 
 /**
  * @brief Return true if s2 is an exact prefix of s1
@@ -170,94 +191,125 @@ bool mu_str_has_suffix_cstr(mu_str_t *s1, const char *cstr);
 /**
  * @brief Search forward to find a substring within a string.
  *
- * @param haystack The source string to search
- * @param needle The substring to search
- * @param skip_substr Indicates whether to include or exclude needle.
- * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
- *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.
+ * @param str The source string to search
+ * @param substr The substring to search
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.
  */
-size_t mu_str_find(mu_str_t *haystack, mu_str_t *needle, bool skip_substr);
+int mu_str_find_substr(mu_str_t *str, mu_str_t *substr, bool skip_substr);
 
 /**
  * @brief Search forward to find a substring within a string.
  *
- * @param haystack The source string to search
- * @param needle A null-terminated C-style string to search for.
- * @param skip_substr Indicates whether to include or exclude needle.
- * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
- *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.
+ * @param str The source string to search
+ * @param substr A null-terminated C-style string to search for.
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.
  */
-size_t mu_str_find_cstr(mu_str_t *haystack,
-                        const char *needle,
-                        bool skip_substr);
+int mu_str_find_subcstr(mu_str_t *str, const char *substr, bool skip_substr);
 
 /**
  * @brief Search in reverse to find a substring within a string.
  *
- * @param haystack The source string to search
- * @param needle The substring to search
- * @param skip_substr Indicates whether to include or exclude needle.
- * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
- *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.
+ * @param str The source string to search
+ * @param substr The substring to search
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.
  */
-size_t mu_str_rfind(mu_str_t *haystack, mu_str_t *needle, bool skip_substr);
+int mu_str_rfind_substr(mu_str_t *str, mu_str_t *substr, bool skip_substr);
 
 /**
  * @brief Search in reverse to find a substring within a string.
  *
- * @param haystack The source string to search
- * @param needle A null-terminated C-style string to search for.
- * @param skip_substr Indicates whether to include or exclude needle.
- * @return If needle is not found in haystack, return MU_STR_NOT_FOUND.  If
- *         skip_substr is false, returns index of first byte of needle,
- *         else returns index of last byte of needle.
+ * @param str The source string to search
+ * @param substr A null-terminated C-style string to search for.
+ * @param skip_substr Indicates whether to include or exclude substr.
+ * @return If substr is not found in str, return MU_STR_NOT_FOUND.  If
+ *         skip_substr is false, returns index of first byte of substr,
+ *         else returns index of last byte of substr.
  */
-size_t mu_str_rfind_cstr(mu_str_t *haystack,
-                         const char *needle,
-                         bool skip_substr);
+int mu_str_rfind_subcstr(mu_str_t *str, const char *substr, bool skip_substr);
 
 /**
- * @brief Return the index of the first char for which predicate returns
- * break_if, or MU_STR_NOT_FOUND if there was no match.
- */
-size_t mu_str_match(mu_str_t *str,
-                    mu_str_predicate_t predicate,
-                    void *arg,
-                    bool break_if);
-
-/**
- * @brief Return the index of the last char for which predicate returns
- * break_if, or MU_STR_NOT_FOUND if there was no match.
- */
-size_t mu_str_rmatch(mu_str_t *str,
-                     mu_str_predicate_t predicate,
-                     void *arg,
-                     bool break_if);
-
-/**
- * @brief Remove bytes from the start of str for which predicate returns true.
+ * @brief Search forward in a string until predicate returns true.
  *
- * @return modified str.
+ * @param str The string being searched
+ * @param predicate the user-supplied search function
+ * @param arg The user-supplied argument passed to predicate
+ * @param break_if It true, break when predcate returns true, else break when
+ * the predicate returns false.
+ * @return the index of the first char for which predicate returns break_if, or
+ * MU_STR_NOT_FOUND if there was no match.
  */
-mu_str_t *mu_str_ltrim(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
+int mu_str_index(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+                  bool break_if);
 
 /**
- * @brief Remove bytes from the end of str for which predicate returns true.
+ * @brief Search backward in a string until predicate returns true.
  *
- * @return modified str.
+ * @param str The string being searched
+ * @param predicate the user-supplied search function
+ * @param arg The user-supplied argument passed to predicate
+ * @param break_if It true, break when predcate returns true, else break when
+ * the predicate returns false.
+ * @return the index of the first char for which predicate returns break_if, or
+ * MU_STR_NOT_FOUND if there was no match.
  */
-mu_str_t *mu_str_rtrim(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
+int mu_str_rindex(mu_str_t *str, mu_str_predicate_t predicate, void *arg,
+                  bool break_if);
 
 /**
- * @brief Remove bytes from the start and end of str for which predicate returns
- * true.
+ * @brief Trim bytes from the beginning of a string.
  *
- * @return modified str.
+ * @param dst The string to receive the trimmed result.  Note that dst may equal
+ * src.
+ * @param src The string being trimmed.
+ * @param predicate The user-suppliced matching function
+ * @param arg The user-supplied argument passed to predicate
+ * @return dst
+ *
+ * Any leading characters for which predicate returns true are removed from src.
  */
-mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
+mu_str_t *mu_str_ltrim(mu_str_t *dst, mu_str_t *src,
+                       mu_str_predicate_t predicate, void *arg);
+
+/**
+ * @brief Trim bytes from the end of a string.
+ *
+ * @param dst The string to receive the trimmed result.  Note that dst may equal
+ * src.
+ * @param src The string being trimmed.
+ * @param predicate The user-suppliced matching function
+ * @param arg The user-supplied argument passed to predicate
+ * @return dst
+ *
+ * Any trailing characters for which predicate returns true are removed from
+ * src.
+ */
+mu_str_t *mu_str_rtrim(mu_str_t *dst, mu_str_t *src,
+                       mu_str_predicate_t predicate, void *arg);
+
+/**
+ * @brief Trim bytes from the beginning and end of a string.
+ *
+ * @param dst The string to receive the trimmed result.  Note that dst may equal
+ * src.
+ * @param src The string being trimmed.
+ * @param predicate The user-suppliced matching function
+ * @param arg The user-supplied argument passed to predicate
+ * @return dst
+ *
+ * Any leading or trailing characters for which predicate returns true are
+ * removed from src.
+ */
+mu_str_t *mu_str_trim(mu_str_t *dst, mu_str_t *src,
+                      mu_str_predicate_t predicate, void *arg);
 
 /**
  * @brief Copy the contents of a mu_str plus a null terminator to a buffer.
@@ -268,11 +320,19 @@ mu_str_t *mu_str_trim(mu_str_t *str, mu_str_predicate_t predicate, void *arg);
  * @return true if buf is large enough to hold the bytes plus the null
  *         termination, false otherwise.
  */
-bool mu_str_to_cstr(mu_str_t *str, char *buf, size_t capacity);
+bool mu_str_to_cstr(mu_str_t *str, char *buf, int capacity);
 
 /**
- * A collection of simple parsing functions.  Functions assume no leading,
- * trailing or intermediate whitespace.
+ * @brief A collection of simple integer parsers.
+ *
+ * @param str The string being parsed.
+ * @return The converted integer
+ *
+ * Notes:
+ * - Conversion stops on the at the first non-digit.
+ * - If the first character is a non-digit, the parse function returns 0.
+ * - Conversion continues to the end of string.  If the parsed number exceeds
+ * - returned data type, the result is truncated to the low-order bits.
  */
 int mu_str_parse_int(mu_str_t *str);
 unsigned int mu_str_parse_unsigned_int(mu_str_t *str);
@@ -284,6 +344,7 @@ int32_t mu_str_parse_int32(mu_str_t *str);
 uint32_t mu_str_parse_uint32(mu_str_t *str);
 int64_t mu_str_parse_int64(mu_str_t *str);
 uint64_t mu_str_parse_uint64(mu_str_t *str);
+unsigned int mu_str_parse_hex(mu_str_t *str); // accepts [0-9][a-f][A-F]
 
 // *****************************************************************************
 // End of file

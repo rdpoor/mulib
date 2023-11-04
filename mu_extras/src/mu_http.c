@@ -479,3 +479,235 @@ static void test_mu_http(void) {
 int main(void) { test_mu_http(); }
 
 #endif // #ifdef TEST_MU_HTTP
+
+#if 0
+
+void test_mu_str_example(void) {
+    // Parse an HTML message, extracting the Date: from the header and the
+    // contents of the body.
+    printf("\nStarting mu_str_example...");
+    fflush(stdout);
+
+    const char *HTML = "HTTP/1.1 200 OK\r\n"
+                       "Date: Wed, 26 Oct 2022 17:17:34 GMT\r\n"
+                       "Content-Type: application/json\r\n"
+                       "Content-Length: 27\r\n"
+                       "Connection: keep-alive\r\n"
+                       "X-Javatime: 1666804654506\r\n"
+                       "\r\n"
+                       "{\"code\":200,\"message\":\"ok\"}";
+
+    mu_str_t html, date_value, body;
+    int idx;
+
+    mu_str_init_cstr(&html, HTML);
+
+    // find "Wed, 26 Oct 2022 17:17:34 GMT"
+    // Extract the text following "Date: " to end of line
+    idx = mu_str_find_subcstr(&html, "Date: ", true);
+    TEST_ASSERT(idx != MU_STR_NOT_FOUND);
+    mu_str_slice(&date_value, &html, idx, MU_STR_END);
+    idx = mu_str_find_subcstr(&date_value, "\r\n", false);
+    TEST_ASSERT(idx != MU_STR_NOT_FOUND);
+    mu_str_slice(&date_value, &date_value, 0, idx);
+    TEST_ASSERT(cstr_eq(&date_value, "Wed, 26 Oct 2022 17:17:34 GMT"));
+
+    // find "{\"code\":200,\"message\":\"ok\"}"
+    // blank \r\n\r\n signifies end of HTML header and start of body
+    idx = mu_str_find_subcstr(&html, "\r\n\r\n", true);
+    TEST_ASSERT(idx != MU_STR_NOT_FOUND);
+    mu_str_slice(&body, &html, idx, MU_STR_END);
+    TEST_ASSERT(cstr_eq(&body, "{\"code\":200,\"message\":\"ok\"}"));
+
+    printf("\n...mu_str_example complete\n");
+}
+
+typedef struct {
+    const char *host_name;
+    int host_name_len;
+    uint16_t host_port;
+    bool use_tls;
+} http_params_t;
+
+#define HTTP_PREFIX "http://"
+#define HTTPS_PREFIX "https://"
+
+static bool is_hostname(uint8_t byte, void *arg) {
+    if ((byte >= 'a') && (byte <= 'z')) {
+        return true;
+    } else if ((byte >= '0') && (byte <= '9')) {
+        return true;
+    } else if (byte == '.') {
+        return true;
+    } else if (byte == '-') {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static bool is_decimal(uint8_t byte, void *arg) {
+    if ((byte >= '0') && (byte <= '9')) {
+        return true;
+    }
+    return false;
+}
+
+static uint16_t parse_uint16(const uint8_t *buf, int len) {
+    uint16_t v = 0;
+
+    while (len-- > 0) {
+        v = (v * 10) + (*buf++ - '0');
+    }
+    return v;
+}
+
+http_params_t *parse_http_params(http_params_t *params, const char *url) {
+    mu_str_t s1;
+    int idx;
+
+    mu_str_init_cstr(&s1, url);
+    // printf("\n==== parsing '%s'", url);
+
+    if (mu_str_has_prefix_cstr(&s1, HTTP_PREFIX)) {
+        // starts with http://
+        // printf("\nStarts with http://");
+        params->use_tls = false;
+        params->host_port = 80; // unless over-ridden by a :<port> spec...
+        mu_str_slice(&s1, &s1, strlen(HTTP_PREFIX), MU_STR_END);
+
+    } else if (mu_str_has_prefix_cstr(&s1, HTTPS_PREFIX)) {
+        // starts with https://
+        // printf("\nStarts with https://");
+        params->use_tls = true;
+        params->host_port = 443; // unless over-ridden by a :<port> spec...
+        mu_str_slice(&s1, &s1, strlen(HTTPS_PREFIX), MU_STR_END);
+
+    } else {
+        return NULL;
+    }
+
+    // hostname may not start with a '-'
+    if (mu_str_has_prefix_cstr(&s1, "-")) {
+        // printf("\nhostname may not start with -");
+        return NULL;
+    }
+
+    // search for first non-hostname char
+    idx = mu_str_match(&s1, is_hostname, NULL, false);
+
+    if (idx == MU_STR_NOT_FOUND) {
+        // hit end of string without finding any non-hostname chars
+        idx = mu_str_length(&s1);
+    }
+
+    if (idx == 0) {
+        // zero length hostname not allowed.
+        // printf("\nZero length hostname not allowed");
+        return NULL;
+
+    } else if (mu_str_bytes(&s1)[idx] != ':') {
+        // hostname not terminated with a port number
+        params->host_name = (const char *)mu_str_bytes(&s1);
+        params->host_name_len = idx;
+        return params;
+    }
+
+    // hostname terminated with a ':' -- parse the following port number
+    mu_str_slice(&s1, &s1, idx + 1, MU_STR_END);
+
+    idx = mu_str_match(&s1, is_decimal, NULL, false);
+    if (idx == MU_STR_NOT_FOUND) {
+        // hit end of string without finding any non-decimal chars
+        idx = mu_str_length(&s1);
+    }
+
+    if (idx == 0) {
+        // printf("\nzero length port # not allowed");
+        // zero length port # not allowed
+        return NULL;
+    }
+
+    // here, all bytes between s1[0] and s1[idx] are guaranteed to be integers.
+    // NOTE: we don't check for overflow (values >= 65536)
+    params->host_port = parse_uint16(mu_str_bytes(&s1), idx);
+
+    return params;
+}
+
+void test_parse_url(void) {
+    http_params_t params;
+
+    printf("\nStarting test_parse_url example...");
+    fflush(stdout);
+
+    TEST_ASSERT(parse_http_params(&params, "http://example.com") == &params);
+    TEST_ASSERT(strncmp(params.host_name, "example.com", params.host_name_len) == 0);
+    TEST_ASSERT(params.host_port == 80);
+    TEST_ASSERT(params.use_tls == false);
+
+    TEST_ASSERT(parse_http_params(&params, "https://example.com") == &params);
+    TEST_ASSERT(strncmp(params.host_name, "example.com", params.host_name_len) == 0);
+    TEST_ASSERT(params.host_port == 443);
+    TEST_ASSERT(params.use_tls == true);
+
+    TEST_ASSERT(parse_http_params(&params, "http://example.com:8080") == &params);
+    TEST_ASSERT(strncmp(params.host_name, "example.com", params.host_name_len) == 0);
+    TEST_ASSERT(params.host_port == 8080);
+    TEST_ASSERT(params.use_tls == false);
+
+    TEST_ASSERT(parse_http_params(&params, "https://example.com:8080") == &params);
+    TEST_ASSERT(strncmp(params.host_name, "example.com", params.host_name_len) == 0);
+    TEST_ASSERT(params.host_port == 8080);
+    TEST_ASSERT(params.use_tls == true);
+
+    TEST_ASSERT(parse_http_params(&params, "https://example.com/extra") == &params);
+    TEST_ASSERT(strncmp(params.host_name, "example.com", params.host_name_len) == 0);
+    TEST_ASSERT(params.host_port == 443);
+    TEST_ASSERT(params.use_tls == true);
+
+    TEST_ASSERT(parse_http_params(&params, "https://example.com:123/extra") ==
+           &params);
+    TEST_ASSERT(strncmp(params.host_name, "example.com", params.host_name_len) == 0);
+    TEST_ASSERT(params.host_port == 123);
+    TEST_ASSERT(params.use_tls == true);
+
+    TEST_ASSERT(parse_http_params(&params, "https://example.com/") == &params);
+    TEST_ASSERT(strncmp(params.host_name, "example.com", params.host_name_len) == 0);
+    TEST_ASSERT(params.host_port == 443);
+    TEST_ASSERT(params.use_tls == true);
+
+    TEST_ASSERT(parse_http_params(&params, "https://192.168.12.34/") == &params);
+    TEST_ASSERT(strncmp(params.host_name, "192.168.12.34", params.host_name_len) ==
+           0);
+    TEST_ASSERT(params.host_port == 443);
+    TEST_ASSERT(params.use_tls == true);
+
+    // These are the valid chars that end a port #
+    // "#?/\"
+
+    // pathologies
+    TEST_ASSERT(parse_http_params(&params, "") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http:") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http:/") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http://") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http://:") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http://:123") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http://example.com:") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "http://example.com:abc") == NULL);
+    TEST_ASSERT(parse_http_params(&params, "ftp://example.com:123") == NULL);
+    // parse_http_params() doesn't investigate the URL past the hostname / port#
+    // ASSERT(parse_http_params(&params, "http://example.com/extra:123") ==
+    // NULL); This should be caught, but we don't handle it at present.
+    // ASSERT(parse_http_params(&params, "http://example.com:123abc") == NULL);
+    printf("\n...test_parse_url example complete\n");
+}
+
+int main(void) {
+    test_mu_str();
+    test_mu_str_example();
+    test_parse_url();
+}
+
+#endif // #ifdef TEST_MU_STR
