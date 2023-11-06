@@ -22,17 +22,24 @@ BIN_DIR := $(TEST_DIR)/bin
 
 MULIB_SOURCES := \
 	$(MULIB_DIR)/mu_json.c \
-	$(MULIB_DIR)/mu_log.c
+	$(MULIB_DIR)/mu_log.c \
+	$(MULIB_DIR)/mu_timer.c
 
 UNIT_TESTS := \
 	$(BIN_DIR)/test_mu_json \
-	$(BIN_DIR)/test_mu_log
+	$(BIN_DIR)/test_mu_log \
+	$(BIN_DIR)/test_mu_timer
 
 MULIB_OBJECTS := $(patsubst $(MULIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(MULIB_SOURCES))
 TEST_OBJECTS := $(patsubst $(BIN_DIR)/%,$(OBJ_DIR)/%.o,$(UNIT_TESTS))
 
-CFLAGS := -Wall -O2 -I$(MULIB_DIR) -I$(TEST_DIR)  -I../../mu_string/src # Compiler flags
-LDFLAGS :=                                        # Linker flags
+ # Compiler flags
+CFLAGS := -Wall -O2 -I$(MULIB_DIR) -I$(TEST_DIR)  \
+	-I../../mu_string/src \
+	-I../../mu_schedule/src
+
+# Linker flags
+LDFLAGS :=
 
 .PHONY: run_unit_tests clean make_build_dirs
 
@@ -46,7 +53,7 @@ make_build_dirs:
 	@mkdir -pv $(OBJ_DIR) $(BIN_DIR)
 
 clean:
-	rm -rvf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
 # generic rule for compiling MULIB_SOURCES
 $(OBJ_DIR)/%.o: $(MULIB_DIR)/%.c
@@ -63,4 +70,7 @@ $(BIN_DIR)/test_mu_json: $(OBJ_DIR)/test_mu_json.o $(OBJ_DIR)/mu_json.o $(OBJ_DI
 	$(CC) $(LDFLAGS) $^ -o $@
 
 $(BIN_DIR)/test_mu_log: $(OBJ_DIR)/test_mu_log.o $(OBJ_DIR)/mu_log.o $(OBJ_DIR)/unity.o
+	$(CC) $(LDFLAGS) $^ -o $@
+
+$(BIN_DIR)/test_mu_timer: $(OBJ_DIR)/test_mu_timer.o $(OBJ_DIR)/mu_timer.o $(OBJ_DIR)/unity.o
 	$(CC) $(LDFLAGS) $^ -o $@

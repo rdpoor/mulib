@@ -30,7 +30,7 @@ make_build_dirs:
 	@mkdir -pv $(OBJ_DIR) $(BIN_DIR)
 
 clean:
-	rm -rvf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
 # generic rule for compiling MULIB_SOURCES
 $(OBJ_DIR)/%.o: $(MULIB_DIR)/%.c
