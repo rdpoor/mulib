@@ -4,13 +4,6 @@
 `mulib` a highly performant, compact and reliable framework for building complex
 applications in resource-constrained embedded systems.  
 
-`mulib`'s growing list of modules include:
-* `mu_sched`: A fast and lithe run-to-completion (single threaded) scheduler,
-which also supports safe, efficient linkage from interrupt to foreground levels.
-* `mu_task`: Support for deferred execution
-* `mu_strbuf` and `mu_str`: Fast and safe copy-free string handling.
-* `mu_access_mgr`: Grant exclusive access to a shared resource.
-
 ## `mulib`'s philosophy:  Small, Fast and Trusting
 
 `mulib`'s design is guided by the following tenets:
@@ -43,7 +36,7 @@ Open Source license.
 (And in case you're wondering about the pronunciation, "MOO-lib" is preferred
 over "MEW-lib": cows, not kittens.)
 
-## Directory Structure (in progress)
+## Directory Structure
 
 ```
 mulib/
@@ -57,7 +50,7 @@ mulib/
       mu_sched.[ch]
       mu_spsc.[ch]
       mu_task.[ch]
-      mu_time.h         # NOTE: each implementation will provide mu_time.c "elsewhere"
+      mu_time.h         # NOTE: implementations provide mu_time.c "elsewhere"
     test/               # unit tests for the scheduler.
       Makefile          # testing makefile
       fff.h             # fake / mock / stub framework
@@ -67,7 +60,7 @@ mulib/
       test_mu_sched.c
       ... etc
 
-  mu_string/            # sources, unit tests and documentation for mulib string manipulation
+  mu_string/            # in-place, zero copy, safe string manipulation
     README.md           # overview and documentation for mu_string package
     src/                # these are the only files you need to include in your project
       mu_str.[ch]

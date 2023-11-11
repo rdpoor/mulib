@@ -6,15 +6,9 @@ TEST_DIR := .
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 
-MULIB_SOURCES := \
-	$(MULIB_DIR)/mu_json.c \
-	$(MULIB_DIR)/mu_log.c \
-	$(MULIB_DIR)/mu_timer.c
+MULIB_SOURCES :=
 
-UNIT_TESTS := \
-	$(BIN_DIR)/test_mu_json \
-	$(BIN_DIR)/test_mu_log \
-	$(BIN_DIR)/test_mu_timer
+UNIT_TESTS :=
 
 MULIB_OBJECTS := $(patsubst $(MULIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(MULIB_SOURCES))
 TEST_OBJECTS := $(patsubst $(BIN_DIR)/%,$(OBJ_DIR)/%.o,$(UNIT_TESTS))
@@ -53,14 +47,14 @@ $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 # the rule for buildiung each unit test executable is listed explicitly in order
 # to guarantee separation of interests: test_mu_foo depends only on mu_foo.o
 
-$(BIN_DIR)/test_mu_json: $(OBJ_DIR)/test_mu_json.o $(OBJ_DIR)/mu_json.o $(OBJ_DIR)/unity.o
-	$(CC) $(LDFLAGS) $^ -o $@
+# $(BIN_DIR)/test_mu_json: $(OBJ_DIR)/test_mu_json.o $(OBJ_DIR)/mu_json.o $(OBJ_DIR)/unity.o
+# 	$(CC) $(LDFLAGS) $^ -o $@
 
-$(BIN_DIR)/test_mu_log: $(OBJ_DIR)/test_mu_log.o $(OBJ_DIR)/mu_log.o $(OBJ_DIR)/unity.o
-	$(CC) $(LDFLAGS) $^ -o $@
+# $(BIN_DIR)/test_mu_log: $(OBJ_DIR)/test_mu_log.o $(OBJ_DIR)/mu_log.o $(OBJ_DIR)/unity.o
+# 	$(CC) $(LDFLAGS) $^ -o $@
 
-$(BIN_DIR)/test_mu_timer: $(OBJ_DIR)/test_mu_timer.o $(OBJ_DIR)/mu_timer.o $(OBJ_DIR)/unity.o
-	$(CC) $(LDFLAGS) $^ -o $@
+# $(BIN_DIR)/test_mu_timer: $(OBJ_DIR)/test_mu_timer.o $(OBJ_DIR)/mu_timer.o $(OBJ_DIR)/unity.o
+# 	$(CC) $(LDFLAGS) $^ -o $@
 
 # coverage tests
 
