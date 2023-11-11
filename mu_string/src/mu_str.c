@@ -205,7 +205,7 @@ mu_str_t *mu_str_ltrim(mu_str_t *dst, mu_str_t *str,
     int idx = mu_str_index(str, predicate, arg, false);
 
     if (idx == MU_STR_NOT_FOUND) {
-        return str;
+        return mu_str_copy(dst, str);
     } else {
         return mu_str_slice(dst, str, idx, MU_STR_END);
     }
@@ -216,7 +216,7 @@ mu_str_t *mu_str_rtrim(mu_str_t *dst, mu_str_t *str,
     int idx = mu_str_rindex(str, predicate, arg, false);
 
     if (idx == MU_STR_NOT_FOUND) {
-        return str;
+        return mu_str_copy(dst, str);
     } else {
         return mu_str_slice(dst, str, 0, idx);
     }

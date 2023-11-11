@@ -137,6 +137,28 @@ void test_mu_str_compare(void) {
                                mu_str_init_cstr(&s2, "abcd")) < 0);
 }
 
+void test_mu_str_compare_cstr(void) {
+    mu_str_t s1;
+
+    mu_str_init_cstr(&s1, "abcd");
+    // strings are equal in content and length
+    TEST_ASSERT(mu_str_compare_cstr(&s1, "abcd") == 0);
+    // s1 is lexographically higher
+    TEST_ASSERT(mu_str_compare_cstr(&s1, "abcc") > 0);
+    // s1 is lexographically lower
+    TEST_ASSERT(mu_str_compare_cstr(&s1, "abce") < 0);
+    // s1 is longer
+    TEST_ASSERT(mu_str_compare_cstr(&s1, "abc") > 0);
+    // s1 is shorter
+    TEST_ASSERT(mu_str_compare_cstr(&s1, "abcde") < 0);
+    // s2 empty
+    TEST_ASSERT(mu_str_compare_cstr(&s1, "") > 0);
+    // both empty
+    TEST_ASSERT(mu_str_compare_cstr(mu_str_init_cstr(&s1, ""), "") == 0);
+    // s1 empty
+    TEST_ASSERT(mu_str_compare_cstr(mu_str_init_cstr(&s1, ""), "abcd") < 0);
+}
+
 void test_mu_str_slice(void) {
     mu_str_t s1, s2;
 
@@ -390,6 +412,15 @@ void test_mu_str_trim(void) {
     mu_str_init_cstr(&src, "  abcde  ");
     TEST_ASSERT(&src == mu_str_trim(&src, &src, is_whitespace, NULL));
     TEST_ASSERT(cstr_eq(&src, "abcde"));
+
+    // no trimming
+    mu_str_init_cstr(&src, "");
+    TEST_ASSERT(&dst == mu_str_ltrim(&dst, &src, is_whitespace, NULL));
+    TEST_ASSERT(cstr_eq(&dst, ""));
+
+    mu_str_init_cstr(&src, "");
+    TEST_ASSERT(&dst == mu_str_rtrim(&dst, &src, is_whitespace, NULL));
+    TEST_ASSERT(cstr_eq(&dst, ""));
 }
 
 void test_mu_str_to_cstr(void) {
@@ -661,6 +692,7 @@ int main(void) {
     RUN_TEST(test_mu_str_init);
     RUN_TEST(test_mu_str_copy);
     RUN_TEST(test_mu_str_compare);
+    RUN_TEST(test_mu_str_compare_cstr);
     RUN_TEST(test_mu_str_slice);
     RUN_TEST(test_mu_str_bisect);
     RUN_TEST(test_mu_str_has_suffix_prefix);

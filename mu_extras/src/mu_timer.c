@@ -146,8 +146,7 @@ static void start_aux(mu_timer_t *timer, MU_SCHED_REL_TIME expire_in_tics,
                       bool is_periodic) {
     mu_timer_stop(timer);
 
-    // function pointers, whoo!
-    MU_SCHED_ABS_TIME now = mu_sched_get_clock_source()();
+    MU_SCHED_ABS_TIME now = mu_time_now();
     timer->expire_at = mu_time_offset(now, expire_in_tics);
     timer->period = period_tics;
     timer->on_expiration = on_expiration;
@@ -219,7 +218,7 @@ static mu_timer_t s_timer;
 // A task that simply prints out the current time
 static mu_task_t s_dummy_task;
 
-static mu_time_abs_t get_now(void) { return mu_sched_get_clock_source()(); }
+static mu_time_abs_t get_now(void) { return mu_time_now(); }
 
 static void dummy_task_fn(void *ctx, void *arg) {
     printf("\ntimer call count = %d, called at %ld", s_called_count, get_now());
