@@ -26,13 +26,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <stdlib.h>
 #include "JSON_checker.h"
+#include <stdlib.h>
 
-#define TRUE  1
+#define TRUE 1
 #define FALSE 0
 #define GOOD 0xBABAB00E
-#define __   -1     /* the universal error code */
+#define __ -1 /* the universal error code */
 
 /*
     Characters are mapped into these 31 character classes. This allows for
@@ -40,40 +40,41 @@ SOFTWARE.
 */
 
 enum classes {
-    C_SPACE,  /* space */
-    C_WHITE,  /* other whitespace */
-    C_LCURB,  /* {  */
-    C_RCURB,  /* } */
-    C_LSQRB,  /* [ */
-    C_RSQRB,  /* ] */
-    C_COLON,  /* : */
-    C_COMMA,  /* , */
-    C_QUOTE,  /* " */
-    C_BACKS,  /* \ */
-    C_SLASH,  /* / */
-    C_PLUS,   /* + */
-    C_MINUS,  /* - */
-    C_POINT,  /* . */
-    C_ZERO ,  /* 0 */
-    C_DIGIT,  /* 123456789 */
-    C_LOW_A,  /* a */
-    C_LOW_B,  /* b */
-    C_LOW_C,  /* c */
-    C_LOW_D,  /* d */
-    C_LOW_E,  /* e */
-    C_LOW_F,  /* f */
-    C_LOW_L,  /* l */
-    C_LOW_N,  /* n */
-    C_LOW_R,  /* r */
-    C_LOW_S,  /* s */
-    C_LOW_T,  /* t */
-    C_LOW_U,  /* u */
-    C_ABCDF,  /* ABCDF */
-    C_E,      /* E */
-    C_ETC,    /* everything else */
+    C_SPACE, /* space */
+    C_WHITE, /* other whitespace */
+    C_LCURB, /* {  */
+    C_RCURB, /* } */
+    C_LSQRB, /* [ */
+    C_RSQRB, /* ] */
+    C_COLON, /* : */
+    C_COMMA, /* , */
+    C_QUOTE, /* " */
+    C_BACKS, /* \ */
+    C_SLASH, /* / */
+    C_PLUS,  /* + */
+    C_MINUS, /* - */
+    C_POINT, /* . */
+    C_ZERO,  /* 0 */
+    C_DIGIT, /* 123456789 */
+    C_LOW_A, /* a */
+    C_LOW_B, /* b */
+    C_LOW_C, /* c */
+    C_LOW_D, /* d */
+    C_LOW_E, /* e */
+    C_LOW_F, /* f */
+    C_LOW_L, /* l */
+    C_LOW_N, /* n */
+    C_LOW_R, /* r */
+    C_LOW_S, /* s */
+    C_LOW_T, /* t */
+    C_LOW_U, /* u */
+    C_ABCDF, /* ABCDF */
+    C_E,     /* E */
+    C_ETC,   /* everything else */
     NR_CLASSES
 };
 
+// clang-format off
 static int ascii_class[128] = {
 /*
     This array maps the 128 ASCII characters into character classes.
@@ -100,47 +101,47 @@ static int ascii_class[128] = {
     C_ETC,   C_ETC,   C_LOW_R, C_LOW_S, C_LOW_T, C_LOW_U, C_ETC,   C_ETC,
     C_ETC,   C_ETC,   C_ETC,   C_LCURB, C_ETC,   C_RCURB, C_ETC,   C_ETC
 };
-
+// clang-format on
 
 /*
     The state codes.
 */
 enum states {
-    GO,  /* start    */
-    OK,  /* ok       */
-    OB,  /* object   */
-    KE,  /* key      */
-    CO,  /* colon    */
-    VA,  /* value    */
-    AR,  /* array    */
-    ST,  /* string   */
-    ES,  /* escape   */
-    U1,  /* u1       */
-    U2,  /* u2       */
-    U3,  /* u3       */
-    U4,  /* u4       */
-    MI,  /* minus    */
-    ZE,  /* zero     */
-    IN,  /* integer  */
-    FR,  /* fraction */
-    FS,  /* fraction */
-    E1,  /* e        */
-    E2,  /* ex       */
-    E3,  /* exp      */
-    T1,  /* tr       */
-    T2,  /* tru      */
-    T3,  /* true     */
-    F1,  /* fa       */
-    F2,  /* fal      */
-    F3,  /* fals     */
-    F4,  /* false    */
-    N1,  /* nu       */
-    N2,  /* nul      */
-    N3,  /* null     */
+    GO, /* start    */
+    OK, /* ok       */
+    OB, /* object   */
+    KE, /* key      */
+    CO, /* colon    */
+    VA, /* value    */
+    AR, /* array    */
+    ST, /* string   */
+    ES, /* escape   */
+    U1, /* u1       */
+    U2, /* u2       */
+    U3, /* u3       */
+    U4, /* u4       */
+    MI, /* minus    */
+    ZE, /* zero     */
+    IN, /* integer  */
+    FR, /* fraction */
+    FS, /* fraction */
+    E1, /* e        */
+    E2, /* ex       */
+    E3, /* exp      */
+    T1, /* tr       */
+    T2, /* tru      */
+    T3, /* true     */
+    F1, /* fa       */
+    F2, /* fal      */
+    F3, /* fals     */
+    F4, /* false    */
+    N1, /* nu       */
+    N2, /* nul      */
+    N3, /* null     */
     NR_STATES
 };
 
-
+// clang-format off
 static int state_transition_table[NR_STATES][NR_CLASSES] = {
 /*
     The state transition table takes the current state and the current symbol,
@@ -182,47 +183,34 @@ static int state_transition_table[NR_STATES][NR_CLASSES] = {
 /*nul    N2*/ {__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,N3,__,__,__,__,__,__,__,__},
 /*null   N3*/ {__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,OK,__,__,__,__,__,__,__,__}
 };
-
+// clang-format on
 
 /*
     These modes can be pushed on the stack.
 */
-enum modes {
-    MODE_ARRAY,
-    MODE_DONE,
-    MODE_KEY,
-    MODE_OBJECT
-};
+enum modes { MODE_ARRAY, MODE_DONE, MODE_KEY, MODE_OBJECT };
 
-static void
-destroy(JSON_checker jc)
-{
-/*
-    Delete the JSON_checker object.
-*/
+static void destroy(JSON_checker jc) {
+    /*
+        Delete the JSON_checker object.
+    */
     jc->valid = 0;
-    free((void*)jc->stack);
-    free((void*)jc);
+    free((void *)jc->stack);
+    free((void *)jc);
 }
 
-
-static int
-reject(JSON_checker jc)
-{
-/*
-    Delete the JSON_checker object.
-*/
+static int reject(JSON_checker jc) {
+    /*
+        Delete the JSON_checker object.
+    */
     destroy(jc);
     return FALSE;
 }
 
-
-static int
-push(JSON_checker jc, int mode)
-{
-/*
-    Push a mode onto the stack. Return false if there is overflow.
-*/
+static int push(JSON_checker jc, int mode) {
+    /*
+        Push a mode onto the stack. Return false if there is overflow.
+    */
     jc->top += 1;
     if (jc->top >= jc->depth) {
         return FALSE;
@@ -231,14 +219,11 @@ push(JSON_checker jc, int mode)
     return TRUE;
 }
 
-
-static int
-pop(JSON_checker jc, int mode)
-{
-/*
-    Pop the stack, assuring that the current mode matches the expectation.
-    Return false if there is underflow or if the modes mismatch.
-*/
+static int pop(JSON_checker jc, int mode) {
+    /*
+        Pop the stack, assuring that the current mode matches the expectation.
+        Return false if there is underflow or if the modes mismatch.
+    */
     if (jc->top < 0 || jc->stack[jc->top] != mode) {
         return FALSE;
     }
@@ -246,46 +231,41 @@ pop(JSON_checker jc, int mode)
     return TRUE;
 }
 
+JSON_checker new_JSON_checker(int depth) {
+    /*
+        new_JSON_checker starts the checking process by constructing a
+       JSON_checker object. It takes a depth parameter that restricts the level
+       of maximum nesting.
 
-JSON_checker
-new_JSON_checker(int depth)
-{
-/*
-    new_JSON_checker starts the checking process by constructing a JSON_checker
-    object. It takes a depth parameter that restricts the level of maximum
-    nesting.
+        To continue the process, call JSON_checker_char for each character in
+       the JSON text, and then call JSON_checker_done to obtain the final
+       result. These functions are fully reentrant.
 
-    To continue the process, call JSON_checker_char for each character in the
-    JSON text, and then call JSON_checker_done to obtain the final result.
-    These functions are fully reentrant.
-
-    The JSON_checker object will be deleted by JSON_checker_done.
-    JSON_checker_char will delete the JSON_checker object if it sees an error.
-*/
+        The JSON_checker object will be deleted by JSON_checker_done.
+        JSON_checker_char will delete the JSON_checker object if it sees an
+       error.
+    */
     JSON_checker jc = (JSON_checker)malloc(sizeof(struct JSON_checker_struct));
     jc->valid = GOOD;
     jc->state = GO;
     jc->depth = depth;
     jc->top = -1;
-    jc->stack = (int*)calloc(depth, sizeof(int));
+    jc->stack = (int *)calloc(depth, sizeof(int));
     push(jc, MODE_DONE);
     return jc;
 }
 
-
-int
-JSON_checker_char(JSON_checker jc, int next_char)
-{
-/*
-    After calling new_JSON_checker, call this function for each character (or
-    partial character) in your JSON text. It can accept UTF-8, UTF-16, or
-    UTF-32. It returns TRUE if things are looking ok so far. If it rejects the
-    text, it destroys the JSON_checker object and returns false.
-*/
+int JSON_checker_char(JSON_checker jc, int next_char) {
+    /*
+        After calling new_JSON_checker, call this function for each character
+       (or partial character) in your JSON text. It can accept UTF-8, UTF-16, or
+        UTF-32. It returns TRUE if things are looking ok so far. If it rejects
+       the text, it destroys the JSON_checker object and returns false.
+    */
     int next_class, next_state;
-/*
-    Determine the character's class.
-*/
+    /*
+        Determine the character's class.
+    */
     if (jc->valid != GOOD) {
         return FALSE;
     }
@@ -300,21 +280,21 @@ JSON_checker_char(JSON_checker jc, int next_char)
             return reject(jc);
         }
     }
-/*
-    Get the next state from the state transition table.
-*/
+    /*
+        Get the next state from the state transition table.
+    */
     next_state = state_transition_table[jc->state][next_class];
     if (next_state >= 0) {
-/*
-    Change the state.
-*/
+        /*
+            Change the state.
+        */
         jc->state = next_state;
-/*
-    Or perform one of the actions.
-*/
+        /*
+            Or perform one of the actions.
+        */
     } else {
         switch (next_state) {
-/* empty } */
+            /* empty } */
         case -9:
             if (!pop(jc, MODE_KEY)) {
                 return reject(jc);
@@ -322,35 +302,35 @@ JSON_checker_char(JSON_checker jc, int next_char)
             jc->state = OK;
             break;
 
-/* } */ case -8:
+        /* } */ case -8:
             if (!pop(jc, MODE_OBJECT)) {
                 return reject(jc);
             }
             jc->state = OK;
             break;
 
-/* ] */ case -7:
+        /* ] */ case -7:
             if (!pop(jc, MODE_ARRAY)) {
                 return reject(jc);
             }
             jc->state = OK;
             break;
 
-/* { */ case -6:
+        /* { */ case -6:
             if (!push(jc, MODE_KEY)) {
                 return reject(jc);
             }
             jc->state = OB;
             break;
 
-/* [ */ case -5:
+        /* [ */ case -5:
             if (!push(jc, MODE_ARRAY)) {
                 return reject(jc);
             }
             jc->state = AR;
             break;
 
-/* " */ case -4:
+        /* " */ case -4:
             switch (jc->stack[jc->top]) {
             case MODE_KEY:
                 jc->state = CO;
@@ -364,12 +344,12 @@ JSON_checker_char(JSON_checker jc, int next_char)
             }
             break;
 
-/* , */ case -3:
+        /* , */ case -3:
             switch (jc->stack[jc->top]) {
             case MODE_OBJECT:
-/*
-    A comma causes a flip from object mode to key mode.
-*/
+                /*
+                    A comma causes a flip from object mode to key mode.
+                */
                 if (!pop(jc, MODE_OBJECT) || !push(jc, MODE_KEY)) {
                     return reject(jc);
                 }
@@ -383,18 +363,18 @@ JSON_checker_char(JSON_checker jc, int next_char)
             }
             break;
 
-/* : */ case -2:
-/*
-    A colon causes a flip from key mode to object mode.
-*/
+        /* : */ case -2:
+            /*
+                A colon causes a flip from key mode to object mode.
+            */
             if (!pop(jc, MODE_KEY) || !push(jc, MODE_OBJECT)) {
                 return reject(jc);
             }
             jc->state = VA;
             break;
-/*
-    Bad action.
-*/
+            /*
+                Bad action.
+            */
         default:
             return reject(jc);
         }
@@ -402,16 +382,13 @@ JSON_checker_char(JSON_checker jc, int next_char)
     return TRUE;
 }
 
-
-int
-JSON_checker_done(JSON_checker jc)
-{
-/*
-    The JSON_checker_done function should be called after all of the characters
-    have been processed, but only if every call to JSON_checker_char returned
-    true. This function deletes the JSON_checker and returns true if the JSON
-    text was accepted.
-*/
+int JSON_checker_done(JSON_checker jc) {
+    /*
+        The JSON_checker_done function should be called after all of the
+       characters have been processed, but only if every call to
+       JSON_checker_char returned true. This function deletes the JSON_checker
+       and returns true if the JSON text was accepted.
+    */
     if (jc->valid != GOOD) {
         return FALSE;
     }

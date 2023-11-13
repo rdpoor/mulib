@@ -19,6 +19,7 @@ void tearDown(void) {
  *
  * The test data here is derived from the (excellent) JSON parsing test suite
  * at https://github.com/nst/JSONTestSuite/tree/master.
+ * See also https://seriot.ch/projects/parsing_json.html
  */
 static bool validate_format(const char *filename) {
     FILE *fp = fopen(filename, "r");
