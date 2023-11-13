@@ -7,11 +7,13 @@ OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 
 MULIB_SOURCES := \
+	$(MULIB_DIR)/json_checker.c \
 	$(MULIB_DIR)/mu_json.c \
 	$(MULIB_DIR)/mu_log.c \
 	$(MULIB_DIR)/mu_timer.c
 
 UNIT_TESTS := \
+	$(BIN_DIR)/test_json_checker \
 	$(BIN_DIR)/test_mu_json \
 	$(BIN_DIR)/test_mu_log \
 	$(BIN_DIR)/test_mu_timer
@@ -52,6 +54,9 @@ $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 
 # the rule for buildiung each unit test executable is listed explicitly in order
 # to guarantee separation of interests: test_mu_foo depends only on mu_foo.o
+
+$(BIN_DIR)/test_json_checker: $(OBJ_DIR)/test_json_checker.o $(OBJ_DIR)/json_checker.o $(OBJ_DIR)/unity.o
+	$(CC) $(LDFLAGS) $^ -o $@
 
 $(BIN_DIR)/test_mu_json: $(OBJ_DIR)/test_mu_json.o $(OBJ_DIR)/mu_json.o $(OBJ_DIR)/unity.o
 	$(CC) $(LDFLAGS) $^ -o $@
