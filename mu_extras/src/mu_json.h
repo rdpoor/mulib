@@ -138,12 +138,22 @@ typedef enum {
 typedef struct {
     mu_str_t str;              // slice of the original JSON string
     mu_json_token_type_t type; // token type
+    int depth;                 // structure depth
 } mu_json_token_t;
 
 typedef struct {
   size_t item_count;  // # of items emitted at this level
   bool is_object;     // if true, use ':' separator else use ',' separator
 } mu_json_level_t;
+
+/**
+ * @brief Signature for a user-supplied function to write a single JSON byte
+ *
+ * @param ch Reference destination for byte read
+ * @param arg User-supplied argument passed in from mu_json_emit_init()
+ * @return true if the character was successfully read
+ */
+typedef bool (*mu_json_reader_fn)(uint8_t *ch, uintptr_t arg);
 
 /**
  * @brief Signature for a user-supplied function to write a single JSON byte
@@ -165,10 +175,34 @@ typedef struct {
 // *****************************************************************************
 // Public declarations
 
-int mu_json_parse_str(mu_str_t *json, mu_json_token_t *tokens, size_t max_tokens);
+int mu_json_parse_stream(mu_json_tokens_t *tokens, // user-supplied token store
+                         size_t max_tokens,        // max number of tokens
+                         mu_json_reader_fn reader, // user-supplied char reader
+                         void *reader_arg);        // arg passed to reader
+int mu_json_parse_mu_str(mu_json_tokens_t *tokens, // user-supplied token store
+                         size_t max_tokens,        // max number of tokens
+                         mu_str_t *str);           // mu_str of JSON
+int mu_json_parse_cstr(mu_json_tokens_t *tokens,   // user-supplied token store
+                       size_t max_tokens,          // max number of tokens
+                       const char *cstr);          // const char *JSON string
 
-int mu_json_parse_cstr(const char *json, mu_json_token_t *tokens,
-                       size_t max_tokens);
+mu_json_token_type_t mu_json_token_type(mu_json_token_t *token);
+int mu_json_token_level(mu_json_token_t *token);
+const char *mu_json_token_string(mu_json_token_t *token);
+int mu_json_token_string_length(mu_json_token_t *token);
+
+// Parsing one token at a time.  Is this possible without keeping an array of
+// parsed tokens?  Repeatedly scanning sub-elements doesn't work in a stream
+// context (you can't back up).  But if MU_JSON_TOKEN_TYPE_OBJECT doesn't span
+// the whole string to the closing '}', then it could work.
+bool mu_json_parser_init_from_stream(mu_json_parser_t *parser,
+                                mu_json_reader_fn reader,
+                                void *reader_arg);
+bool mu_json_parser_init_from_mu_str(mu_json_parser_t *parser,
+                                     mu_str_t *json);
+bool mu_json_parser_init_from_cstr(mu_json_parser_t *parser,
+                                   const char *json);
+int mu_json_parse_token(mu_json_parser_t *parser, mu_json_token_t *token);
 
 mu_json_emitter_t *mu_json_emit_init(mu_json_emitter_t *emitter,
                                      mu_json_level_t *levels, size_t max_levels,

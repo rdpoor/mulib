@@ -102,6 +102,21 @@ void test_mu_str_init(void) {
     TEST_ASSERT_TRUE(mu_str_is_empty(&s3));
 }
 
+void test_mu_str_ref(void) {
+    mu_str_t s1;
+    uint8_t byte = 'c';
+    mu_str_init_cstr(&s1, "ab");
+
+    TEST_ASSERT_FALSE(mu_str_ref(&s1, -1, &byte));
+    TEST_ASSERT_EQUAL_INT('\0', byte);
+    TEST_ASSERT_TRUE(mu_str_ref(&s1, 0, &byte));
+    TEST_ASSERT_EQUAL_INT('a', byte);
+    TEST_ASSERT_TRUE(mu_str_ref(&s1, 1, &byte));
+    TEST_ASSERT_EQUAL_INT('b', byte);
+    TEST_ASSERT_FALSE(mu_str_ref(&s1, 2, &byte));
+    TEST_ASSERT_EQUAL_INT('\0', byte);
+}
+
 void test_mu_str_copy(void) {
     mu_str_t s1, s2;
     uint8_t buf[10];
@@ -690,6 +705,7 @@ int main(void) {
     UNITY_BEGIN();
 
     RUN_TEST(test_mu_str_init);
+    RUN_TEST(test_mu_str_ref);
     RUN_TEST(test_mu_str_copy);
     RUN_TEST(test_mu_str_compare);
     RUN_TEST(test_mu_str_compare_cstr);

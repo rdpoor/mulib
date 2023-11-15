@@ -80,6 +80,16 @@ const uint8_t *mu_str_bytes(mu_str_t *str) { return str->bytes; }
 
 int mu_str_length(mu_str_t *str) { return str->len; }
 
+bool mu_str_ref(mu_str_t *str, int index, uint8_t *ch) {
+    if (index < 0 || index >= str->len) {
+        *ch = '\0';
+        return false;
+    } else {
+        *ch = str->bytes[index];
+        return true;
+    }
+}
+
 bool mu_str_is_empty(mu_str_t *str) { return mu_str_length(str) == 0; }
 
 mu_str_t *mu_str_copy(mu_str_t *dst, mu_str_t *src) {

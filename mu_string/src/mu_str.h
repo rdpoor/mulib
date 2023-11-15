@@ -94,6 +94,11 @@ const uint8_t *mu_str_bytes(mu_str_t *str);
 int mu_str_length(mu_str_t *str);
 
 /**
+ * @brief Access the index'th byte in the mu_str and return it by reference.
+ */
+bool mu_str_ref(mu_str_t *str, int index, uint8_t *ch);
+
+/**
  * @brief Return true if there are no bytes in the mu_str's data buffer.
  */
 bool mu_str_is_empty(mu_str_t *str);
