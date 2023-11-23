@@ -23,6 +23,74 @@
  */
 
 /**
+
+General strategy:
+
+In mu_jparse, each JSON entity is captured in a mu_jparse_token_t structure:
+
+typedef struct {
+    mu_str_t str;                // slice of the original JSON string
+    mu_jparse_token_type_t type; // token type (ARRAY, OBJECT, STRING, ...)
+    int depth;                   // 0 = toplevel, 1 = child of toplevel...
+} mu_jparse_token_t;
+
+Parsing the JSON string is done with a compact table-driven push-down parser.
+Rather than keep an explicit stack of parser states, the list of parsed tokens
+provides the information needed for the parser.  For example, the JSON string:
+
+  {"a":[1,2.5],"b":true}
+
+will parse into a list of seven tokens:
+
+i: slice                 , type    , depth, container, siblings
+0: {"a":[1,2.5],"b":true}, OBJECT  , 0    , NULL     , 0
+1: "a"                   , STRING  , 1    , OBJECT   , 0
+2: [1,2]                 , ARRAY   , 1    , OBJECT   , 1
+3: 1                     , INTEGER , 2    , ARRAY    , 0
+4: 2.5                   , NUMBER  , 2    , ARRAY    , 1
+5: "b"                   , STRING  , 1    , OBJECT   , 2
+6: true                  , TRUE    , 1    , OBJECT   , 3
+
+A few things to note:
+
+depth tells us how many levels deep the parser is
+container is the type of the container (or NULL to top level)
+siblings is how many elements are in the current container.  For OBJECT
+  containers, an even-numbered sibling is always the key, odd is the value.
+
+Therefore, the container determines the parser that is in effect after an
+element is parsed.
+
+
+
+  ch prev_state    action      depth
+
+     value
+  {  object
+  "    in_string     open(str)   1
+  a  in_string      in_string     -           1
+  "  in_string      expect_key    close(str)  1
+  :  expect_key     expect_entity -           1
+  [  expect_entity  expect_entity open(arr)   2
+  1  in_number      in_number     open(num)   2
+  ,  in_number      expect_entity close(num)  2
+  2  expect_entity  in_number     open(num)   2
+  ]  in_number
+  ,
+  "
+  b
+  "
+  :
+  t
+  r
+  u
+  e
+  }
+
+
+ */
+
+/**
  *
  * SEE:
  *   https://github.com/nst/JSONTestSuite
@@ -161,41 +229,43 @@ case PARSE_NULL2:
 // ****************************************************************************=
 // Private types and definitions
 
+#define __   -1     /* the universal error code */
+
 typedef enum {
-    CH_SPACE,  /* space */
-    CH_WHITE,  /* other whitespace */
-    CH_LCURB,  /* {  */
-    CH_RCURB,  /* } */
-    CH_LSQRB,  /* [ */
-    CH_RSQRB,  /* ] */
-    CH_COLON,  /* : */
-    CH_COMMA,  /* , */
-    CH_QUOTE,  /* " */
-    CH_BACKS,  /* \ */
-    CH_SLASH,  /* / */
-    CH_PLUS,   /* + */
-    CH_MINUS,  /* - */
-    CH_POINT,  /* . */
-    CH_ZERO ,  /* 0 */
-    CH_DIGIT,  /* 123456789 */
-    CH_LOW_A,  /* a */
-    CH_LOW_B,  /* b */
-    CH_LOW_C,  /* c */
-    CH_LOW_D,  /* d */
-    CH_LOW_E,  /* e */
-    CH_LOW_F,  /* f */
-    CH_LOW_L,  /* l */
-    CH_LOW_N,  /* n */
-    CH_LOW_R,  /* r */
-    CH_LOW_S,  /* s */
-    CH_LOW_T,  /* t */
-    CH_LOW_U,  /* u */
-    CH_ABCDF,  /* ABCDF */
-    CH_E,      /* E */
-    CH_EOS,    /* end of string */
-    CH_ETC,    /* everything else */
-    CH_CLASS_MAX
-} ch_class_t;
+    C_SPACE,  /* space */
+    C_WHITE,  /* other whitespace */
+    C_LCURB,  /* {  */
+    C_RCURB,  /* } */
+    C_LSQRB,  /* [ */
+    C_RSQRB,  /* ] */
+    C_COLON,  /* : */
+    C_COMMA,  /* , */
+    C_QUOTE,  /* " */
+    C_BACKS,  /* \ */
+    C_SLASH,  /* / */
+    C_PLUS,   /* + */
+    C_MINUS,  /* - */
+    C_POINT,  /* . */
+    C_ZERO ,  /* 0 */
+    C_DIGIT,  /* 123456789 */
+    C_LOW_A,  /* a */
+    C_LOW_B,  /* b */
+    C_LOW_C,  /* c */
+    C_LOW_D,  /* d */
+    C_LOW_E,  /* e */
+    C_LOW_F,  /* f */
+    C_LOW_L,  /* l */
+    C_LOW_N,  /* n */
+    C_LOW_R,  /* r */
+    C_LOW_S,  /* s */
+    C_LOW_T,  /* t */
+    C_LOW_U,  /* u */
+    C_ABCDF,  /* ABCDF */
+    C_E,      /* E */
+    C_EOS,    /* end of string */
+    C_ETC,    /* everything else */
+    C_CLASS_MAX
+} c_class_t;
 
 typedef enum {
     S_GO,  /* start    */
@@ -232,27 +302,27 @@ typedef enum {
     STATE_MAX
 } state_t;
 
-typedef enum {
-	A_SA,   // start array
-	A_EA,   // end array
-	A_SO,   // start object
-	A_EO,   // end object
-	A_SS,   // start string
-	A_ES,   // end string
-	A_SN,   // start number
-	A_EN,   // end number
-	A_ST,   // start true
-	A_ET,   // end true
-	A_SF,   // start false
-	A_EF,   // end false
-	A_SU,   // start nUll
-	A_EU,   // end nUll
-} action_t;
-
 /**
  * @brief Set the 0x80 bit to signify this is an action rather than a state
  */
 #define A(a) ((state_t)((a) | 0x80))
+
+typedef enum {
+	SA,   // start array
+	EA,   // end array
+	SO,   // start object
+	EO,   // end object
+	SS,   // start string
+	ES,   // end string
+	SN,   // start number
+	EN,   // end number
+	ST,   // start true
+	ET,   // end true
+	SF,   // start false
+	EF,   // end false
+	SU,   // start nUll
+	EU,   // end nUll
+} action_t;
 
 typedef struct {
 	mu_jparse_jtree_t *tree;  // the array of tokens and overall count / status
@@ -263,35 +333,71 @@ typedef struct {
 // ****************************************************************************=
 // Private (static) storage
 
+// clang-format off
 /**
  * @brief Map an ASCII character to a ch_state_t.
  */
-static ch_class_t s_ch_class_map[] = {
-    __,       __,       __,       __,       __,       __,       __,       __,
-    __,       CH_WHITE, CH_WHITE, __,       __,       CH_WHITE, __,       __,
-    __,       __,       __,       __,       __,       __,       __,       __,
-    __,       __,       __,       __,       __,       __,       __,       __,
+static c_class_t s_c_class_map[] = {
+    __,      __,      __,      __,      __,      __,      __,      __,
+    __,      C_WHITE, C_WHITE, __,      __,      C_WHITE, __,      __,
+    __,      __,      __,      __,      __,      __,      __,      __,
+    __,      __,      __,      __,      __,      __,      __,      __,
 
-    CH_SPACE, CH_ETC,   CH_QUOTE, CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
-    CH_ETC,   CH_ETC,   CH_ETC,   CH_PLUS,  CH_COMMA, CH_MINUS, CH_POINT, CH_SLASH,
-    CH_ZERO,  CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT,
-    CH_DIGIT, CH_DIGIT, CH_COLON, CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
+    C_SPACE, C_ETC,   C_QUOTE, C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_PLUS,  C_COMMA, C_MINUS, C_POINT, C_SLASH,
+    C_ZERO,  C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT,
+    C_DIGIT, C_DIGIT, C_COLON, C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
 
-    CH_ETC,   CH_ABCDF, CH_ABCDF, CH_ABCDF, CH_ABCDF, CH_E,     CH_ABCDF, CH_ETC,
-    CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
-    CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
-    CH_ETC,   CH_ETC,   CH_ETC,   CH_LSQRB, CH_BACKS, CH_RSQRB, CH_ETC,   CH_ETC,
+    C_ETC,   C_ABCDF, C_ABCDF, C_ABCDF, C_ABCDF, C_E,     C_ABCDF, C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_LSQRB, C_BACKS, C_RSQRB, C_ETC,   C_ETC,
 
-    CH_ETC,   CH_LOW_A, CH_LOW_B, CH_LOW_C, CH_LOW_D, CH_LOW_E, CH_LOW_F, CH_ETC,
-    CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_LOW_L, CH_ETC,   CH_LOW_N, CH_ETC,
-    CH_ETC,   CH_ETC,   CH_LOW_R, CH_LOW_S, CH_LOW_T, CH_LOW_U, CH_ETC,   CH_ETC,
-    CH_ETC,   CH_ETC,   CH_ETC,   CH_LCURB, CH_ETC,   CH_RCURB, CH_ETC,   CH_ETC
+    C_ETC,   C_LOW_A, C_LOW_B, C_LOW_C, C_LOW_D, C_LOW_E, C_LOW_F, C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_ETC,   C_LOW_L, C_ETC,   C_LOW_N, C_ETC,
+    C_ETC,   C_ETC,   C_LOW_R, C_LOW_S, C_LOW_T, C_LOW_U, C_ETC,   C_ETC,
+    C_ETC,   C_ETC,   C_ETC,   C_LCURB, C_ETC,   C_RCURB, C_ETC,   C_ETC
 };
+// clang-format on
 
-static int8_t s_state_map[STATE_MAX][CH_CLASS_MAX] = {
-	{},
-	{}
+// clang-format off
+static int8_t s_state_map[STATE_MAX][C_CLASS_MAX] = {
+//
+//                 white                                                                  1-9                                                             ABCDF      etc
+//            space  |    {    }    [    ]    :    ,    "    \    /    +    -    .    0    |    a    b    c    d    e    f    l    n    r    s    t    u    |    E    |*/
+/*start  GO*/ {GO,  GO,A(SA),  __,  -5,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*ok     OK*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*object OB*/ {OB,  OB,  __,  -9,  __,  __,  __,  __,  ST,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*key    KE*/ {KE,  KE,  __,  __,  __,  __,  __,  __,  ST,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*colon  CO*/ {CO,  CO,  __,  __,  __,  __,  -2,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*value  VA*/ {VA,  VA,  -6,  __,  -5,  __,  __,  __,  ST,  __,  __,  __,  MI,  __,  ZE,  IN,  __,  __,  __,  __,  __,  F1,  __,  N1,  __,  __,  T1,  __,  __,  __,  __},
+/*array  AR*/ {AR,  AR,  -6,  __,  -5,  -7,  __,  __,  ST,  __,  __,  __,  MI,  __,  ZE,  IN,  __,  __,  __,  __,  __,  F1,  __,  N1,  __,  __,  T1,  __,  __,  __,  __},
+/*string ST*/ {ST,  __,  ST,  ST,  ST,  ST,  ST,  ST,  -4,  ES,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST},
+/*escape ES*/ {__,  __,  __,  __,  __,  __,  __,  __,  ST,  ST,  ST,  __,  __,  __,  __,  __,  __,  ST,  __,  __,  __,  ST,  __,  ST,  ST,  __,  ST,  U1,  __,  __,  __},
+/*u1     U1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  U2,  U2,  U2,  U2,  U2,  U2,  U2,  U2,  __,  __,  __,  __,  __,  __,  U2,  U2,  __},
+/*u2     U2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  U3,  U3,  U3,  U3,  U3,  U3,  U3,  U3,  __,  __,  __,  __,  __,  __,  U3,  U3,  __},
+/*u3     U3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  U4,  U4,  U4,  U4,  U4,  U4,  U4,  U4,  __,  __,  __,  __,  __,  __,  U4,  U4,  __},
+/*u4     U4*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  __,  __,  __,  __,  __,  __,  ST,  ST,  __},
+/*minus  MI*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  ZE,  IN,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*zero   ZE*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  FR,  __,  __,  __,  __,  __,  __,  E1,  __,  __,  __,  __,  __,  __,  __,  __,  E1,  __},
+/*int    IN*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  FR,  IN,  IN,  __,  __,  __,  __,  E1,  __,  __,  __,  __,  __,  __,  __,  __,  E1,  __},
+/*frac   FR*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  FS,  FS,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*fracs  FS*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  __,  FS,  FS,  __,  __,  __,  __,  E1,  __,  __,  __,  __,  __,  __,  __,  __,  E1,  __},
+/*e      E1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  E2,  E2,  __,  E3,  E3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*ex     E2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  E3,  E3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*exp    E3*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  __,  E3,  E3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*tr     T1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  T2,  __,  __,  __,  __,  __,  __},
+/*tru    T2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  T3,  __,  __,  __},
+/*true   T3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  OK,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*fa     F1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  F2,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*fal    F2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  F3,  __,  __,  __,  __,  __,  __,  __,  __},
+/*fals   F3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  F4,  __,  __,  __,  __,  __},
+/*false  F4*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  OK,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
+/*nu     N1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  N2,  __,  __,  __},
+/*nul    N2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  N3,  __,  __,  __,  __,  __,  __,  __,  __},
+/*null   N3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  OK,  __,  __,  __,  __,  __,  __,  __,  __}
 };
+// clang-format on
 
 // ****************************************************************************=
 // Private (forward) declarations
@@ -317,7 +423,7 @@ static bool parser_step(parser_t *parser);
  *
  * NOTE: this post-increments the character pointer.
  */
-static ch_class_t classify_next_char(parser_t *parser)
+static c_class_t classify_next_char(parser_t *parser)
 
 
 /**
@@ -328,6 +434,7 @@ static ch_class_t classify_next_char(parser_t *parser)
  * is on, this triggers an action rather than a simple state transtion.
  */
 static inline bool state_is_action(state_t state) { return state & 0x80; }
+
 
 // ****************************************************************************=
 // Public code
@@ -426,7 +533,7 @@ static parser_t *parser_init(parser_t *parser, mu_parse_tree *tree,
 }
 
 static bool parser_step(parser_t *parser) {
-	ch_class_t ch_class = classify_next_char(parser);
+	c_class_t ch_class = classify_next_char(parser);
 	state_t next_state = get_state(parser->state, ch_class);
 	if (state_is_action(next_state)) {
 		process_action(parser, next_state);
@@ -436,7 +543,7 @@ static bool parser_step(parser_t *parser) {
 	return false;
 }
 
-static ch_class_t classify_next_char(parser_t *parser) {
+static c_class_t classify_next_char(parser_t *parser) {
 	if (parser->char_index >= mu_str_length(parser->json)) {
 		// At end of JSON string, class => CL_EOS
 		return CH_EOS;
@@ -445,11 +552,64 @@ static ch_class_t classify_next_char(parser_t *parser) {
     // TODO: implement mu_str_ref()?
 	uint8_t ch = mu_str_bytes(parser->json)[parser->char_index++];
 
-	if (ch > sizeof(s_ch_class_map)) {
+	if (ch > sizeof(s_c_class_map)) {
 		// ch out of range of lookup table.  class => CL_ETC
 		return CH_ETC;
 	} else {
 		// look up ch_class from table.
-		return s_ch_class_map[ch];
+		return s_c_class_map[ch];
 	}
+}
+
+static void process_action(parser_t *parser, state_t next_state) {
+	mu_jparse_token_t *token;
+	action_t action = next_state & 0x7f; // strip action bit
+	// TODO: convert to table dispatch
+
+	switch(action) {
+	case SA: {
+        // start array
+        alloc_token(parser, MU_JPARSE_TOKEN_TYPE_OBJECT, true);
+    } break;
+	case EA: {
+        // end array
+    } break;
+	case SO: {
+        // start object
+    } break;
+	case EO: {
+        // end object
+    } break;
+	case SS: {
+        // start string
+    } break;
+	case ES: {
+        // end string
+    } break;
+	case SN: {
+        // start number
+    } break;
+	case EN: {
+        // end number
+    } break;
+	case ST: {
+        // start true
+    } break;
+	case ET: {
+        // end true
+    } break;
+	case SF: {
+        // start false
+    } break;
+	case EF: {
+        // end false
+    } break;
+	case SU: {
+        // start nUll
+    } break;
+	case EU: {
+        // end nUll
+    } break;
+
+	} // switch
 }
