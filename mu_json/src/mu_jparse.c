@@ -162,39 +162,97 @@ case PARSE_NULL2:
 // Private types and definitions
 
 typedef enum {
-    C_SPACE,  /* space */
-    C_WHITE,  /* other whitespace */
-    C_LCURB,  /* {  */
-    C_RCURB,  /* } */
-    C_LSQRB,  /* [ */
-    C_RSQRB,  /* ] */
-    C_COLON,  /* : */
-    C_COMMA,  /* , */
-    C_QUOTE,  /* " */
-    C_BACKS,  /* \ */
-    C_SLASH,  /* / */
-    C_PLUS,   /* + */
-    C_MINUS,  /* - */
-    C_POINT,  /* . */
-    C_ZERO ,  /* 0 */
-    C_DIGIT,  /* 123456789 */
-    C_LOW_A,  /* a */
-    C_LOW_B,  /* b */
-    C_LOW_C,  /* c */
-    C_LOW_D,  /* d */
-    C_LOW_E,  /* e */
-    C_LOW_F,  /* f */
-    C_LOW_L,  /* l */
-    C_LOW_N,  /* n */
-    C_LOW_R,  /* r */
-    C_LOW_S,  /* s */
-    C_LOW_T,  /* t */
-    C_LOW_U,  /* u */
-    C_ABCDF,  /* ABCDF */
-    C_E,      /* E */
-    C_ETC,    /* everything else */
-    NR_CH_CLASSES
+    CH_SPACE,  /* space */
+    CH_WHITE,  /* other whitespace */
+    CH_LCURB,  /* {  */
+    CH_RCURB,  /* } */
+    CH_LSQRB,  /* [ */
+    CH_RSQRB,  /* ] */
+    CH_COLON,  /* : */
+    CH_COMMA,  /* , */
+    CH_QUOTE,  /* " */
+    CH_BACKS,  /* \ */
+    CH_SLASH,  /* / */
+    CH_PLUS,   /* + */
+    CH_MINUS,  /* - */
+    CH_POINT,  /* . */
+    CH_ZERO ,  /* 0 */
+    CH_DIGIT,  /* 123456789 */
+    CH_LOW_A,  /* a */
+    CH_LOW_B,  /* b */
+    CH_LOW_C,  /* c */
+    CH_LOW_D,  /* d */
+    CH_LOW_E,  /* e */
+    CH_LOW_F,  /* f */
+    CH_LOW_L,  /* l */
+    CH_LOW_N,  /* n */
+    CH_LOW_R,  /* r */
+    CH_LOW_S,  /* s */
+    CH_LOW_T,  /* t */
+    CH_LOW_U,  /* u */
+    CH_ABCDF,  /* ABCDF */
+    CH_E,      /* E */
+    CH_EOS,    /* end of string */
+    CH_ETC,    /* everything else */
+    CH_CLASS_MAX
 } ch_class_t;
+
+typedef enum {
+    S_GO,  /* start    */
+    S_OK,  /* ok       */
+    S_OB,  /* object   */
+    S_KE,  /* key      */
+    S_CO,  /* colon    */
+    S_VA,  /* value    */
+    S_AR,  /* array    */
+    S_ST,  /* string   */
+    S_ES,  /* escape   */
+    S_U1,  /* u1       */
+    S_U2,  /* u2       */
+    S_U3,  /* u3       */
+    S_U4,  /* u4       */
+    S_MI,  /* minus    */
+    S_ZE,  /* zero     */
+    S_IN,  /* integer  */
+    S_FR,  /* fraction */
+    S_FS,  /* fraction */
+    S_E1,  /* e        */
+    S_E2,  /* ex       */
+    S_E3,  /* exp      */
+    S_T1,  /* tr       */
+    S_T2,  /* tru      */
+    S_T3,  /* true     */
+    S_F1,  /* fa       */
+    S_F2,  /* fal      */
+    S_F3,  /* fals     */
+    S_F4,  /* false    */
+    S_N1,  /* nu       */
+    S_N2,  /* nul      */
+    S_N3,  /* null     */
+    STATE_MAX
+} state_t;
+
+typedef enum {
+	A_SA,   // start array
+	A_EA,   // end array
+	A_SO,   // start object
+	A_EO,   // end object
+	A_SS,   // start string
+	A_ES,   // end string
+	A_SN,   // start number
+	A_EN,   // end number
+	A_ST,   // start true
+	A_ET,   // end true
+	A_SF,   // start false
+	A_EF,   // end false
+	A_SU,   // start nUll
+	A_EU,   // end nUll
+} action_t;
+
+/**
+ * @brief Set the 0x80 bit to signify this is an action rather than a state
+ */
+#define A(a) ((state_t)((a) | 0x80))
 
 typedef struct {
 	mu_jparse_jtree_t *tree;  // the array of tokens and overall count / status
@@ -204,6 +262,36 @@ typedef struct {
 
 // ****************************************************************************=
 // Private (static) storage
+
+/**
+ * @brief Map an ASCII character to a ch_state_t.
+ */
+static ch_class_t s_ch_class_map[] = {
+    __,       __,       __,       __,       __,       __,       __,       __,
+    __,       CH_WHITE, CH_WHITE, __,       __,       CH_WHITE, __,       __,
+    __,       __,       __,       __,       __,       __,       __,       __,
+    __,       __,       __,       __,       __,       __,       __,       __,
+
+    CH_SPACE, CH_ETC,   CH_QUOTE, CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
+    CH_ETC,   CH_ETC,   CH_ETC,   CH_PLUS,  CH_COMMA, CH_MINUS, CH_POINT, CH_SLASH,
+    CH_ZERO,  CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT, CH_DIGIT,
+    CH_DIGIT, CH_DIGIT, CH_COLON, CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
+
+    CH_ETC,   CH_ABCDF, CH_ABCDF, CH_ABCDF, CH_ABCDF, CH_E,     CH_ABCDF, CH_ETC,
+    CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
+    CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,
+    CH_ETC,   CH_ETC,   CH_ETC,   CH_LSQRB, CH_BACKS, CH_RSQRB, CH_ETC,   CH_ETC,
+
+    CH_ETC,   CH_LOW_A, CH_LOW_B, CH_LOW_C, CH_LOW_D, CH_LOW_E, CH_LOW_F, CH_ETC,
+    CH_ETC,   CH_ETC,   CH_ETC,   CH_ETC,   CH_LOW_L, CH_ETC,   CH_LOW_N, CH_ETC,
+    CH_ETC,   CH_ETC,   CH_LOW_R, CH_LOW_S, CH_LOW_T, CH_LOW_U, CH_ETC,   CH_ETC,
+    CH_ETC,   CH_ETC,   CH_ETC,   CH_LCURB, CH_ETC,   CH_RCURB, CH_ETC,   CH_ETC
+};
+
+static int8_t s_state_map[STATE_MAX][CH_CLASS_MAX] = {
+	{},
+	{}
+};
 
 // ****************************************************************************=
 // Private (forward) declarations
@@ -223,6 +311,23 @@ static parser_t *parser_init(parser_t *parser, mu_parse_tree *tree,
  * a non-zero value on success.
  */
 static bool parser_step(parser_t *parser);
+
+/**
+ * @brief Read next char from JSON source, map to ch_class.
+ *
+ * NOTE: this post-increments the character pointer.
+ */
+static ch_class_t classify_next_char(parser_t *parser)
+
+
+/**
+ * @brief Return true if this given state triggers an action, not just a state
+ * transition.
+ *
+ * NOTE: States (and actions) are represented by a uint8_t.  When the 0x80 bit
+ * is on, this triggers an action rather than a simple state transtion.
+ */
+static inline bool state_is_action(state_t state) { return state & 0x80; }
 
 // ****************************************************************************=
 // Public code
@@ -321,5 +426,30 @@ static parser_t *parser_init(parser_t *parser, mu_parse_tree *tree,
 }
 
 static bool parser_step(parser_t *parser) {
+	ch_class_t ch_class = classify_next_char(parser);
+	state_t next_state = get_state(parser->state, ch_class);
+	if (state_is_action(next_state)) {
+		process_action(parser, next_state);
+	} else {
+		parser->state = next_state;
+	}
 	return false;
+}
+
+static ch_class_t classify_next_char(parser_t *parser) {
+	if (parser->char_index >= mu_str_length(parser->json)) {
+		// At end of JSON string, class => CL_EOS
+		return CH_EOS;
+	}
+
+    // TODO: implement mu_str_ref()?
+	uint8_t ch = mu_str_bytes(parser->json)[parser->char_index++];
+
+	if (ch > sizeof(s_ch_class_map)) {
+		// ch out of range of lookup table.  class => CL_ETC
+		return CH_ETC;
+	} else {
+		// look up ch_class from table.
+		return s_ch_class_map[ch];
+	}
 }
