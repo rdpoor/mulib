@@ -45,7 +45,7 @@ will parse into a list of seven tokens:
 i: slice                 , type    , depth, container, siblings
 0: {"a":[1,2.5],"b":true}, OBJECT  , 0    , NULL     , 0
 1: "a"                   , STRING  , 1    , OBJECT   , 0
-2: [1,2]                 , ARRAY   , 1    , OBJECT   , 1
+2: [1,2.5]               , ARRAY   , 1    , OBJECT   , 1
 3: 1                     , INTEGER , 2    , ARRAY    , 0
 4: 2.5                   , NUMBER  , 2    , ARRAY    , 1
 5: "b"                   , STRING  , 1    , OBJECT   , 2
@@ -60,6 +60,24 @@ siblings is how many elements are in the current container.  For OBJECT
 
 Therefore, the container determines the parser that is in effect after an
 element is parsed.
+
+EXPECT_ENTITY: whitespace, '[', '{', '"', digit, 't', 'f', 'n'
+IN_ARRAY: whitespace, ',', ']'
+  ',' => state = ENTITY,
+  ']' => action = CLOSE_ARRAY, state => POP_STATE
+IN_OBJECT_EVEN: whitespace, ':'
+  ':' => EXPECT_STRING
+IN_OBJECT_ODD: whitespace, ',', '}'
+  ',' => EXPECT_ENTITY
+  '}' => action = CLOSE_OBJECT, state = POP_STATE
+EXPECT_STRING: whitespace, '"'
+  '"' => IN_STRING
+IN_STRING:
+IN_NUMBER:
+IN_TRUE:
+IN_FALSE:
+IN_NULL:
+
 
 
 
