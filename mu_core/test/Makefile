@@ -1,14 +1,17 @@
 # Compile and run unit tests
 CC := gcc
 CFLAGS := -Wall -g
-
 DEPFLAGS := -MMD -MP
+GCOVFLAGS := -fprofile-arcs -ftest-coverage
+# Add coverage flags also to the linker flags
+LFLAGS := $(GCOVFLAGS)
 
 SRC_DIR := ../src
 TEST_DIR := ../test
 TEST_SUPPORT_DIR := ../../test_support
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
+COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
 	$(SRC_DIR)/mu_array.c \
@@ -31,10 +34,10 @@ EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
 # Prevent makefile from automatically deleting object files
 .SECONDARY: $(SRC_OBJS) $(TEST_OBJS) $(TEST_SUPPORT_OBJS)
 
-$(info SRC_OBJS = $(SRC_OBJS))
-$(info TEST_OBJS = $(TEST_OBJS))
-$(info TEST_SUPPORT_OBJS = $(TEST_SUPPORT_OBJS))
-$(info EXECUTABLES = $(EXECUTABLES))
+# $(info SRC_OBJS = $(SRC_OBJS))
+# $(info TEST_OBJS = $(TEST_OBJS))
+# $(info TEST_SUPPORT_OBJS = $(TEST_SUPPORT_OBJS))
+# $(info EXECUTABLES = $(EXECUTABLES))
 
 .PHONY: all run-tests clean
 
@@ -46,8 +49,30 @@ run-tests: all
 		./$$test; \
 	done
 
+run-coverage:
+	# Determine absolute paths
+	# TEST_DIR_ABS=$$(realpath $(TEST_DIR))
+	# TEST_SUPPORT_DIR_ABS=$$(realpath $(TEST_SUPPORT_DIR))
+
+	# Clean and rebuild everything with coverage flags
+	$(MAKE) clean
+	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"
+	# Run tests to generate coverage data
+	@for test in $(EXECUTABLES) ; do \
+		./$$test; \
+	done
+	# Capture initial coverage data
+	lcov --capture --directory $(OBJ_DIR) --output-file coverage.info
+	# Remove coverage data for test and test_support directories using absolute paths
+	# lcov --remove coverage.info "$(TEST_DIR_ABS)/*" "$(TEST_SUPPORT_DIR_ABS)/*" --output-file coverage.info.cleaned
+	# Generate coverage report
+	genhtml coverage.info --output-directory $(COVERAGE_DIR)
+	@echo "Coverage report generated in $(COVERAGE_DIR)"
+	# Optional: Clean up intermediate coverage files
+	# rm -f coverage.info coverage.info.cleaned
+
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR)
 
 # Compile and generate dependencies for source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -69,4 +94,4 @@ $(OBJ_DIR)/%.o: $(TEST_SUPPORT_DIR)/%.c
 # Link object files to create executables
 $(BIN_DIR)/%: $(OBJ_DIR)/%.o $(SRC_OBJS) $(TEST_SUPPORT_OBJS)
 	mkdir -p $(BIN_DIR)
-	$(CC) $^ -o $@
+	$(CC) $(LFLAGS) $^ -o $@

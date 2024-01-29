@@ -16,7 +16,7 @@ void tearDown(void) {
 
 void test_queue_init(void) {
     mu_queue_t q;
-    void *storage[3];
+    void *storage[QUEUE_CAPACITY];
 
     TEST_ASSERT_EQUAL_PTR(mu_queue_init(&q, storage, QUEUE_CAPACITY), &q);
     TEST_ASSERT_EQUAL_INT(QUEUE_CAPACITY, mu_queue_capacity(&q));
@@ -33,20 +33,25 @@ void test_queue_put(void) {
     mu_queue_init(&q, storage, QUEUE_CAPACITY);
     TEST_ASSERT_TRUE(mu_queue_is_empty(&q));
     TEST_ASSERT_FALSE(mu_queue_is_full(&q));
+    TEST_ASSERT_EQUAL_INT(mu_queue_count(&q), 0);
 
     TEST_ASSERT_TRUE(mu_queue_put(&q, obj_a));
     TEST_ASSERT_FALSE(mu_queue_is_empty(&q));
     TEST_ASSERT_FALSE(mu_queue_is_full(&q));
+    TEST_ASSERT_EQUAL_INT(mu_queue_count(&q), 1);
 
     TEST_ASSERT_TRUE(mu_queue_put(&q, obj_b));
     TEST_ASSERT_FALSE(mu_queue_is_empty(&q));
     TEST_ASSERT_FALSE(mu_queue_is_full(&q));
+    TEST_ASSERT_EQUAL_INT(mu_queue_count(&q), 2);
 
     TEST_ASSERT_TRUE(mu_queue_put(&q, obj_c));
     TEST_ASSERT_FALSE(mu_queue_is_empty(&q));
     TEST_ASSERT_TRUE(mu_queue_is_full(&q));
+    TEST_ASSERT_EQUAL_INT(mu_queue_count(&q), 3);
 
     TEST_ASSERT_FALSE(mu_queue_put(&q, obj_d));  // is now full
+    TEST_ASSERT_EQUAL_INT(mu_queue_count(&q), 3);
 }
 
 void test_queue_get(void) {
@@ -119,28 +124,32 @@ void test_queue_wraparaound(void) {
     char *obj_b = "b";
     char *obj_c = "c";
     char *obj_d = "d";
-    char *obj_e = "e";
-    char *obj_f = "f";
     void *obj;
 
     // fill the queue
     mu_queue_init(&q, storage, QUEUE_CAPACITY);
-    mu_queue_put(&q, obj_a);
-    mu_queue_put(&q, obj_b);
-    mu_queue_put(&q, obj_c);
+    TEST_ASSERT_EQUAL_INT(q.index, 0);         // (circumventing the API)
+    TEST_ASSERT_TRUE(mu_queue_put(&q, obj_a)); // [- - -] => [a - -]
+    TEST_ASSERT_EQUAL_INT(q.index, 1);         // (circumventing the API)
 
     // fetch one, put another...
-    TEST_ASSERT_TRUE(mu_queue_get(&q, &obj));  // [a b c] => [b c]
+    TEST_ASSERT_TRUE(mu_queue_get(&q, &obj));  // [a - -] => [- - -]
+    TEST_ASSERT_EQUAL_INT(q.index, 1);         // (circumventing the API)
     TEST_ASSERT_EQUAL_PTR(obj, obj_a);
-    TEST_ASSERT_TRUE(mu_queue_put(&q, obj_d)); // [b c] => [b c d]
+    TEST_ASSERT_TRUE(mu_queue_put(&q, obj_b)); // [- - -] => [- b -]
+    TEST_ASSERT_EQUAL_INT(q.index, 2);         // (circumventing the API)
 
-    TEST_ASSERT_TRUE(mu_queue_get(&q, &obj));  // [b c d] => [c d]
+    TEST_ASSERT_TRUE(mu_queue_get(&q, &obj));  // [- b -] => [- - -]
+    TEST_ASSERT_EQUAL_INT(q.index, 2);         // (circumventing the API)
     TEST_ASSERT_EQUAL_PTR(obj, obj_b);
-    TEST_ASSERT_TRUE(mu_queue_put(&q, obj_e)); // [c d] => [c d e]
+    TEST_ASSERT_TRUE(mu_queue_put(&q, obj_c)); // [- - -] => [- - c]
+    TEST_ASSERT_EQUAL_INT(q.index, 0);         // (circumventing the API)
 
-    TEST_ASSERT_TRUE(mu_queue_get(&q, &obj));  // [c d e] => [d e]
+    TEST_ASSERT_TRUE(mu_queue_get(&q, &obj));  // [c - -] => [- - -]
+    TEST_ASSERT_EQUAL_INT(q.index, 0);         // (circumventing the API)
     TEST_ASSERT_EQUAL_PTR(obj, obj_c);
-    TEST_ASSERT_TRUE(mu_queue_put(&q, obj_f)); // [d e] => [d e f]
+    TEST_ASSERT_TRUE(mu_queue_put(&q, obj_d)); // [- - -] => [d - -]
+    TEST_ASSERT_EQUAL_INT(q.index, 1);         // (circumventing the API)
 }
 
 
@@ -158,11 +167,13 @@ void test_queue_reset(void) {
 
     TEST_ASSERT_FALSE(mu_queue_is_empty(&q));
     TEST_ASSERT_TRUE(mu_queue_is_full(&q));
+    TEST_ASSERT_EQUAL_INT(mu_queue_count(&q), 3);
 
     TEST_ASSERT_EQUAL_PTR(mu_queue_reset(&q), &q);
 
     TEST_ASSERT_TRUE(mu_queue_is_empty(&q));
     TEST_ASSERT_FALSE(mu_queue_is_full(&q));
+    TEST_ASSERT_EQUAL_INT(mu_queue_count(&q), 0);
 }
 
 
