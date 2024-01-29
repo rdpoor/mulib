@@ -11,9 +11,13 @@ OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 
 SRC_FILES := \
+	$(SRC_DIR)/mu_array.c \
+	$(SRC_DIR)/mu_queue.c \
 	$(SRC_DIR)/mu_spsc.c
 
 TEST_FILES := \
+	$(TEST_DIR)/test_mu_array.c \
+	$(TEST_DIR)/test_mu_queue.c \
 	$(TEST_DIR)/test_mu_spsc.c
 
 TEST_SUPPORT_FILES := \
@@ -24,12 +28,13 @@ TEST_OBJS := $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_FILES))
 TEST_SUPPORT_OBJS := $(patsubst $(TEST_SUPPORT_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_SUPPORT_FILES))
 EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
 
+# Prevent makefile from automatically deleting object files
 .SECONDARY: $(SRC_OBJS) $(TEST_OBJS) $(TEST_SUPPORT_OBJS)
 
-# $(info SRC_OBJS = $(SRC_OBJS))
-# $(info TEST_OBJS = $(TEST_OBJS))
-# $(info TEST_SUPPORT_OBJS = $(TEST_SUPPORT_OBJS))
-# $(info EXECUTABLES = $(EXECUTABLES))
+$(info SRC_OBJS = $(SRC_OBJS))
+$(info TEST_OBJS = $(TEST_OBJS))
+$(info TEST_SUPPORT_OBJS = $(TEST_SUPPORT_OBJS))
+$(info EXECUTABLES = $(EXECUTABLES))
 
 .PHONY: all run-tests clean
 

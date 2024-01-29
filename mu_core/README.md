@@ -6,8 +6,8 @@ rule is that modules in `mu_core` may depend on other modules in `mu_core` and
 
 | module | descripton |
 |-----|-----|
-|'mu_pque' | queue of pointer-sized objects (LIFO) |
-|'mu_pvec' | vector of pointer-sized objects (FIFO) |
+|'mu_queue' | queue of pointer-sized objects (LIFO) |
+|'mu_array' | dense array of pointer-sized objects |
 |'mu_spsc' | single producer, single consumer thread-safe FIFO |
 |'mu_str' | safe, 'zero copy' operations on strings and slices of strings |
 |'mu_istr' | safe, in-place operations on string with an index field |
