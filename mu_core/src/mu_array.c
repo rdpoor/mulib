@@ -86,7 +86,7 @@ bool mu_array_push(mu_array_t *array, void *item) {
 
 bool mu_array_pop(mu_array_t *array, void **item) {
     if (!mu_array_is_empty(array)) {
-        *item = &array->storage[--array->count];
+        *item = array->storage[--array->count];
         return true;
     } else {
         return false;
@@ -95,7 +95,7 @@ bool mu_array_pop(mu_array_t *array, void **item) {
 
 bool mu_array_peek(mu_array_t *array, void **item) {
     if (!mu_array_is_empty(array)) {
-        *item = &array->storage[array->count - 1];
+        *item = array->storage[array->count - 1];
         return true;
     } else {
         return false;
@@ -104,7 +104,7 @@ bool mu_array_peek(mu_array_t *array, void **item) {
 
 bool mu_array_ref(mu_array_t *array, void **item, size_t index) {
     if (index < array->count) {
-        *item = &array->storage[index];
+        *item = array->storage[index];
         return true;
     } else {
         return false;
@@ -124,6 +124,8 @@ bool mu_array_insert(mu_array_t *array, void *item, size_t index) {
         void *src = &array->storage[index];
         void *dst = &array->storage[index + 1];
         memmove(dst, src, to_move * sizeof(void *));
+        // Store the item
+        array->storage[index] = item;
         array->count += 1;
         return true;
     }
@@ -138,7 +140,7 @@ bool mu_array_delete(mu_array_t *array, void **item, size_t index) {
         // optimize deleting at end (identical to mu_array_pop())
         *item = array->storage[--array->count];
     } else {
-        *item = &array->storage[index];
+        *item = array->storage[index];
         // close the hole at index
         int to_move = array->count - index;
         void *src = &array->storage[index + 1];

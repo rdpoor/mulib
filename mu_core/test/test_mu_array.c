@@ -17,6 +17,7 @@ void tearDown(void) {
 static int one = 1;
 static int two = 2;
 static int three = 3;
+static int four = 4;
 
 static int int_compare(void *a, void *b) {
     int int_a = *(int *)a;
@@ -330,38 +331,73 @@ void test_mu_array_rindex(void) {
 }
 
 void test_mu_array_sort(void) {
-    mu_array_t array;
+    mu_array_t a;
     void *storage[3];
 
     // test sorting an empty array: count remains zero
-    mu_array_init(&array, storage, sizeof(storage)/sizeof(storage[0]));
-    TEST_ASSERT_EQUAL_PTR(&array, mu_array_sort(&array, int_compare));
-    TEST_ASSERT_EQUAL_UINT(0, mu_array_count(&array));
+    mu_array_init(&a, storage, sizeof(storage)/sizeof(storage[0]));
+    TEST_ASSERT_EQUAL_PTR(&a, mu_array_sort(&a, int_compare));
+    TEST_ASSERT_EQUAL_UINT(0, mu_array_count(&a));
 
     // test sorting a non-empty array
-    mu_array_reset(&array);
-    mu_array_push(&array, &three);
-    mu_array_push(&array, &one);
-    mu_array_push(&array, &two);
-    TEST_ASSERT_EQUAL_PTR(&array, mu_array_sort(&array, int_compare));
+    mu_array_reset(&a);
+    mu_array_push(&a, &three);
+    mu_array_push(&a, &one);
+    mu_array_push(&a, &two);
+    TEST_ASSERT_EQUAL_PTR(&a, mu_array_sort(&a, int_compare));
     TEST_ASSERT_EQUAL_PTR(&one, storage[0]);
-    TEST_ASSERT_EQUAL_INT(&two, storage[1]);
-    TEST_ASSERT_EQUAL_INT(&three, storage[2]);
+    TEST_ASSERT_EQUAL_PTR(&two, storage[1]);
+    TEST_ASSERT_EQUAL_PTR(&three, storage[2]);
 
     // test sorting an already sorted array
-    mu_array_reset(&array);
-    mu_array_push(&array, &one);
-    mu_array_push(&array, &two);
-    mu_array_push(&array, &three);
-    TEST_ASSERT_EQUAL_PTR(&array, mu_array_sort(&array, int_compare));
+    mu_array_reset(&a);
+    mu_array_push(&a, &one);
+    mu_array_push(&a, &two);
+    mu_array_push(&a, &three);
+    TEST_ASSERT_EQUAL_PTR(&a, mu_array_sort(&a, int_compare));
     TEST_ASSERT_EQUAL_PTR(&one, storage[0]);
-    TEST_ASSERT_EQUAL_INT(&two, storage[1]);
-    TEST_ASSERT_EQUAL_INT(&three, storage[2]);
+    TEST_ASSERT_EQUAL_PTR(&two, storage[1]);
+    TEST_ASSERT_EQUAL_PTR(&three, storage[2]);
 }
 
 void test_mu_array_insert_sorted(void) {
-    // finish this test!
-    TEST_ASSERT_EQUAL_INT(1, 2);
+    mu_array_t a;
+    void *storage[3];
+
+    mu_array_init(&a, storage, sizeof(storage)/sizeof(storage[0]));
+    memset(storage, 0, sizeof(storage));
+
+    // insert into empty array
+    TEST_ASSERT_TRUE(mu_array_insert_sorted(&a, &two, int_compare));
+    TEST_ASSERT_EQUAL_PTR(&two, storage[0]);
+    TEST_ASSERT_EQUAL_UINT(mu_array_count(&a), 1);
+
+    // insert as last item
+    TEST_ASSERT_TRUE(mu_array_insert_sorted(&a, &three, int_compare));
+    TEST_ASSERT_EQUAL_PTR(&two, storage[0]);
+    TEST_ASSERT_EQUAL_PTR(&three, storage[1]);
+    TEST_ASSERT_EQUAL_UINT(mu_array_count(&a), 2);
+
+    // insert as first item
+    TEST_ASSERT_TRUE(mu_array_insert_sorted(&a, &one, int_compare));
+    TEST_ASSERT_EQUAL_PTR(&one, storage[0]);
+    TEST_ASSERT_EQUAL_PTR(&two, storage[1]);
+    TEST_ASSERT_EQUAL_PTR(&three, storage[2]);
+    TEST_ASSERT_EQUAL_UINT(mu_array_count(&a), 3);
+
+    // insert into full array
+    TEST_ASSERT_FALSE(mu_array_insert_sorted(&a, &four, int_compare));
+
+    // insert between two items
+    mu_array_init(&a, storage, sizeof(storage)/sizeof(storage[0]));
+    memset(storage, 0, sizeof(storage));
+    mu_array_push(&a, &one);
+    mu_array_push(&a, &three);
+    TEST_ASSERT_TRUE(mu_array_insert_sorted(&a, &two, int_compare));
+    TEST_ASSERT_EQUAL_PTR(&one, storage[0]);
+    TEST_ASSERT_EQUAL_PTR(&two, storage[1]);
+    TEST_ASSERT_EQUAL_PTR(&three, storage[2]);
+    TEST_ASSERT_EQUAL_UINT(mu_array_count(&a), 3);
 }
 
 int main(void) {
