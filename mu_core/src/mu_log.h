@@ -68,7 +68,7 @@ typedef enum { MU_LOG_LEVELS(EXPAND_LOG_LEVEL_ENUM) } mu_log_level_t;
  *
  * @return the number of chars printed (excluding the terminating null byte).
  */
-typedef int (*mu_log_logging_fn)(const char *format, va_list ap);
+typedef int (*mu_log_logging_fn)(mu_log_level_t level, const char *format, va_list ap);
 
 // *****************************************************************************
 // Public declarations

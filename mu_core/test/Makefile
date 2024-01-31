@@ -1,11 +1,17 @@
-# Compile and run unit tests
-CC := gcc
-CFLAGS := -Wall -g
-DEPFLAGS := -MMD -MP
-GCOVFLAGS := -fprofile-arcs -ftest-coverage
-# Add coverage flags also to the linker flags
-LFLAGS := $(GCOVFLAGS)
+# Note the following way to test different compiler flags.  Use for mu_log test:
+# coverage:
+# 	# Clean and rebuild everything with coverage flags
+# 	$(MAKE) clean
+# 	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"
+# 	# Run tests to generate coverage data
+# 	@for test in $(EXECUTABLES) ; do \
+# 		./$$test; \
+# 	done
+#
+# Or from command line:
+# make CFLAGS="-Wall -g -DUSE_STRING_LIB" tests
 
+# Compile and run unit tests
 SRC_DIR := ../src
 TEST_DIR := ../test
 TEST_SUPPORT_DIR := ../../test_support
@@ -15,13 +21,27 @@ COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
 	$(SRC_DIR)/mu_array.c \
+	$(SRC_DIR)/mu_log.c \
 	$(SRC_DIR)/mu_queue.c \
-	$(SRC_DIR)/mu_spsc.c
+	$(SRC_DIR)/mu_spsc.c \
+	$(SRC_DIR)/mu_str.c
 
 TEST_FILES := \
 	$(TEST_DIR)/test_mu_array.c \
+	$(TEST_DIR)/test_mu_log.c \
 	$(TEST_DIR)/test_mu_queue.c \
-	$(TEST_DIR)/test_mu_spsc.c
+	$(TEST_DIR)/test_mu_spsc.c \
+	$(TEST_DIR)/test_mu_str.c
+
+# Note: everything below this line is common to all modules.  Consider
+# splitting into shared makefile.
+
+CC := gcc
+CFLAGS := -Wall -g
+DEPFLAGS := -MMD -MP
+GCOVFLAGS := -fprofile-arcs -ftest-coverage
+# Add coverage flags also to the linker flags
+LFLAGS := $(GCOVFLAGS)
 
 TEST_SUPPORT_FILES := \
 	$(TEST_SUPPORT_DIR)/unity.c
@@ -39,17 +59,17 @@ EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
 # $(info TEST_SUPPORT_OBJS = $(TEST_SUPPORT_OBJS))
 # $(info EXECUTABLES = $(EXECUTABLES))
 
-.PHONY: all run-tests clean
+.PHONY: all tests coverage clean
 
 all: $(EXECUTABLES)
 
-run-tests: all
+tests: all
 	@for test in $(EXECUTABLES) ; do \
 		echo "Running $$test..."; \
 		./$$test; \
 	done
 
-run-coverage:
+coverage:
 	# Determine absolute paths
 	# TEST_DIR_ABS=$$(realpath $(TEST_DIR))
 	# TEST_SUPPORT_DIR_ABS=$$(realpath $(TEST_SUPPORT_DIR))
@@ -72,7 +92,7 @@ run-coverage:
 	# rm -f coverage.info coverage.info.cleaned
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR) coverage.info
 
 # Compile and generate dependencies for source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
