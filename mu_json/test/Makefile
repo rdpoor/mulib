@@ -1,65 +1,113 @@
-# Compile and run unit tests
-CC := gcc
+# Note the following way to test different compiler flags.  Use for mu_log test:
+# coverage:
+# 	# Clean and rebuild everything with coverage flags
+# 	$(MAKE) clean
+# 	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"
+# 	# Run tests to generate coverage data
+# 	@for test in $(EXECUTABLES) ; do \
+# 		./$$test; \
+# 	done
+#
+# Or from command line:
+# make CFLAGS="-Wall -g -DUSE_STRING_LIB" tests
 
-MU_JSON_DIR := ../src
-MU_STRING_DIR := ../../mu_string/src
-TEST_DIR := .
+# Compile and run unit tests
+SRC_DIR := ../src
+TEST_DIR := ../test
+TEST_SUPPORT_DIR := ../../test_support
+CORE_DIR := ../../mu_core/src
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
+COVERAGE_DIR := $(TEST_DIR)/coverage
 
-MU_JSON_SOURCES := \
-	$(MU_JSON_DIR)/mu_jparse.c \
-	$(MU_STRING_DIR)/mu_str.c
+SRC_FILES := \
+	$(SRC_DIR)/mu_json.c
 
-UNIT_TESTS := \
-	$(BIN_DIR)/test_mu_parse
+TEST_FILES := \
+	$(TEST_DIR)/test_mu_json.c
 
-MU_JSON_OBJECTS := $(patsubst $(MU_JSON_DIR)/%.c,$(OBJ_DIR)/%.o,$(MU_JSON_SOURCES))
-TEST_OBJECTS := $(patsubst $(BIN_DIR)/%,$(OBJ_DIR)/%.o,$(UNIT_TESTS))
+CORE_FILES := \
+	$(CORE_DIR)/mu_str.c
 
- # Compiler flags
-CFLAGS := -Wall -O0 -I$(MU_JSON_DIR) -I$(TEST_DIR)  \
-	-I../../mu_string/src
-COVERAGE_FLAGS := -fprofile-arcs -ftest-coverage
+# Note: everything below this line is common to all modules.  Consider
+# splitting into shared makefile.
 
-# Linker flags
-LDFLAGS :=
+CC := gcc
+CFLAGS := -Wall -g
+DEPFLAGS := -MMD -MP
+GCOVFLAGS := -fprofile-arcs -ftest-coverage
+# Add coverage flags also to the linker flags
+LFLAGS := $(GCOVFLAGS)
 
-.PHONY: unit_tests clean make_build_dirs coverage_tests
+TEST_SUPPORT_FILES := \
+	$(TEST_SUPPORT_DIR)/unity.c
 
-all: unit_tests
+SRC_OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_FILES) $(CORE_FILES))
+TEST_OBJS := $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_FILES))
+TEST_SUPPORT_OBJS := $(patsubst $(TEST_SUPPORT_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_SUPPORT_FILES))
+EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
 
-unit_tests: make_build_dirs $(UNIT_TESTS)
-	@$(foreach exec, $(UNIT_TESTS), ./$(exec);)
+# Prevent makefile from automatically deleting object files
+.SECONDARY: $(SRC_OBJS) $(TEST_OBJS) $(TEST_SUPPORT_OBJS)
 
-# assure that the build directories exist
-make_build_dirs:
-	@mkdir -pv $(OBJ_DIR) $(BIN_DIR)
+# $(info SRC_OBJS = $(SRC_OBJS))
+# $(info TEST_OBJS = $(TEST_OBJS))
+# $(info TEST_SUPPORT_OBJS = $(TEST_SUPPORT_OBJS))
+# $(info EXECUTABLES = $(EXECUTABLES))
+
+.PHONY: all tests coverage clean
+
+all: $(EXECUTABLES)
+
+tests: all
+	@for test in $(EXECUTABLES) ; do \
+		echo "Running $$test..."; \
+		./$$test; \
+	done
+
+coverage:
+	# Determine absolute paths
+	# TEST_DIR_ABS=$$(realpath $(TEST_DIR))
+	# TEST_SUPPORT_DIR_ABS=$$(realpath $(TEST_SUPPORT_DIR))
+
+	# Clean and rebuild everything with coverage flags
+	$(MAKE) clean
+	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"
+	# Run tests to generate coverage data
+	@for test in $(EXECUTABLES) ; do \
+		./$$test; \
+	done
+	# Capture initial coverage data
+	lcov --capture --directory $(OBJ_DIR) --output-file coverage.info
+	# Remove coverage data for test and test_support directories using absolute paths
+	# lcov --remove coverage.info "$(TEST_DIR_ABS)/*" "$(TEST_SUPPORT_DIR_ABS)/*" --output-file coverage.info.cleaned
+	# Generate coverage report
+	genhtml coverage.info --output-directory $(COVERAGE_DIR)
+	@echo "Coverage report generated in $(COVERAGE_DIR)"
+	# Optional: Clean up intermediate coverage files
+	# rm -f coverage.info coverage.info.cleaned
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) coverage coverage.info
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR) coverage.info
 
-# generic rule for compiling MU_JSON_SOURCES
-$(OBJ_DIR)/%.o: $(MU_JSON_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+# Compile and generate dependencies for source files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(CORE_DIR) $(DEPFLAGS) -c $< -o $@
 
-# generic rule for compiling TEST_SOURCES
+# Compile and generate dependencies for test files
 $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(CORE_DIR) -I$(TEST_SUPPORT_DIR) $(DEPFLAGS) -c $< -o $@
 
-# the rule for buildiung each unit test executable is listed explicitly in order
-# to guarantee separation of interests: test_mu_foo depends only on mu_foo.o
+# Compile and generate dependencies for test support files
+$(OBJ_DIR)/%.o: $(TEST_SUPPORT_DIR)/%.c
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) -I$(SRC_DIR) $(DEPFLAGS) -c $< -o $@
 
-$(BIN_DIR)/test_mu_jparse: $(OBJ_DIR)/test_mu_jparse.o $(OBJ_DIR)/mu_jparse.o $(OBJ_DIR)/unity.o
-	$(CC) $(LDFLAGS) $^ -o $@
+-include $(OBJ_DIR)/*.d
 
-# coverage tests
-
-coverage_tests: CFLAGS += $(COVERAGE_FLAGS)
-coverage_tests: LDFLAGS += $(COVERAGE_FLAGS)
-coverage_tests: clean make_build_dirs $(UNIT_TESTS)
-	@$(foreach exec, $(UNIT_TESTS), ./$(exec);)
-	lcov --capture --directory $(OBJ_DIR) --output-file coverage.info
-	genhtml coverage.info --output-directory coverage
-	@echo "Coverage report generated in 'coverage' directory."
-	x-www-browser coverage/index.html
+# Link object files to create executables
+$(BIN_DIR)/%: $(OBJ_DIR)/%.o $(SRC_OBJS) $(TEST_SUPPORT_OBJS)
+	mkdir -p $(BIN_DIR)
+	$(CC) $(LFLAGS) $^ -o $@
