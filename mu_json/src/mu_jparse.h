@@ -50,10 +50,9 @@ extern "C" {
 #define MU_JPARSE_TOKEN_NOT_FOUND -1
 
 typedef enum {
-    MU_JPARSE_ERR_EMPTY_STRING = 0, // empty string or whitespace only
-    MU_JPARSE_ERR_BAD_FORMAT = -1,  // illegal JSON format
-    MU_JPARSE_ERR_OVERFLOW = -2,    // not enough tokens
-} mu_jparse_err_t;
+    MU_JPARSE_BAD_FORMAT = -1,  // illegal JSON format
+    MU_JPARSE_NO_MEMORY = -2,   // not enough tokens
+} mu_jparse_status_t;
 
 typedef enum {
     MU_JPARSE_TOKEN_TYPE_UNKNOWN, // ?
@@ -76,7 +75,7 @@ typedef struct {
 typedef struct {
     mu_jparse_token_t *tokens; // an array of tokens
     size_t max_tokens;         // maximum number of available tokens
-    int status;                // status < 0 indicates error, else # of tokens
+    int count;                 // # of tokens, or -- if negative -- error
 } mu_jparse_jtree_t;
 
 // ****************************************************************************=

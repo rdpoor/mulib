@@ -38,7 +38,7 @@ Parsing the JSON string is done with a compact table-driven push-down parser.
 Rather than keep an explicit stack of parser states, the list of parsed tokens
 provides the information needed for the parser.  For example, the JSON string:
 
-  {"a":[1,2.5],"b":true}
+  _{"a":[1,2.5],"b":true}
 
 will parse into a list of seven tokens:
 
@@ -59,17 +59,20 @@ siblings is how many elements are in the current container.  For OBJECT
   containers, an even-numbered sibling is always the key, odd is the value.
 
 Therefore, the container determines the parser that is in effect after an
-element is parsed.
+element is parsed.  When the end of any entity is seen, the state becomes
+END_ENTITY.  END_ENTITY selects the next state based on the container
+(ARRAY, OBJECT or NONE), and in the case of an OBJECT container, whether a
+key or value is expected.
 
-EXPECT_ENTITY: whitespace, '[', '{', '"', digit, 't', 'f', 'n'
+START_ENTITY: whitespace, '[', '{', '"', digit, 't', 'f', 'n'
 IN_ARRAY: whitespace, ',', ']'
   ',' => state = ENTITY,
-  ']' => action = CLOSE_ARRAY, state => POP_STATE
+  ']' => action = CLOSE_ARRAY, state => END_ENTITY
 IN_OBJECT_EVEN: whitespace, ':'
   ':' => EXPECT_STRING
 IN_OBJECT_ODD: whitespace, ',', '}'
   ',' => EXPECT_ENTITY
-  '}' => action = CLOSE_OBJECT, state = POP_STATE
+  '}' => action = CLOSE_OBJECT, state = END_ENTITY
 EXPECT_STRING: whitespace, '"'
   '"' => IN_STRING
 IN_STRING:
@@ -78,34 +81,59 @@ IN_TRUE:
 IN_FALSE:
 IN_NULL:
 
+  _{"a":[1,2.5],"b":true}
 
+prev_state     ch depth action       comment
+--------------+-+------+------------+-------------------------------+
+expect_entity     0                  (initial state)
+expect_entity  _  0     -
+expect_entity  {  0     open_object  depth++, state=>expect_string
+expect_string  "  1     open_string  state=>parsing_string
+parsing_string a  1     -
+parsing_string "  1     close_string state=>expect_colon [1]
+expect_colon   :  1     -            state=>expect_entity
+expect_entity  [  1     open_array   depth++, state=>expect_entity
+expect_entity  1  2     open_number  state=>parsing_number
+parsing_number ,  2     close_number state=>expect_entity [2]
+expect_entity  2  2     open_number  state=>parsing_number
+parsing_number .  2     -
+parsing_number 5  2     -
+parsing_number ]  2     close_number depth--, state=>expect_comma [3]
+expect_comma   ,  1     -            state=>expect_string
+expect_string  "  1     open_string  state=>parsing_string
+parsing_string b  1     -
+parsing_string "  1     close_string state=>expect_colon [4]
+expect_colon   :  1     -            state=>expect_entity
+expect_entity  t  1     open_true    state=>parsing_true
+parsing_true   r  1     -
+parsing_true   u  1     -
+parsing_true   e  1     close_true   state=>expect_comma [5]
+expect_comma   }  1     close_object depth--, state=>expect_entity
+expect_entity  ^  0     endgame      end of string && depth==0 => okay
 
+[1] container = OBJECT, container_child_count = 1, ergo state=>expect_colon
+[2] container = ARRAY
+[3] container = OBJECT, container_child_count = 2, ergo state=>expect_comma
+[4] container = OBJECT, container_child_count = 3, ergo state=>expect_colon
+[5] container = OBJECT, container_child_count = 4, comma or } okay...
 
-  ch prev_state    action      depth
-
-     value
-  {  object
-  "    in_string     open(str)   1
-  a  in_string      in_string     -           1
-  "  in_string      expect_key    close(str)  1
-  :  expect_key     expect_entity -           1
-  [  expect_entity  expect_entity open(arr)   2
-  1  in_number      in_number     open(num)   2
-  ,  in_number      expect_entity close(num)  2
-  2  expect_entity  in_number     open(num)   2
-  ]  in_number
-  ,
-  "
-  b
-  "
-  :
-  t
-  r
-  u
-  e
-  }
-
-
+void entity_did_close() {
+	if (depth == 0) {
+	    if (EOS) {
+	        success(); // entity done
+	    } else {
+	        error();   // can't have multiple top-level entities
+	    }
+	} else if (container() == ARRAY) {
+		// ',' or ']' acceptible
+	} else if (container() == OBJECT) {
+	    if (child_count is even) {
+	        // expect :
+	    } else {
+	        // , or } is acceptible
+	    }
+	}
+}
  */
 
 /**
@@ -249,103 +277,112 @@ case PARSE_NULL2:
 
 #define __   -1     /* the universal error code */
 
-typedef enum {
-    C_SPACE,  /* space */
-    C_WHITE,  /* other whitespace */
-    C_LCURB,  /* {  */
-    C_RCURB,  /* } */
-    C_LSQRB,  /* [ */
-    C_RSQRB,  /* ] */
-    C_COLON,  /* : */
-    C_COMMA,  /* , */
-    C_QUOTE,  /* " */
-    C_BACKS,  /* \ */
-    C_SLASH,  /* / */
-    C_PLUS,   /* + */
-    C_MINUS,  /* - */
-    C_POINT,  /* . */
-    C_ZERO ,  /* 0 */
-    C_DIGIT,  /* 123456789 */
-    C_LOW_A,  /* a */
-    C_LOW_B,  /* b */
-    C_LOW_C,  /* c */
-    C_LOW_D,  /* d */
-    C_LOW_E,  /* e */
-    C_LOW_F,  /* f */
-    C_LOW_L,  /* l */
-    C_LOW_N,  /* n */
-    C_LOW_R,  /* r */
-    C_LOW_S,  /* s */
-    C_LOW_T,  /* t */
-    C_LOW_U,  /* u */
-    C_ABCDF,  /* ABCDF */
-    C_E,      /* E */
-    C_EOS,    /* end of string */
-    C_ETC,    /* everything else */
-    C_CLASS_MAX
-} c_class_t;
+#define DEFINE_CHAR_CLASSES(M)                                                 \
+    M(C_SPACE) /* space */                                                     \
+    M(C_WHITE) /* other whitespace */                                          \
+    M(C_LCURB) /* {  */                                                        \
+    M(C_RCURB) /* } */                                                         \
+    M(C_LSQRB) /* [ */                                                         \
+    M(C_RSQRB) /* ] */                                                         \
+    M(C_COLON) /* : */                                                         \
+    M(C_COMMA) /* , */                                                         \
+    M(C_QUOTE) /* " */                                                         \
+    M(C_BACKS) /* \ */                                                         \
+    M(C_SLASH) /* / */                                                         \
+    M(C_PLUS)  /* + */                                                         \
+    M(C_MINUS) /* - */                                                         \
+    M(C_POINT) /* . */                                                         \
+    M(C_ZERO)  /* 0 */                                                         \
+    M(C_DIGIT) /* 123456789 */                                                 \
+    M(C_LOW_A) /* a */                                                         \
+    M(C_LOW_B) /* b */                                                         \
+    M(C_LOW_C) /* c */                                                         \
+    M(C_LOW_D) /* d */                                                         \
+    M(C_LOW_E) /* e */                                                         \
+    M(C_LOW_F) /* f */                                                         \
+    M(C_LOW_L) /* l */                                                         \
+    M(C_LOW_N) /* n */                                                         \
+    M(C_LOW_R) /* r */                                                         \
+    M(C_LOW_S) /* s */                                                         \
+    M(C_LOW_T) /* t */                                                         \
+    M(C_LOW_U) /* u */                                                         \
+    M(C_ABCDF) /* ABCDF */                                                     \
+    M(C_E)     /* E */                                                         \
+    M(C_ETC)   /* everything else */                                           \
+    M(C_CLASS_MAX)
+
+#define EXPAND_CH_CLASS_ENUMS(_name) _name,
+typedef enum { DEFINE_CHAR_CLASSES(EXPAND_CH_CLASS_ENUMS) } c_class_t;
+
+#define DEFINE_STATES(M)                                                       \
+    M(S_VA) /* value    */                                                     \
+    M(S_OK) /* ok       */                                                     \
+    M(S_OB) /* object   */                                                     \
+    M(S_KE) /* key      */                                                     \
+    M(S_CO) /* colon    */                                                     \
+    M(S_AR) /* array    */                                                     \
+    M(S_ST) /* string   */                                                     \
+    M(S_ES) /* escape   */                                                     \
+    M(S_U1) /* u1       */                                                     \
+    M(S_U2) /* u2       */                                                     \
+    M(S_U3) /* u3       */                                                     \
+    M(S_U4) /* u4       */                                                     \
+    M(S_MI) /* minus    */                                                     \
+    M(S_ZE) /* zero     */                                                     \
+    M(S_IN) /* integer  */                                                     \
+    M(S_FR) /* fraction */                                                     \
+    M(S_FS) /* fraction */                                                     \
+    M(S_E1) /* e        */                                                     \
+    M(S_E2) /* ex       */                                                     \
+    M(S_E3) /* exp      */                                                     \
+    M(S_T1) /* tr       */                                                     \
+    M(S_T2) /* tru      */                                                     \
+    M(S_T3) /* true     */                                                     \
+    M(S_F1) /* fa       */                                                     \
+    M(S_F2) /* fal      */                                                     \
+    M(S_F3) /* fals     */                                                     \
+    M(S_F4) /* false    */                                                     \
+    M(S_N1) /* nu       */                                                     \
+    M(S_N2) /* nul      */                                                     \
+    M(S_N3) /* null     */                                                     \
+    M(STATE_MAX)
+
+#define EXPAND_STATE_ENUMS(_name) _name,
+typedef enum { DEFINE_STATES(EXPAND_STATE_ENUMS) } state_t;
+
+#define DEFINE_ACTIONS(M)                                                      \
+    M(A_SA=0x80) /* starting array with [ */                                   \
+    M(A_SO) /* starting object with { */                                       \
+    M(A_SS) /* starting object with " */                                       \
+    M(A_SM) /* starting number with - */                                       \
+    M(A_SZ) /* starting number with 0 */                                       \
+    M(A_SN) /* starting number with 1-9 */                                     \
+    M(A_ST) /* starting true with t */                                         \
+    M(A_SF) /* starting false with f */                                        \
+    M(A_SU) /* starting null with n */                                         \
+    M(A_ES) /* entity ended by space or whitespace */                          \
+    M(A_EA) /* entity ended by ] */                                            \
+    M(A_EO) /* entity ended by } */                                            \
+    M(A_EC) /* entity ended by , */                                            \
+    M(A_EK) /* entity ended by : ('key') */                                    \
+    M(A_EE) /* entity ended by end of string */
+
+#define EXPAND_ACTION_ENUMS(_name) _name,
+typedef enum { DEFINE_ACTIONS(EXPAND_ACTION_ENUMS) } action_t;
 
 typedef enum {
-    S_GO,  /* start    */
-    S_OK,  /* ok       */
-    S_OB,  /* object   */
-    S_KE,  /* key      */
-    S_CO,  /* colon    */
-    S_VA,  /* value    */
-    S_AR,  /* array    */
-    S_ST,  /* string   */
-    S_ES,  /* escape   */
-    S_U1,  /* u1       */
-    S_U2,  /* u2       */
-    S_U3,  /* u3       */
-    S_U4,  /* u4       */
-    S_MI,  /* minus    */
-    S_ZE,  /* zero     */
-    S_IN,  /* integer  */
-    S_FR,  /* fraction */
-    S_FS,  /* fraction */
-    S_E1,  /* e        */
-    S_E2,  /* ex       */
-    S_E3,  /* exp      */
-    S_T1,  /* tr       */
-    S_T2,  /* tru      */
-    S_T3,  /* true     */
-    S_F1,  /* fa       */
-    S_F2,  /* fal      */
-    S_F3,  /* fals     */
-    S_F4,  /* false    */
-    S_N1,  /* nu       */
-    S_N2,  /* nul      */
-    S_N3,  /* null     */
-    STATE_MAX
-} state_t;
-
-/**
- * @brief Set the 0x80 bit to signify this is an action rather than a state
- */
-#define A(a) ((state_t)((a) | 0x80))
-
-typedef enum {
-	SA,   // start array
-	EA,   // end array
-	SO,   // start object
-	EO,   // end object
-	SS,   // start string
-	ES,   // end string
-	SN,   // start number
-	EN,   // end number
-	ST,   // start true
-	ET,   // end true
-	SF,   // start false
-	EF,   // end false
-	SU,   // start nUll
-	EU,   // end nUll
-} action_t;
+    STATUS_IN_PROGRESS, // parsing in progress
+    STATUS_NO_TOKENS,   // ran out of tokens
+    STATUS_BAD_FORMAT,  // bad JSON syntax
+    STATUS_COMPLETE     // success
+} status_t;
 
 typedef struct {
 	mu_jparse_jtree_t *tree;  // the array of tokens and overall count / status
 	mu_str_t *json;           // the JSON string being parsed
 	int char_index;           // index the n'th byte of the JSON string
+    int depth;                // depth of current token
+    status_t status;          // parser status
 } parser_t;
 
 // ****************************************************************************=
@@ -379,43 +416,44 @@ static c_class_t s_c_class_map[] = {
 // clang-format on
 
 // clang-format off
-static int8_t s_state_map[STATE_MAX][C_CLASS_MAX] = {
+static uint8_t s_state_map[STATE_MAX][C_CLASS_MAX] = {
 //
-//                 white                                                                  1-9                                                             ABCDF      etc
-//            space  |    {    }    [    ]    :    ,    "    \    /    +    -    .    0    |    a    b    c    d    e    f    l    n    r    s    t    u    |    E    |*/
-/*start  GO*/ {GO,  GO,A(SA),  __,  -5,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*ok     OK*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*object OB*/ {OB,  OB,  __,  -9,  __,  __,  __,  __,  ST,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*key    KE*/ {KE,  KE,  __,  __,  __,  __,  __,  __,  ST,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*colon  CO*/ {CO,  CO,  __,  __,  __,  __,  -2,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*value  VA*/ {VA,  VA,  -6,  __,  -5,  __,  __,  __,  ST,  __,  __,  __,  MI,  __,  ZE,  IN,  __,  __,  __,  __,  __,  F1,  __,  N1,  __,  __,  T1,  __,  __,  __,  __},
-/*array  AR*/ {AR,  AR,  -6,  __,  -5,  -7,  __,  __,  ST,  __,  __,  __,  MI,  __,  ZE,  IN,  __,  __,  __,  __,  __,  F1,  __,  N1,  __,  __,  T1,  __,  __,  __,  __},
-/*string ST*/ {ST,  __,  ST,  ST,  ST,  ST,  ST,  ST,  -4,  ES,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST},
-/*escape ES*/ {__,  __,  __,  __,  __,  __,  __,  __,  ST,  ST,  ST,  __,  __,  __,  __,  __,  __,  ST,  __,  __,  __,  ST,  __,  ST,  ST,  __,  ST,  U1,  __,  __,  __},
-/*u1     U1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  U2,  U2,  U2,  U2,  U2,  U2,  U2,  U2,  __,  __,  __,  __,  __,  __,  U2,  U2,  __},
-/*u2     U2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  U3,  U3,  U3,  U3,  U3,  U3,  U3,  U3,  __,  __,  __,  __,  __,  __,  U3,  U3,  __},
-/*u3     U3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  U4,  U4,  U4,  U4,  U4,  U4,  U4,  U4,  __,  __,  __,  __,  __,  __,  U4,  U4,  __},
-/*u4     U4*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  ST,  __,  __,  __,  __,  __,  __,  ST,  ST,  __},
-/*minus  MI*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  ZE,  IN,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*zero   ZE*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  FR,  __,  __,  __,  __,  __,  __,  E1,  __,  __,  __,  __,  __,  __,  __,  __,  E1,  __},
-/*int    IN*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  FR,  IN,  IN,  __,  __,  __,  __,  E1,  __,  __,  __,  __,  __,  __,  __,  __,  E1,  __},
-/*frac   FR*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  FS,  FS,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*fracs  FS*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  __,  FS,  FS,  __,  __,  __,  __,  E1,  __,  __,  __,  __,  __,  __,  __,  __,  E1,  __},
-/*e      E1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  E2,  E2,  __,  E3,  E3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*ex     E2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  E3,  E3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*exp    E3*/ {OK,  OK,  __,  -8,  __,  -7,  __,  -3,  __,  __,  __,  __,  __,  __,  E3,  E3,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*tr     T1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  T2,  __,  __,  __,  __,  __,  __},
-/*tru    T2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  T3,  __,  __,  __},
-/*true   T3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  OK,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*fa     F1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  F2,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*fal    F2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  F3,  __,  __,  __,  __,  __,  __,  __,  __},
-/*fals   F3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  F4,  __,  __,  __,  __,  __},
-/*false  F4*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  OK,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __},
-/*nu     N1*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  N2,  __,  __,  __},
-/*nul    N2*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  N3,  __,  __,  __,  __,  __,  __,  __,  __},
-/*null   N3*/ {__,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  __,  OK,  __,  __,  __,  __,  __,  __,  __,  __}
+//             space white     {      }    [     ]     :     ,     "     \     /     +     -     .     0   1-9     a     b     c     d     e     f     l     n     r     s     t     u ABCDF     E   etc */
+/*value  VA*/ { S_VA, S_VA, A_SO,   __, A_SA,   __,   __,   __, A_SS,   __,   __,   __, A_SM,   __, A_SZ, A_SN,   __,   __,   __,   __,   __, A_SF,   __, A_SU,   __,   __, A_ST,   __,   __,   __,   __},
+/*ok     OK*/ { S_OK, S_OK,   __, A_EO,   __, A_EA,   __, A_EC,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*object OB*/ { S_OB, S_OB,   __, A_EO,   __,   __,   __,   __, S_ST,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*key    KE*/ { S_KE, S_KE,   __,   __,   __,   __,   __,   __, S_ST,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*colon  CO*/ { S_CO, S_CO,   __,   __,   __,   __, A_EK,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*array  AR*/ { S_AR, S_AR, A_SO,   __, A_SA, A_EA,   __,   __, S_ST,   __,   __,   __, S_MI,   __, S_ZE, S_IN,   __,   __,   __,   __,   __, S_F1,   __, S_N1,   __,   __, S_T1,   __,   __,   __,   __},
+/*string ST*/ { S_ST,   __, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, A_ES, S_ES, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST},
+/*escape ES*/ {   __,   __,   __,   __,   __,   __,   __,   __, S_ST, S_ST, S_ST,   __,   __,   __,   __,   __,   __, S_ST,   __,   __,   __, S_ST,   __, S_ST, S_ST,   __, S_ST, S_U1,   __,   __,   __},
+/*u1     U1*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_U2, S_U2, S_U2, S_U2, S_U2, S_U2, S_U2, S_U2,   __,   __,   __,   __,   __,   __, S_U2, S_U2,   __},
+/*u2     U2*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_U3, S_U3, S_U3, S_U3, S_U3, S_U3, S_U3, S_U3,   __,   __,   __,   __,   __,   __, S_U3, S_U3,   __},
+/*u3     U3*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_U4, S_U4, S_U4, S_U4, S_U4, S_U4, S_U4, S_U4,   __,   __,   __,   __,   __,   __, S_U4, S_U4,   __},
+/*u4     U4*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST, S_ST,   __,   __,   __,   __,   __,   __, S_ST, S_ST,   __},
+/*minus  MI*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_ZE, S_IN,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*zero   ZE*/ { S_OK, S_OK,   __, A_EO,   __, A_EA,   __, A_EC,   __,   __,   __,   __,   __, S_FR,   __,   __,   __,   __,   __,   __, S_E1,   __,   __,   __,   __,   __,   __,   __,   __, S_E1,   __},
+/*int    IN*/ { S_OK, S_OK,   __, A_EO,   __, A_EA,   __, A_EC,   __,   __,   __,   __,   __, S_FR, S_IN, S_IN,   __,   __,   __,   __, S_E1,   __,   __,   __,   __,   __,   __,   __,   __, S_E1,   __},
+/*frac   FR*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_FS, S_FS,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*fracs  FS*/ { S_OK, S_OK,   __, A_EO,   __, A_EA,   __, A_EC,   __,   __,   __,   __,   __,   __, S_FS, S_FS,   __,   __,   __,   __, S_E1,   __,   __,   __,   __,   __,   __,   __,   __, S_E1,   __},
+/*e      E1*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_E2, S_E2,   __, S_E3, S_E3,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*ex     E2*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_E3, S_E3,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*exp    E3*/ { S_OK, S_OK,   __, A_EO,   __, A_EA,   __, A_EC,   __,   __,   __,   __,   __,   __, S_E3, S_E3,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*tr     T1*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_T2,   __,   __,   __,   __,   __,   __},
+/*tru    T2*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_T3,   __,   __,   __},
+/*true   T3*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_OK,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*fa     F1*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_F2,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*fal    F2*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_F3,   __,   __,   __,   __,   __,   __,   __,   __},
+/*fals   F3*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_F4,   __,   __,   __,   __,   __},
+/*false  F4*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_OK,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __},
+/*nu     N1*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_N2,   __,   __,   __},
+/*nul    N2*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_N3,   __,   __,   __,   __,   __,   __,   __,   __},
+/*null   N3*/ {   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __,   __, S_OK,   __,   __,   __,   __,   __,   __,   __,   __}
 };
 // clang-format on
+
+#define EXPAND_ACTION_FUNCTIONS(_name, _function) _function,
+static action_fn s_action_map[] = { DEFINE_ACTIONS(EXPAND_ACTION_FUNCTIONS) };
 
 // ****************************************************************************=
 // Private (forward) declarations
@@ -429,10 +467,9 @@ static parser_t *parser_init(parser_t *parser, mu_parse_tree *tree,
                              mu_str_t *json);
 
 /**
- * @brief Process one JSON byte at a time, return false on completion or error.
+ * @brief Process one JSON byte at a time
  *
- * Note: upon return, tree->status will be set to a negative value on error or
- * a non-zero value on success.
+ * Note: call step until parser->status != STATUS_IN_PROGRESS
  */
 static bool parser_step(parser_t *parser);
 
@@ -443,7 +480,6 @@ static bool parser_step(parser_t *parser);
  */
 static c_class_t classify_next_char(parser_t *parser)
 
-
 /**
  * @brief Return true if this given state triggers an action, not just a state
  * transition.
@@ -453,6 +489,20 @@ static c_class_t classify_next_char(parser_t *parser)
  */
 static inline bool state_is_action(state_t state) { return state & 0x80; }
 
+/**
+ * @brief Turn off the "is_action" bit to convert a state to an action.
+ */
+static inline action_t state_to_action(state_t state) { return state & ~=80; }
+
+/**
+ * @brief Look up the next state from the state transition table.
+ *
+ * Note: if the returned value has the 0x80 bit set, this denotes an action
+ * rather than a simple state transition.
+ */
+static inline state_t get_next_state(state_t curr_state, c_class_t c_class) {
+	return s_state_map[curr_state][c_class];
+}
 
 // ****************************************************************************=
 // Public code
@@ -462,7 +512,7 @@ mu_jparse_jtree_t *mu_jparse_jtree_init(mu_jparse_jtree_t *tree,
                                         size_t max_tokens) {
 	tree->tokens = token_store;
 	tree->max_tokens = max_tokens;
-	tree->status = 0;
+	tree->count = 0;
 }
 
 mu_jparse_jtree_t *mu_jparse_parse_mu_str(mu_jparse_jtree_t *tree,
@@ -531,13 +581,21 @@ mu_jparse_token_t *mu_jparse_jtree_first_child(mu_jparse_jtree_t *tree,
 // Private (static) code
 
 static mu_parse_jtree_t *parse_aux(mu_parse_jtree_t *tree, mu_str_t *json) {
-	parser_t parser;
+	parser_t parser;  // parser only exists long enough to parse the JSON
+
 	parser_init(&parser, tree, json);
-	while (parser_step(parser)) {
-		// process one char at a time until end of string or error
-	}
-	// Here, tree has been built with status = # of tokens (if non-negative) or
-	// status = error code (if negative)
+    while (parser->status == STATUS_IN_PROGRESS) {
+        // read and process a char at a time
+        parser_step(parser);
+    }
+	// Finalize tree count
+    if (parser->status == STATUS_NO_TOKENS) {
+        tree->count = MU_JPARSE_NO_MEMORY;
+    } else if (parser->status == STATUS_BAD_FORMAT) {
+        tree->count = MU_JPARSE_BAD_FORMAT;
+    } else {
+        // tree->count already set to # of tokens allocated
+    }
 	return tree;
 }
 
@@ -545,89 +603,200 @@ static parser_t *parser_init(parser_t *parser, mu_parse_tree *tree,
                              mu_str_t *json) {
     parser->tree = tree;
     parser->json = json;
-    tree->status = 0;
     parser->char_index = 0;
+    parser->depth = 0;
+    parser->status = STATUS_IN_PROGRESS;
     return parser;
 }
 
-static bool parser_step(parser_t *parser) {
-	c_class_t ch_class = classify_next_char(parser);
-	state_t next_state = get_state(parser->state, ch_class);
-	if (state_is_action(next_state)) {
-		process_action(parser, next_state);
-	} else {
-		parser->state = next_state;
-	}
-	return false;
+static void parser_step(parser_t *parser) {
+    uint8_t ch;
+
+    if (!mu_str_ref(parser->json, parser->char_index, &ch)) {
+        // at end of string
+        process_action(parser, TE);
+
+    } else {
+        c_class_t c_class = classify_char(ch);
+        state_t next_state = get_next_state(parser->state, c_class);
+
+        if (!state_is_action(next_state)) {
+            // no action to process - simply advance state
+            parser->state = next_state;
+
+        } else {
+            // next_state has action bit turned on.
+            process_action(parser, next_state);
+        }
+
+        // prepare to read next char
+        parser->char_index++;
+    }
 }
 
-static c_class_t classify_next_char(parser_t *parser) {
-	if (parser->char_index >= mu_str_length(parser->json)) {
-		// At end of JSON string, class => CL_EOS
-		return CH_EOS;
-	}
-
-    // TODO: implement mu_str_ref()?
-	uint8_t ch = mu_str_bytes(parser->json)[parser->char_index++];
-
+static c_class_t classify_char(parser_t *parser) {
 	if (ch > sizeof(s_c_class_map)) {
-		// ch out of range of lookup table.  class => CL_ETC
-		return CH_ETC;
+		// ch out of range of lookup table.  class => C_ETC
+		return C_ETC;
 	} else {
-		// look up ch_class from table.
+		// look up character class from table.
 		return s_c_class_map[ch];
 	}
 }
 
-static void process_action(parser_t *parser, state_t next_state) {
-	mu_jparse_token_t *token;
-	action_t action = next_state & 0x7f; // strip action bit
-	// TODO: convert to table dispatch
+static process_action(parser_t *parser, action_t action) {
+    mu_jparse_token_t *container = containing_token(parser);
 
 	switch(action) {
-	case SA: {
+	case A_SA: {
         // start array
-        alloc_token(parser, MU_JPARSE_TOKEN_TYPE_OBJECT, true);
+        start_token(parser, MU_JPARSE_TOKEN_TYPE_ARRAY, parser->depth++);
+        parser->state = IA;  // in array
     } break;
-	case EA: {
-        // end array
-    } break;
-	case SO: {
+	case A_SO: {
         // start object
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_OBJECT, parser->depth++);
+        parser->state = KE;  // expect key
     } break;
-	case EO: {
-        // end object
+	case A_SS: {
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_STRING, parser->depth);
+        parser_state = ST;
     } break;
-	case SS: {
-        // start string
+	case A_SM: {
+        // start minus sign
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_NUMBER, parser->depth);
+        parser_state = MI;
     } break;
-	case ES: {
-        // end string
+	case A_SZ: {
+        // start zero
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_NUMBER, parser->depth);
+        parser_state = ZE;
     } break;
-	case SN: {
+	case A_SN: {
         // start number
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_NUMBER, parser->depth);
+        parser_state = IN;
     } break;
-	case EN: {
-        // end number
-    } break;
-	case ST: {
+	case A_ST: {
         // start true
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_TRUE, parser->depth);
+        parser_state = T1;
     } break;
-	case ET: {
-        // end true
-    } break;
-	case SF: {
+	case A_SF: {
         // start false
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_FALSE, parser->depth);
+        parser_state = F1;
     } break;
-	case EF: {
-        // end false
-    } break;
-	case SU: {
+	case A_SU: {
         // start nUll
+		start_token(parser, MU_JPARSE_TOKEN_TYPE_NULL, parser->depth);
+        parser_state = N1;
     } break;
-	case EU: {
-        // end nUll
+    case A_ES: {
+        // entity ended by space or whitespace
+        end_token(parser);
+        parser->state = OK;
+    } break;
+    case A_EA: {
+        // entity ended by ] (parent should == ARRAY)
+        if (container && (container->type == MU_JPARSE_TOKEN_TYPE_ARRAY)) {
+            end_token(parser);
+            parser->depth -= 1;
+            parser->state = OK;
+        } else {
+            parser->status = STATUS_BAD_FORMAT;
+        }
+    } break;
+    case A_EO: {
+        // entity ended by } (parent should == OBJECT)
+        if (container && (container->type == MU_JPARSE_TOKEN_TYPE_OBJECT)) {
+            end_token(parser);
+            parser->depth -= 1;
+            parser->state = OK;
+        } else {
+            parser->status = STATUS_BAD_FORMAT;
+        }
     } break;
 
+    case A_EC: {
+        // entity ended by comma
+        if (container == NULL) {
+            parser->status = STATUS_BAD_FORMAT;
+        } else if (container->type == MU_JPARSE_TOKEN_TYPE_OBJECT) {
+            if (is_even(child_count(container))) {
+                // even numbered children are keys.  need colon, not comma
+                parser->status = STATUS_BAD_FORMAT;
+            } else {
+                end_token(parser);
+                parser->state = OK;
+            }
+        } else /* container->type == MU_JPARSE_TOKEN_TYPE_ARRAY */ {
+            // comma separates items in an array
+            end_token(parser);
+            parser->state = OK;
+        }
+    } break;
+
+    case A_EK: {
+        // entity ended by colon
+        if (container == NULL) {
+            parser->status = STATUS_BAD_FORMAT;
+        } else if (container->type == MU_JPARSE_TOKEN_TYPE_OBJECT) {
+            if (!is_even(child_count(container))) {
+                // odd numbered children are values.  need comma, not colon
+                parser->status = STATUS_BAD_FORMAT;
+            } else {
+                end_token(parser);
+                parser->state = OK;
+            }
+        } else /* container->type == MU_JPARSE_TOKEN_TYPE_ARRAY */ {
+            // array elements need comma, not colon
+            parser->status = STATUS_BAD_FORMAT;
+        }
+    } break;
+
+    case A_EE: {
+        // entity ended by end of string
+        if (parser->state != OK) {
+            // not at top-level parser
+            parser->status = STATUS_BAD_FORMAT;
+        } else if (parser->depth != 0) {
+            // un-terminated array or object
+             parser->status = STATUS_BAD_FORMAT;
+        } else {
+            end_token(parser);
+            parser->status = STATUS_COMPLETE;
+        }
+    } break;
 	} // switch
+}
+
+static void start_token(parser_t *parser, mu_jparse_token_type_t type, int depth) {
+    mu_jparse_jtree_t *tree = parser->tree;
+    if (tree->count >= tree->max_tokens) {
+        parser->status = STATUS_NO_TOKENS;
+    } else {
+        mu_jparse_token_t *token = &tree->tokens[tree->count];
+        token->type = type;
+        token->depth = depth;
+        // capture JSON string starting at current char to end of string.
+        // The ending char will be fixed up in end_token() [q.v.].
+        mu_str_slice(&token->str, parser->json, parser->char_index, MU_STR_END);
+    }
+}
+
+static void end_token(parser_t *parser) {
+    mu_jparse_jtree_t *tree = parser->tree;
+    mu_jparse_token_t *token = &tree->tokens[tree->count++];
+    if (token->type == MU_JPARSE_TOKEN_TYPE_UNKNOWN) {
+        // should not happen.
+        asm("nop");
+    }
+    // the token string currently extends to end of the JSON string.
+    // trim it to parser->char_index.
+    // TODO: design sensible way to compute slice end...
+    //                    +-----------+
+    // +------------------------------+
+    //                          ^
+    // mu_str_slice(&token->str, &token->str, 0, ???);
 }

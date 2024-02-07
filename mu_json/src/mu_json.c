@@ -44,6 +44,8 @@
 
 static int parse(mu_json_parser_t *parser, mu_str_t *mu_str);
 
+static mu_json_token_flags_t token_flags(mu_json_token_t *token);
+
 static bool is_first_token(mu_json_token_t *token);
 
 static bool is_last_token(mu_json_token_t *token);
@@ -95,8 +97,7 @@ int mu_json_token_depth(mu_json_token_t *token) {
 mu_json_token_t *mu_json_token_prev(mu_json_token_t *token) {
     if (token == NULL) {
         return NULL;
-    }
-    if (is_first_token(token)) {
+    } else if (is_first_token(token)) {
         return NULL;
     } else {
         return &token[-1];
@@ -106,8 +107,7 @@ mu_json_token_t *mu_json_token_prev(mu_json_token_t *token) {
 mu_json_token_t *mu_json_token_next(mu_json_token_t *token) {
     if (token == NULL) {
         return NULL;
-    }
-    if (is_last_token(token)) {
+    } if (is_last_token(token)) {
         return NULL;
     } else {
         return &token[1];
@@ -201,10 +201,14 @@ static int parse(mu_json_parser_t *parser, mu_str_t *mu_str) {
     return MU_JSON_ERR_BAD_FORMAT;
     }
 
+static mu_json_token_flags_t token_flags(mu_json_token_t *token) {
+    return token->flags;
+}
+
 static bool is_first_token(mu_json_token_t *token) {
-    return token->depth == 0;
+    return token_flags(token) & MU_JSON_TOKEN_FLAG_SOL;
 }
 
 static bool is_last_token(mu_json_token_t *token) {
-    return token->depth == EOL_DEPTH;
+    return token_flags(token) & MU_JSON_TOKEN_FLAG_EOL;
 }

@@ -66,13 +66,18 @@ typedef enum {
     MU_JSON_TOKEN_TYPE_TRUE,    // true
     MU_JSON_TOKEN_TYPE_FALSE,   // false
     MU_JSON_TOKEN_TYPE_NULL,    // null
-    MU_JSON_TOKEN_TYPE_EOL      // end of list (internal use only)
 } mu_json_token_type_t;
 
+typedef enum {
+    MU_JSON_TOKEN_FLAG_SOL = 1,
+    MU_JSON_TOKEN_FLAG_EOL = 2
+} mu_json_token_flags_t;
+
 typedef struct {
-    mu_str_t str;              // slice of the original JSON string
-    mu_json_token_type_t type; // token type
-    int depth;                 // 0=toplevel, 1=child of toplevel, -1=eol
+    mu_str_t str;  // slice of the original JSON string
+    uint8_t type;  // mu_parse_token_type cast to uint8_t
+    uint8_t flags; // mu_json_token_flags_t cast to uint8_t
+    int16_t depth; // 0 = toplevel, n+1 = child of n...
 } mu_json_token_t;
 
 typedef struct {
@@ -101,6 +106,8 @@ int mu_json_parse_buf(mu_json_parser_t *parser, const uint8_t *buf,
                       size_t buf_length);
 
 mu_json_token_type_t mu_json_token_type(mu_json_token_t *token);
+
+mu_json_token_flags_t mu_json_token_flags(mu_json_token_t *token);
 
 int mu_json_token_depth(mu_json_token_t *token);
 
