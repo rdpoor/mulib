@@ -155,28 +155,36 @@ mu_json_token_t *mu_json_token_prev_sibling(mu_json_token_t *token) {
     if (token == NULL) {
         return NULL;
     }
-    // search backwards until a token with equal depth is found
-    int depth = mu_json_token_depth(token);
-    mu_json_token_t *prev = token;
-
-    do {
-        prev = mu_json_token_prev(prev);
-    } while (prev != NULL && mu_json_token_depth(prev) > depth);
-    return prev;
+    mu_json_token_t *prev = mu_json_token_prev(token);
+    while (true) {
+        if (prev == NULL) {
+            return NULL;
+        } else if (mu_json_token_depth(prev) < mu_json_token_depth(token)) {
+            return NULL;
+        } else if (mu_json_token_depth(prev) == mu_json_token_depth(token)) {
+            return prev;
+        } else {
+            prev = mu_json_token_prev(prev);
+        }
+    }
 }
 
 mu_json_token_t *mu_json_token_next_sibling(mu_json_token_t *token) {
     if (token == NULL) {
         return NULL;
     }
-    // search forwards until a token with equal depth is found
-    int depth = mu_json_token_depth(token);
-    mu_json_token_t *next = token;
-
-    do {
-        next = mu_json_token_next(next);
-    } while (next != NULL && mu_json_token_depth(next) > depth);
-    return next;
+    mu_json_token_t *next = mu_json_token_next(token);
+    while (true) {
+        if (next == NULL) {
+            return NULL;
+        } else if (mu_json_token_depth(next) < mu_json_token_depth(token)) {
+            return NULL;
+        } else if (mu_json_token_depth(next) == mu_json_token_depth(token)) {
+            return next;
+        } else {
+            next = mu_json_token_next(next);
+        }
+    }
 }
 
 void *mu_json_token_traverse(mu_json_token_t *root, mu_json_visit_fn fn,

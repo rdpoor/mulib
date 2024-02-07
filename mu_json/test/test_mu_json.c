@@ -228,7 +228,7 @@ void test_json_token_prev_sibling(void) {
     TEST_ASSERT_EQUAL_PTR(&s_tokens[7], mu_json_token_prev_sibling(&s_tokens[8]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[6], mu_json_token_prev_sibling(&s_tokens[9]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[9], mu_json_token_prev_sibling(&s_tokens[10]));
-    TEST_ASSERT_EQUAL_PTR(&s_tokens[10], mu_json_token_prev_sibling(&s_tokens[11]));
+    TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_prev_sibling(&s_tokens[11]));
 }
 
 void test_json_token_next_sibling(void) {
@@ -244,7 +244,7 @@ void test_json_token_next_sibling(void) {
     TEST_ASSERT_EQUAL_PTR(&s_tokens[8], mu_json_token_next_sibling(&s_tokens[7]));
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next_sibling(&s_tokens[8]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[10], mu_json_token_next_sibling(&s_tokens[9]));
-    TEST_ASSERT_EQUAL_PTR(&s_tokens[11], mu_json_token_next_sibling(&s_tokens[10]));
+    TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next_sibling(&s_tokens[10]));
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next_sibling(&s_tokens[11]));
 }
 
