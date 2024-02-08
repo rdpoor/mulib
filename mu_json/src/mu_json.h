@@ -107,8 +107,6 @@ int mu_json_parse_buf(mu_json_parser_t *parser, const uint8_t *buf,
 
 mu_json_token_type_t mu_json_token_type(mu_json_token_t *token);
 
-mu_json_token_flags_t mu_json_token_flags(mu_json_token_t *token);
-
 int mu_json_token_depth(mu_json_token_t *token);
 
 mu_json_token_t *mu_json_token_prev(mu_json_token_t *token);
