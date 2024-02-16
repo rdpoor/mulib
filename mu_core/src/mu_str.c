@@ -114,6 +114,15 @@ size_t mu_str_length(mu_str_t *str) { return str->length; }
 
 bool mu_str_is_empty(mu_str_t *str) { return str->length == 0; }
 
+bool mu_str_get_byte(mu_str_t *str, int index, uint8_t *byte) {
+    if (index < 0 || index >= str->length) {
+        return false;
+    } else {
+        *byte = str->buf[index];
+        return true;
+    }
+}
+
 mu_str_t *mu_str_copy(mu_str_t *dst, mu_str_t *src) {
     return mu_str_init(dst, src->buf, src->length);
 }

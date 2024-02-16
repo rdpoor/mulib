@@ -28,7 +28,7 @@ void setUp(void) {
     t = &s_tokens[0];
     mu_str_slice(&t->str, &str, 0, 36); // {"a":10, "b":11, "c":[3, 4], "d":[]}
     t->type = MU_JSON_TOKEN_TYPE_OBJECT;
-    t->flags = MU_JSON_TOKEN_FLAG_SOL;
+    t->flags = MU_JSON_TOKEN_FLAG_IS_FIRST;
     t->depth = 0;
 
     t = &s_tokens[1];
@@ -88,7 +88,7 @@ void setUp(void) {
     t = &s_tokens[10];
     mu_str_slice(&t->str, &str, 33, 35); // []
     t->type = MU_JSON_TOKEN_TYPE_ARRAY;
-    t->flags = MU_JSON_TOKEN_FLAG_EOL;
+    t->flags = MU_JSON_TOKEN_FLAG_IS_LAST;
     t->depth = 1;
 }
 
@@ -137,6 +137,34 @@ void test_json_token_depth(void) {
     TEST_ASSERT_EQUAL_INT(2, mu_json_token_depth(&s_tokens[8]));
     TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(&s_tokens[9]));
     TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(&s_tokens[10]));
+}
+
+void test_json_token_is_first(void) {
+    TEST_ASSERT_TRUE(mu_json_token_is_first(&s_tokens[0]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[1]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[2]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[3]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[4]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[5]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[6]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[7]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[8]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[9]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[10]));
+}
+
+void test_json_token_is_last(void) {
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[0]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[1]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[2]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[3]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[4]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[5]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[6]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[7]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[8]));
+    TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[9]));
+    TEST_ASSERT_TRUE(mu_json_token_is_first(&s_tokens[10]));
 }
 
 void test_json_token_prev(void) {

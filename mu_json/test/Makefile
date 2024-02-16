@@ -88,7 +88,7 @@ coverage:
 	# rm -f coverage.info coverage.info.cleaned
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR) coverage.info
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR) coverage.info *.gcda *.gcno
 
 # Compile and generate dependencies for source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c

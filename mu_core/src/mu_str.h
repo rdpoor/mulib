@@ -100,6 +100,12 @@ size_t mu_str_length(mu_str_t *str);
 bool mu_str_is_empty(mu_str_t *str);
 
 /**
+ * @brief Access the index'th byte within str, return false if index is out of
+ * range.
+ */
+bool mu_str_get_byte(mu_str_t *str, int index, uint8_t *byte);
+
+/**
  * @brief Make a shallow copy of a mu_str from src to dst.
  */
 mu_str_t *mu_str_copy(mu_str_t *dst, mu_str_t *src);

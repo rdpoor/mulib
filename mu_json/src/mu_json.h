@@ -69,8 +69,8 @@ typedef enum {
 } mu_json_token_type_t;
 
 typedef enum {
-    MU_JSON_TOKEN_FLAG_SOL = 1,
-    MU_JSON_TOKEN_FLAG_EOL = 2
+    MU_JSON_TOKEN_FLAG_IS_FIRST = 1, // first token in token list
+    MU_JSON_TOKEN_FLAG_IS_LAST = 2   // last token in token list
 } mu_json_token_flags_t;
 
 typedef struct {
@@ -83,6 +83,7 @@ typedef struct {
 typedef struct {
     mu_json_token_t *tokens; // an array of tokens
     size_t max_tokens;       // maximum number of available tokens
+    int token_count;         // # of allocated tokens
     int status;              // status < 0 indicates error, else # of tokens
 } mu_json_parser_t;
 
@@ -108,6 +109,10 @@ int mu_json_parse_buf(mu_json_parser_t *parser, const uint8_t *buf,
 mu_json_token_type_t mu_json_token_type(mu_json_token_t *token);
 
 int mu_json_token_depth(mu_json_token_t *token);
+
+bool mu_json_token_is_first(mu_json_token_t *token);
+
+bool mu_json_token_is_last(mu_json_token_t *token);
 
 mu_json_token_t *mu_json_token_prev(mu_json_token_t *token);
 
