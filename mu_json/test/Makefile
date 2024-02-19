@@ -21,10 +21,12 @@ BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
-	$(SRC_DIR)/mu_json.c
+	$(SRC_DIR)/mu_json.c \
+	$(SRC_DIR)/JSON_checker.c
 
 TEST_FILES := \
-	$(TEST_DIR)/test_mu_json.c
+	$(TEST_DIR)/test_mu_json.c \
+	$(TEST_DIR)/test_JSON_checker.c
 
 CORE_FILES := \
 	$(CORE_DIR)/mu_str.c
