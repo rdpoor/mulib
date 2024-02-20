@@ -30,11 +30,13 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 // ****************************************************************************=
 // Private types and definitions
 
-#define DEBUG_TRACE
+// #define DEBUG_TRACE
 #ifdef DEBUG_TRACE
 #include <stdio.h>
 #define TRACE_PRINTF(...) fprintf(stderr, __VA_ARGS__)
@@ -121,15 +123,21 @@ typedef enum { DEFINE_CHAR_CLASSES(EXPAND_CH_CLASS_ENUMS) } ch_class_t;
     M(N2, "nul")                                                               \
     M(N3, "null")                                                              \
     M(NR_STATES, "actions follow")                                             \
-    M(Ec, "empty }")                                                           \
-    M(Co, "close }")                                                           \
-    M(Ca, "close ]")                                                           \
-    M(Oo, "open {")                                                            \
-    M(Oa, "open [")                                                            \
-    M(Os, "open \"")                                                           \
-    M(Cs, "close \"")                                                          \
-    M(Cm, "comma")                                                             \
-    M(Cl, "colon")
+    M(Ba, "begin array")                                                       \
+    M(Bd, "begin digit")                                                       \
+    M(Bf, "begin false")                                                       \
+    M(Bm, "begin minus")                                                       \
+    M(Bn, "begin nUll")                                                        \
+    M(Bo, "begin object")                                                      \
+    M(Bs, "begin string")                                                      \
+    M(Bt, "begin true")                                                        \
+    M(Bz, "begin zero")                                                        \
+    M(Fa, "finish array")                                                      \
+    M(Fo, "finish object")                                                     \
+    M(Ok, "finish element")                                                    \
+    M(Pl, "process colon")                                                     \
+    M(Pm, "process comma")                                                     \
+    M(Pq, "process close quote")
 
 #define EXPAND_STATE_ENUMS(_name, _description) _name,
 enum { DEFINE_STATES(EXPAND_STATE_ENUMS) };
@@ -141,6 +149,7 @@ typedef struct {
     int token_count;         // # of allocated tokens
     int depth;               // current depth
     int char_pos;            // position of char being parsed
+    int state;               // parser state
     mu_json_err_t error;     // error status
 } parser_t;
 
@@ -180,35 +189,33 @@ static int ascii_classes[128] = {
  *
  * This state transition table takes the current state and the current symbol,
  * and returns either a new state or an action. An action is signified by a
- * mixed-case symbol and has a value greater than NR_STATES. JSON text is
- * accepted if at the end of the text the state is OK and if the mode is
- * MODE_DONE.
+ * mixed-case symbol and has a value greater than NR_STATES.
  */
 // clang-format off
 static int state_transition_table[NR_STATES * NR_CLASSES] = {
-/*               white                                      1-9                                   ABCDF  etc
-             space |  {  }  [  ]  :  ,  "  \  /  +  -  .  0  |  a  b  c  d  e  f  l  n  r  s  t  u  |  E  |*/
-/*start  GO*/ GO,GO,Oo,__,Oa,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*ok     OK*/ OK,OK,__,Co,__,Ca,__,Cm,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*object OB*/ OB,OB,__,Ec,__,__,__,__,Os,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*key    KE*/ KE,KE,__,__,__,__,__,__,Os,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*colon  CO*/ CO,CO,__,__,__,__,Cl,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*value  VA*/ VA,VA,Oo,__,Oa,__,__,__,Os,__,__,__,MI,__,ZE,IN,__,__,__,__,__,F1,__,N1,__,__,T1,__,__,__,__,
-/*array  AR*/ AR,AR,Oo,__,Oa,Ca,__,__,Os,__,__,__,MI,__,ZE,IN,__,__,__,__,__,F1,__,N1,__,__,T1,__,__,__,__,
-/*string ST*/ ST,__,ST,ST,ST,ST,ST,ST,Cs,ES,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,
-/*escape ES*/ __,__,__,__,__,__,__,__,Os,ST,ST,__,__,__,__,__,__,ST,__,__,__,ST,__,ST,ST,__,ST,U1,__,__,__,
+/*             white                                      1-9                                   ABCDF  etc
+           space |  {  }  [  ]  :  ,  "  \  /  +  -  .  0  |  a  b  c  d  e  f  l  n  r  s  t  u  |  E  |*/
+/*start  GO*/ GO,GO,Bo,__,Ba,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*ok     OK*/ OK,OK,__,Fo,__,Fa,__,Pm,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*object OB*/ OB,OB,__,Fo,__,__,__,__,Bs,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*key    KE*/ KE,KE,__,__,__,__,__,__,Bs,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*colon  CO*/ CO,CO,__,__,__,__,Pl,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*value  VA*/ VA,VA,Bo,__,Ba,__,__,__,Bs,__,__,__,Bm,__,Bz,Bd,__,__,__,__,__,Bf,__,Bn,__,__,Bt,__,__,__,__,
+/*array  AR*/ AR,AR,Bo,__,Ba,Fa,__,__,Bs,__,__,__,Bm,__,Bz,Bd,__,__,__,__,__,Bf,__,Bn,__,__,Bt,__,__,__,__,
+/*string ST*/ ST,__,ST,ST,ST,ST,ST,ST,Pq,ES,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,
+/*escape ES*/ __,__,__,__,__,__,__,__,Bs,ST,ST,__,__,__,__,__,__,ST,__,__,__,ST,__,ST,ST,__,ST,U1,__,__,__,
 /*u1     U1*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,U2,U2,U2,U2,U2,U2,U2,U2,__,__,__,__,__,__,U2,U2,__,
 /*u2     U2*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,U3,U3,U3,U3,U3,U3,U3,U3,__,__,__,__,__,__,U3,U3,__,
 /*u3     U3*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,U4,U4,U4,U4,U4,U4,U4,U4,__,__,__,__,__,__,U4,U4,__,
 /*u4     U4*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,ST,ST,ST,ST,ST,ST,ST,ST,__,__,__,__,__,__,ST,ST,__,
 /*minus  MI*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,ZE,IN,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*zero   ZE*/ OK,OK,__,Co,__,Ca,__,Cm,__,__,__,__,__,FR,__,__,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
-/*int    IN*/ OK,OK,__,Co,__,Ca,__,Cm,__,__,__,__,__,FR,IN,IN,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
+/*zero   ZE*/ OK,OK,__,Fo,__,Fa,__,Pm,__,__,__,__,__,FR,__,__,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
+/*int    IN*/ OK,OK,__,Fo,__,Fa,__,Pm,__,__,__,__,__,FR,IN,IN,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
 /*frac   FR*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,FS,FS,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*fracs  FS*/ OK,OK,__,Co,__,Ca,__,Cm,__,__,__,__,__,__,FS,FS,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
+/*fracs  FS*/ OK,OK,__,Fo,__,Fa,__,Pm,__,__,__,__,__,__,FS,FS,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
 /*e      E1*/ __,__,__,__,__,__,__,__,__,__,__,E2,E2,__,E3,E3,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*ex     E2*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,E3,E3,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*exp    E3*/ OK,OK,__,Co,__,Ca,__,Cm,__,__,__,__,__,__,E3,E3,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*exp    E3*/ OK,OK,__,Fo,__,Fa,__,Pm,__,__,__,__,__,__,E3,E3,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*tr     T1*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,T2,__,__,__,__,__,__,
 /*tru    T2*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,T3,__,__,__,
 /*true   T3*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,OK,__,__,__,__,__,__,__,__,__,__,
@@ -225,14 +232,27 @@ static int state_transition_table[NR_STATES * NR_CLASSES] = {
 /**
  * @brief Modes of the parser.
  */
-#define DEFINE_MODES(M)                                                        \
-    M(MODE_ARRAY)  /* working inside an array */                               \
-    M(MODE_DONE)   /* "top of stack", okay if input ends now */                \
-    M(MODE_KEY)    /* working inside an object, expecting a key */             \
-    M(MODE_OBJECT) /* working inside an object, expecting a value */
+// #define DEFINE_MODES(M)                                                        \
+//     M(MODE_DONE)   /* no tokens or okay for input to end */                    \
+//     M(MODE_ARRAY)  /* inside an array, expect value or ']' */                  \
+//     M(MODE_OBJECT) /* inside an object, expect ',' or '}' */                   \
+//     M(MODE_KEY)    /* inside an object, expect ':'
 
-#define EXPAND_MODE_ENUMS(_name) _name,
-enum { DEFINE_MODES(EXPAND_MODE_ENUMS) };
+// #define EXPAND_MODE_ENUMS(_name) _name,
+// enum { DEFINE_MODES(EXPAND_MODE_ENUMS) };
+
+#define EXPAND_TOKEN_TYPE_NAMES(_name) #_name,
+__attribute__((unused)) static const char *s_token_type_names[] = {
+    DEFINE_MU_JSON_TOKEN_TYPES(EXPAND_TOKEN_TYPE_NAMES)};
+#define N_TOKEN_TYPES (sizeof(s_token_type_names) / sizeof(s_token_type_names[0]))
+
+__attribute__((unused)) static const char *token_type_name(mu_json_token_type_t token_type) {
+    if (token_type >= 0 && token_type < N_TOKEN_TYPES) {
+        return s_token_type_names[token_type];
+    } else {
+        return "unkown token type";
+    }
+}
 
 // *****************************************************************************
 // start DEBUG_TRACE support
@@ -278,20 +298,6 @@ __attribute__((unused)) static const char *state_description(int state) {
     }
 }
 
-#define EXPAND_MODE_NAMES(_name) #_name,
-__attribute__((unused)) static const char *s_mode_names[] = {
-    DEFINE_MODES(EXPAND_MODE_NAMES)};
-
-#define N_MODES sizeof(s_mode_names) / sizeof(s_mode_names[0])
-
-__attribute__((unused)) static const char *mode_name(int mode) {
-    if (mode >= 0 && mode < N_MODES) {
-        return s_mode_names[mode];
-    } else {
-        return "unknown mode";
-    }
-}
-
 __attribute__((unused)) static const char *error_name(mu_json_err_t error) {
     if (error == MU_JSON_ERR_NONE) {
         return "MU_JSON_ERR_NONE";
@@ -320,10 +326,12 @@ static int parse(mu_json_token_t *tokens, size_t max_tokens,
 static int classify_char(uint8_t ch);
 
 /**
- * @brief Examine the allocated token list to determine what type of tokens
- * the parser can accept.
+ * @brief Convenience interface to begin_token(): Allocates a token, sets its
+ * type, and set the parser state to s.
+ * 
+ * Rife with side effects, but makes for a condensed dispatch table.
  */
-static int get_mode(parser_t *parser);
+static void std_alloc(parser_t *parser, mu_json_token_type_t type, int s);
 
 /**
  * @brief Initialize and add a token to the token list.
@@ -332,37 +340,102 @@ static int get_mode(parser_t *parser);
  *
  * Return false if no tokens are avaialble.
  */
-static bool start_token(parser_t *parser, mu_json_token_type_t type);
+static bool begin_token(parser_t *parser, mu_json_token_type_t type);
 
 /**
  * @brief Complete a token.
  * 
- * Trim the tooken's JSON slice end at the current char_pos and seal it.
+ * Trim the tooken's JSON slice end at the current char_pos and seal it.  Note
+ * that is called on the first char past the end of the token, not on the 
+ * closing character itself.
  */
 static void finish_token(parser_t *parser, mu_json_token_t *token);
 
 /**
  * @brief Map a (state, char_class) pair to a new state.
  */
-static int lookup_state(int state, int char_class);
+static inline int lookup_state(int state, int char_class) {
+    return state_transition_table[state * NR_CLASSES + char_class];
+}
 
 /**
- * @broef Return true if this token is "sealed", that is, the end of the token
+ * @brief Return true if this token is "sealed", that is, the end of the token
  * has been found.  For containers (like ARRAY and OBJECT) this means that no
  * more items will be added to it.
  */
-static bool token_is_sealed(mu_json_token_t *token);
+static inline bool token_is_sealed(mu_json_token_t *token) {
+    return token->flags & MU_JSON_TOKEN_FLAG_IS_SEALED;
+}
 
 /**
  * @brief Seal a token.
  */
-static void token_seal(mu_json_token_t *token);
+static inline void seal_token(mu_json_token_t *token) {
+    token->flags |= MU_JSON_TOKEN_FLAG_IS_SEALED;
+}
 
 /**
- * @brief Return the most recently allocated token or NULL if none have been
- * allocated.
+ * @brief Return true if this is the first token.
  */
-static mu_json_token_t *top_token(parser_t *parser);
+static inline bool token_is_first(mu_json_token_t *token) {
+    return token->flags & MU_JSON_TOKEN_FLAG_IS_FIRST;
+}
+
+/**
+ * @brief Mark this token as being first.
+ */
+static inline void set_is_first(mu_json_token_t *token) {
+    token->flags |= MU_JSON_TOKEN_FLAG_IS_FIRST;
+}
+
+/**
+ * @brief Return true if this is the last token.
+ */
+static inline bool token_is_last(mu_json_token_t *token) {
+    return token->flags & MU_JSON_TOKEN_FLAG_IS_LAST;
+}
+
+/**
+ * @brief Mark this token as being last.
+ */
+static inline void set_is_last(mu_json_token_t *token) {
+    token->flags |= MU_JSON_TOKEN_FLAG_IS_LAST;
+}
+
+/**
+ * @brief "Top of Stack": Return the most recently allocated token or NULL if 
+ * none have been allocated.
+ */
+static mu_json_token_t *tos(parser_t *parser);
+
+/**
+ * @brief Return the currently open container (i.e. available for adding to)
+ * or NULL if there is none.
+ */
+static mu_json_token_t *active_container(parser_t *parser,
+                                         mu_json_token_type_t type);
+
+/**
+ * @brief Return the number of top-level children inside container, stopping
+ * when token is encountered.
+ */
+int child_count(mu_json_token_t *container, mu_json_token_t *token);
+
+/**
+ * @brief Set the parser state.  If DEBUG_TRACE in effect, print transition.
+ */
+static inline void set_state(parser_t *parser, int state) {
+    parser->state = state;
+    TRACE_PRINTF(" => %s", state_name(parser->state));
+}
+
+/**
+ * @brief Return a string describing the token.
+ * 
+ * WARNING 1: prints into a static buf that gets re-written on the next call.
+ * WARNING 2: limits results to 100 bytes.
+ */
+static char *token_string(mu_json_token_t *token);
 
 // ****************************************************************************=
 // Public code
@@ -401,17 +474,27 @@ int mu_json_token_depth(mu_json_token_t *token) {
 }
 
 bool mu_json_token_is_first(mu_json_token_t *token) {
-    return token->flags & MU_JSON_TOKEN_FLAG_IS_FIRST;
+    if (token == NULL) {
+        // TODO: warn
+        return false;
+    } else {
+        return token_is_first(token);
+    }
 }
 
 bool mu_json_token_is_last(mu_json_token_t *token) {
-    return token->flags & MU_JSON_TOKEN_FLAG_IS_LAST;
+    if (token == NULL) {
+        // TODO: warn
+        return false;
+    } else {
+        return token_is_last(token);
+    }
 }
 
 mu_json_token_t *mu_json_token_prev(mu_json_token_t *token) {
     if (token == NULL) {
         return NULL;
-    } else if (mu_json_token_is_first(token)) {
+    } else if (token_is_first(token)) {
         return NULL;
     } else {
         return &token[-1];
@@ -422,7 +505,7 @@ mu_json_token_t *mu_json_token_next(mu_json_token_t *token) {
     if (token == NULL) {
         return NULL;
     }
-    if (mu_json_token_is_last(token)) {
+    if (token_is_last(token)) {
         return NULL;
     } else {
         return &token[1];
@@ -433,7 +516,7 @@ mu_json_token_t *mu_json_token_root(mu_json_token_t *token) {
     if (token == NULL) {
         return NULL;
     }
-    while (!mu_json_token_is_first(token)) {
+    while (!token_is_first(token)) {
         token = mu_json_token_prev(token);
     }
     return token;
@@ -520,11 +603,11 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
     parser.token_count = 0;
     parser.depth = 0;
     parser.char_pos = 0;
+    parser.state = GO;
     parser.error = MU_JSON_ERR_NONE;
 
     uint8_t ch;
     int char_class;
-    int curr_state = GO;
     int next_state;
 
     TRACE_PRINTF("\n==== parsing '%.*s'", (int)mu_str_length(json_input),
@@ -547,157 +630,191 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
             break;
         }
 
-        next_state = lookup_state(curr_state, char_class);
+        next_state = lookup_state(parser.state, char_class);
 
-        TRACE_PRINTF("\n%d %d %10s '%c': %s %s => %s", parser.token_count,
-                     parser.depth, mode_name(get_mode(&parser)), ch,
-                     ch_class_name(char_class), state_name(curr_state),
-                     state_name(next_state));
+        TRACE_PRINTF("\n%d %d '%c': %s %s => %s", parser.token_count,
+                     parser.depth, ch, ch_class_name(char_class),
+                     state_name(parser.state), state_name(next_state));
 
         if (next_state >= 0 && next_state < NR_STATES) {
             // Simple state transition w/o special action
-            curr_state = next_state;
+            set_state(&parser, next_state);
 
         } else {
-            // This state requires special action before transitioning.
+            // These states perform an action before transitioning to next state
             switch (next_state) {
-            case Ec: {
-                // } - close empty object
-                if (get_mode(&parser) != MODE_KEY) {
+
+            // These actions cause tokens to be allocated.
+            case Ba: {
+                // [ - Begin Array
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_ARRAY, AR);
+                parser.depth += 1;
+                break;
+            }
+
+            case Bd: {
+                // Begin digit 1..9
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_NUMBER, IN);
+                break;
+            }
+
+            case Bf: {
+                // Begin false
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_FALSE, F1);
+                break;
+            }
+
+            case Bm: {
+                // Begin minus
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_NUMBER, MI);
+                break;
+            }
+
+            case Bn: {
+                // begin null
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_NULL, N1);
+                break;
+            }
+
+            case Bo: {
+                // begin object
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_OBJECT, OB);
+                parser.depth += 1;
+                break;
+            }
+
+            case Bs: {
+                // begin string
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_STRING, ST);
+                break;
+            }
+
+            case Bt: {
+                // begin true
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_TRUE, T1);
+                break;
+            }
+
+            case Bz: {
+                // Begin zero
+                std_alloc(&parser, MU_JSON_TOKEN_TYPE_NUMBER, ZE);
+                break;
+            }
+
+            // These actions cause tokens to be finished and/or state changes.
+            case Fa: {
+                // ] (finish array)
+                // If top of stack is not an array, finish it. 
+                mu_json_token_t *tok = tos(&parser); 
+                if (mu_json_token_type(tok) != MU_JSON_TOKEN_TYPE_ARRAY) {
+                    finish_token(&parser, tok);
+                }
+                parser.depth -= 1;
+                set_state(&parser, OK);
+                break;
+            }
+
+            case Fo: {
+                // } (finish object)
+                mu_json_token_t *container;
+                if ((container = active_container(
+                         &parser, MU_JSON_TOKEN_TYPE_OBJECT)) == NULL) {
+                    // not inside an OBJECT
+                    parser.error = MU_JSON_ERR_BAD_FORMAT;
+                } else if (container == tos(&parser)) {
+                    // empty container
+                } else {
+                    finish_token(&parser, tos(&parser));
+                    parser.depth -= 1;
+                }
+                set_state(&parser, OK);
+                break;
+            }
+
+            case Ok: {
+                // Whitespace following end of an entity
+                finish_token(&parser, tos(&parser));
+                set_state(&parser, OK);
+                break;
+            }
+
+            case Pl: {
+                // Process colon
+                mu_json_token_t *container;
+                finish_token(&parser, tos(&parser));
+                // inside an OBJECT w odd # of children, expect value
+                // Else format error...
+                if ((container = active_container(
+                         &parser, MU_JSON_TOKEN_TYPE_OBJECT)) == NULL) {
                     parser.error = MU_JSON_ERR_BAD_FORMAT;
                 } else {
-                    curr_state = OK;
-                    finish_token(&parser, top_token(&parser));
-                    token_seal(top_token(&parser));
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
+                    int n_children = child_count(container, tos(&parser));
+                    if ((n_children & 1) == 0) {
+                        parser.error = MU_JSON_ERR_BAD_FORMAT;
+                    } else {
+                        set_state(&parser, VA);
+                    }
                 }
                 break;
             }
-            case Co: {
-                // } - close object
-                if (get_mode(&parser) != MODE_KEY) {
+
+            case Pm: {
+                // Process comma
+                mu_json_token_t *container;
+                finish_token(&parser, tos(&parser));
+                // inside an ARRAY, expect a value
+                // inside an OBJECT w odd # of children, expect key
+                // inside an OBJECT w even # of children, format error
+                // Else format error...
+                if ((container = active_container(
+                         &parser, MU_JSON_TOKEN_TYPE_ARRAY)) != NULL) {
+                    set_state(&parser, VA);
+
+                } else if ((container = active_container(
+                                &parser, MU_JSON_TOKEN_TYPE_OBJECT)) != NULL) {
+                    int n_children = child_count(container, tos(&parser));
+                    if ((n_children & 1) == 0) {
+                        set_state(&parser, KE);
+                    } else {
+                        parser.error = MU_JSON_ERR_BAD_FORMAT;
+                    }
+
+                } else {
+                    // not inside a container.
+                    // TODO: allow naked toplevel forms: "expect EOS"
                     parser.error = MU_JSON_ERR_BAD_FORMAT;
-                } else {
-                    curr_state = OK;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
                 }
                 break;
             }
 
-            case Ca: {
-                // ] - close array
-                if (get_mode(&parser) != MODE_ARRAY) {
+            case Pq: {
+                // Process close of string:
+                mu_json_token_t *container;
+                // inside an ARRAY, expect a value
+                // inside an OBJECT w even # of children, expect a value
+                // inside an OBJECT w odd # of children, expect colon
+                // Else format error...
+                if ((container = active_container(
+                         &parser, MU_JSON_TOKEN_TYPE_ARRAY)) != NULL) {
+                    set_state(&parser, OK);
+
+                } else if ((container = active_container(
+                                &parser, MU_JSON_TOKEN_TYPE_OBJECT)) != NULL) {
+                    int n_children = child_count(container, tos(&parser));
+                    if ((n_children & 1) == 0) {
+                        set_state(&parser, OK);
+                    } else {
+                        set_state(&parser, CO);
+                    }
+
+                } else {
+                    // not inside a container.
+                    // TODO: allow naked toplevel forms: "expect EOS"
                     parser.error = MU_JSON_ERR_BAD_FORMAT;
-                } else {
-                    curr_state = OK;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
                 }
                 break;
             }
 
-            case Oo: {
-                // { - open object
-                if (!start_token(&parser, MU_JSON_TOKEN_TYPE_OBJECT)) {
-                    // out of tokens
-                    parser.error = MU_JSON_ERR_NO_TOKENS;
-                } else {
-                    parser.depth += 1;
-                    curr_state = OB;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
-                }
-                break;
-            }
-
-            case Oa: {
-                // [ - open array
-                if (!start_token(&parser, MU_JSON_TOKEN_TYPE_ARRAY)) {
-                    // out of tokens
-                    parser.error = MU_JSON_ERR_NO_TOKENS;
-                } else {
-                    parser.depth += 1;
-                    curr_state = AR;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
-                }
-                break;
-            }
-
-            case Os: {
-                // " - open a string
-                if (!start_token(&parser, MU_JSON_TOKEN_TYPE_STRING)) {
-                    // out of tokens
-                    parser.error = MU_JSON_ERR_NO_TOKENS;
-                } else {
-                    curr_state = ST;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
-                }
-                break;
-            }
-            case Cs: {
-                // " - close string
-                finish_token(&parser, top_token(&parser));
-                switch (get_mode(&parser)) {
-                case MODE_OBJECT: {
-                    break;
-                }
-                case MODE_KEY: {
-                    curr_state = CO;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
-                    break;
-                }
-                case MODE_ARRAY: {
-                    curr_state = OK;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
-                    break;
-                }
-                case MODE_DONE: {
-                    break;
-                }
-                } // switch (get_mode(&parser))
-                break;
-            }
-
-            case Cm: {
-                // comma seen
-                switch (get_mode(&parser)) {
-                case MODE_OBJECT: {
-                    break;
-                }
-                case MODE_KEY: {
-                    break;
-                }
-                case MODE_ARRAY: {
-                    curr_state = VA;
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
-                    break;
-                }
-                case MODE_DONE: {
-                    break;
-                }
-                } // switch (get_mode(&parser))
-                break;
-            }
-
-            case Cl: {
-                // colon seen
-                switch (get_mode(&parser)) {
-                case MODE_OBJECT: {
-                    break;
-                }
-                case MODE_KEY: {
-                    curr_state = VA;
-                    token_seal(top_token(&parser));
-                    TRACE_PRINTF(" => %s", state_name(curr_state));
-                    break;
-                }
-                case MODE_ARRAY: {
-                    break;
-                }
-                case MODE_DONE: {
-                    break;
-                }
-                } // switch (get_mode(&parser))
-                break;
-            }
             default: {
                 // Bad action.
                 parser.error = MU_JSON_ERR_BAD_FORMAT;
@@ -712,14 +829,19 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
 
     } // while(true)
 
-    // endgame: do we have a complete form?
-    if (parser.error == MU_JSON_ERR_NONE) {
-        TRACE_PRINTF("\nSuccess: %d token%s\n", parser.token_count, 
-            parser.token_count == 1 ? "" : "s");
-        return parser.token_count;
-    } else {
-        TRACE_PRINTF("\nFailed with %s\n", error_name(parser.error));
+    TRACE_PRINTF("\n=== endgame: depth=%d, state=%s, err=%d\n",
+        parser.depth, state_name(parser.state), parser.error);
+
+    if (parser.error != MU_JSON_ERR_NONE) {
         return parser.error;
+    } else if (parser.depth != 0) {
+        return MU_JSON_ERR_INCOMPLETE;
+    } else if (parser.state != OK) {
+        return MU_JSON_ERR_INCOMPLETE;  // is there a better name for this?
+    } else {
+        set_is_last(tos(&parser));      // mark last token as such 
+        finish_token(&parser, mu_json_token_root(tos(&parser)));
+        return parser.token_count;
     }
 }
 
@@ -731,110 +853,119 @@ static int classify_char(uint8_t ch) {
     }
 }
 
-// Return one of four values:
-// MODE_DONE if the parser is at top level, either with zero elements or with 
-// no "unclosed" containers.
-// MODE_ARRAY if the parser is inside an array, that is, the next element to be
-// added will be a child of the array or will be the closing of the array.
-// MODE_KEY if the parser is inside an object and expecting a key or end of
-// object
-// MODE_OBJECT if the parser is inside an object and expecting a value
-static int get_mode(parser_t *parser) {
-    // Return the current mode of the parser:
-    // '...{'  => mode = MODE_OBJECT (expecing a key)
-    // '...{"asdf"'  => mode = MODE_KEY (expecing ': <vlaue>')
-    // '...{"asdf": 1' => mode = MODE_OBJECT (expecting ', "<key>')
-    if (parser->token_count == 0) {
-        // no tokens -- assume done.
-        TRACE_PRINTF(" [MODE_DONE - no tokens] ");
-        return MODE_DONE; // no tokens, assume done.
-    }
-
-    // examine topmost token
-    mu_json_token_t *token = top_token(parser);
-    if ((token->type == MU_JSON_TOKEN_TYPE_ARRAY) && !token_is_sealed(token)) {
-        // token is an empty array 
-        TRACE_PRINTF(" [MODE_ARRAY - unsealed ARRAY] ");
-        return MODE_ARRAY;
-    } else if ((token->type == MU_JSON_TOKEN_TYPE_OBJECT) && !token_is_sealed(token)) {
-        // token is an empty object - expecting a key
-        TRACE_PRINTF(" [MODE_KEY - unsealed OBJECT] ");
-        return MODE_KEY;
-    }
-
-    // get parent of topmost token
-    mu_json_token_t *parent = mu_json_token_parent(token);
-    if (parent == NULL) {
-        // token is "naked" toplevel value (not within object or array)
-        TRACE_PRINTF(" [MODE_DONE - no parent] ");
-        return MODE_DONE;
-    } else if (parent->type == MU_JSON_TOKEN_TYPE_ARRAY) {
-        // token's parent is an array
-        TRACE_PRINTF(" [MODE_ARRAY - ARRAY parent] ");
-        return MODE_ARRAY;
-    }
-
-    // token is inside an object.  determine if it is in key or value position
-    // by counting how many siblings lie between token and parent
-    int distance = 0;
-    while ((token = mu_json_token_prev_sibling(token)) != NULL) {
-        distance += 1;
-    }
-    if (distance & 0x01) {
-        // odd number: token was in value position
-        TRACE_PRINTF(" [MODE_OBJECT - distance = %d] ", distance);
-        return MODE_OBJECT;
+static void std_alloc(parser_t *parser, mu_json_token_type_t type, int s) {
+    if (!begin_token(parser, type)) {
+        parser->error = MU_JSON_ERR_NO_TOKENS;
     } else {
-        // zero or even number: token is a key
-        TRACE_PRINTF(" [MODE_KEY - distance = %d] ", distance);
-        return MODE_KEY;
+        parser->state = s;
+        TRACE_PRINTF(" => %s", state_name(s));
     }
 }
 
-static bool start_token(parser_t *parser, mu_json_token_type_t type) {
+static bool begin_token(parser_t *parser, mu_json_token_type_t type) {
     if (parser->token_count >= parser->max_tokens) {
         return false;
     }
     mu_json_token_t *token = &parser->tokens[parser->token_count++];
+    memset(token, 0, sizeof(mu_json_token_t));
     // Since we haven't parsed to the end of this token yet, initialize the
     // token's string to start at char_pos and extend to the end of the input
     // string.  This will get adjusted in a call to finish_token() [q.v.].
     mu_str_slice(&token->json, parser->json, parser->char_pos, MU_STR_END);
     token->type = type;
+    if (parser->token_count == 1) {
+        set_is_first(token);
+    }
     token->flags |= parser->token_count == 1 ? MU_JSON_TOKEN_FLAG_IS_FIRST : 0;
     token->depth = parser->depth;
+    TRACE_PRINTF("\nStart %s", token_string(token));
     return true;
 }
 
 static void finish_token(parser_t *parser, mu_json_token_t *token) {
     // TODO: Add mu_json_token_type_t arg to confim we're closing the right one
-    // on entry, token->json extends from the token start to the end of
+    if (token_is_sealed(token)) {
+        // already finished...
+        return;
+    }
+    // On entry, token->json extends from the token start to the end of
     // the input string.  slice it to end at parser->char_pos.
     //
     // How it works:
-    // start_index is the index of the start of the token's string _within the
-    // original input string_.  
+    // start_index is the index of the start of the token's string **within the
+    // original input string**.  Re-slice to start at start_index and end at
+    // parser->char_pos.
     int start_index = mu_str_length(parser->json) - mu_str_length(&token->json);
-    // Re-slice to start at start_index and end at parser->char_pos.
     mu_str_slice(&token->json, parser->json, start_index, parser->char_pos);
+    TRACE_PRINTF("\nFinish %s", token_string(token));
+    seal_token(token);
 }
 
-static int lookup_state(int state, int char_class) {
-    return state_transition_table[state * NR_CLASSES + char_class];
-}
-
-static bool token_is_sealed(mu_json_token_t *token) {
-    return token->flags & MU_JSON_TOKEN_FLAG_IS_SEALED;
-}
-
-static void token_seal(mu_json_token_t *token) {
-    token->flags |= MU_JSON_TOKEN_FLAG_IS_SEALED;
-}
-
-static mu_json_token_t *top_token(parser_t *parser) {
+static mu_json_token_t *tos(parser_t *parser) {
     if (parser->token_count == 0) {
         return NULL;
     } else {
         return &parser->tokens[parser->token_count - 1];
     }
+}
+
+static mu_json_token_t *active_container(parser_t *parser,
+                                         mu_json_token_type_t type) {
+    mu_json_token_t *token = tos(parser);
+    if (token == NULL) {
+        // token stack is empty.
+        TRACE_PRINTF("\nactive_container(): token stack is empty");
+        return NULL;
+    }
+    if ((token->type == type) && !token_is_sealed(token)) {
+        // top of stack is an unsealed container.
+        return token;
+    }
+    // top of stack is not an unsealed container: check parent
+    mu_json_token_t *container = mu_json_token_parent(token);
+    if ((container != NULL) && (container->type == type)) {
+        if (token_is_sealed(container)) {
+            TRACE_PRINTF(
+                "error: unexpected sealed container"); // should not happen
+            return NULL;
+        }
+        return container;
+    }
+    // does not have an active parent
+    return NULL;
+}
+
+int child_count(mu_json_token_t *container, mu_json_token_t *token) {
+    // Assumes that token is a direct child of an active container.  Count
+    // children of the container until token is seen
+    if (container == token) {
+        // handle the case where 0 children have been added to container.
+        return 0;
+    }
+    int count = 1;
+    mu_json_token_t *child = mu_json_token_child(container);
+    while (child != token) {
+        count += 1;
+        child = mu_json_token_next_sibling(child);
+        if (child == NULL) {
+            // shouldn't happen
+            TRACE_PRINTF("\n%s is not a child of container?", token_string(token));
+            return 0;
+        }
+    }
+    return count;
+}
+
+static char *token_string(mu_json_token_t *token) {
+    static char buf[100];
+
+    if (token == NULL) {
+        snprintf(buf, sizeof(buf), "<token %p: null token>", token);
+    } else {
+        snprintf(buf, sizeof(buf), "<token %p: %s %d '%.*s'>", token,
+                 token_type_name(token->type), token->depth,
+                 (int)mu_str_length(&token->json), mu_str_buf(&token->json));
+    }
+    buf[sizeof(buf)-1] = '\0';   // just in case.
+    return buf;
 }

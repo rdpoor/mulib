@@ -426,7 +426,7 @@ int JSON_checker_char(JSON_checker jc, int next_char) {
             /* close quote seen */ 
             switch (jc->stack[jc->top]) {
             case MODE_KEY:
-                /* If in key mode, expect a comma next */
+                /* If in key mode, expect a colon next */
                 jc->state = CO;
                 break;
             case MODE_ARRAY:

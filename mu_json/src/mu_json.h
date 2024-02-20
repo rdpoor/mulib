@@ -51,7 +51,8 @@ extern "C" {
 typedef enum {
     MU_JSON_ERR_NONE = 0,        // no error
     MU_JSON_ERR_BAD_FORMAT = -1, // illegal JSON format
-    MU_JSON_ERR_NO_TOKENS = -2,  // not enough tokens
+    MU_JSON_ERR_NO_TOKENS = -2,  // not enough tokens provided
+    MU_JSON_ERR_INCOMPLETE = -3  // JSON ended with unterminated form
 } mu_json_err_t;
 
 typedef enum {

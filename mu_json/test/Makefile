@@ -21,12 +21,10 @@ BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
-	$(SRC_DIR)/mu_json.c \
-	$(SRC_DIR)/JSON_checker.c
+	$(SRC_DIR)/mu_json.c
 
 TEST_FILES := \
-	$(TEST_DIR)/test_mu_json.c \
-	$(TEST_DIR)/test_JSON_checker.c
+	$(TEST_DIR)/test_mu_json.c
 
 CORE_FILES := \
 	$(CORE_DIR)/mu_str.c
@@ -61,17 +59,13 @@ EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
 
 all: $(EXECUTABLES)
 
-tests: all
+tests: $(EXECUTABLES)
 	@for test in $(EXECUTABLES) ; do \
 		echo "Running $$test..."; \
 		./$$test; \
 	done
 
 coverage:
-	# Determine absolute paths
-	# TEST_DIR_ABS=$$(realpath $(TEST_DIR))
-	# TEST_SUPPORT_DIR_ABS=$$(realpath $(TEST_SUPPORT_DIR))
-
 	# Clean and rebuild everything with coverage flags
 	$(MAKE) clean
 	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"

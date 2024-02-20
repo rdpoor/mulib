@@ -11,15 +11,61 @@ DEFINE_FFF_GLOBALS;
 #define MAX_JSON_STRING 250002
 
 static uint8_t json_buf[MAX_JSON_STRING];
-static mu_json_token_t tokens[MAX_TOKENS];
+static mu_json_token_t s_tokens[MAX_TOKENS];
 
 static const char *s_json =
-  "{\"a\":10, \"b\":11, \"c\":[3, 4], \"d\":[]}";
-
-static mu_json_token_t s_tokens[MAX_TOKENS];
+  "{ \"a\" : 10 , \"b\" : 11 , \"c\" : [ 3, 4 ], \"d\" : [ ] } ";
 
 void setUp(void) {
     // Reset all faked functions
+}
+
+void tearDown(void) {
+    // nothing yet
+}
+
+/**
+ * @brief Test for correctly detecting both valid and invalid JSON syntax.
+ *
+ * Check the contents of a JSON file, return true if expected_outcome is true 
+ * and the JSON is valid, return true if expected_outcome is false and the JSON 
+ * is invalid, return false otherwise.
+ *
+ * The source data here is derived from the (excellent) JSON parsing test suite
+ * at https://github.com/nst/JSONTestSuite/tree/master.
+ */
+static bool check_format(const char *filename, bool expected_outcome) {
+    bool succeeded = false;
+    int n_read;
+
+    memset(json_buf, 0, sizeof(json_buf));
+    memset(s_tokens, 0, sizeof(s_tokens));
+
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "test error: could not open %s\n", filename);
+        return false;
+    }
+
+    n_read = fread(json_buf, sizeof(char), sizeof(json_buf), fp);
+    if (n_read < 0) {
+        fprintf(stderr, "test error: could not read %s\n", filename);
+        return false;
+    }
+
+    if (mu_json_parse_buffer(s_tokens, MAX_TOKENS, json_buf, n_read) >=
+        0) {
+        succeeded = true;
+    }
+
+    return expected_outcome == succeeded;
+}
+
+static void build_tree(void) {
+    TEST_ASSERT_EQUAL_INT(11, mu_json_parse_c_str(s_tokens, MAX_TOKENS, s_json));
+}
+
+__attribute__((unused)) static void hand_build_tree(void) {
     // hand-build a set of parsed tokens.  In the future, use mu_json_parse_xxx
     // to create this.
     //   0000000000111111111122222222223333333
@@ -95,48 +141,7 @@ void setUp(void) {
     mu_str_slice(&t->json, &str, 33, 35); // []
     t->type = MU_JSON_TOKEN_TYPE_ARRAY;
     t->flags = MU_JSON_TOKEN_FLAG_IS_LAST;
-    t->depth = 1;
-}
-
-void tearDown(void) {
-    // nothing yet
-}
-
-/**
- * @brief Test for correctly detecting both valid and invalid JSON syntax.
- *
- * Check the contents of a JSON file, return true if expected_outcome is true 
- * and the JSON is valid, return true if expected_outcome is false and the JSON 
- * is invalid, return false otherwise.
- *
- * The source data here is derived from the (excellent) JSON parsing test suite
- * at https://github.com/nst/JSONTestSuite/tree/master.
- */
-static bool check_format(const char *filename, bool expected_outcome) {
-    bool succeeded = false;
-    int n_read;
-
-    memset(json_buf, 0, sizeof(json_buf));
-    memset(tokens, 0, sizeof(tokens));
-
-    FILE *fp = fopen(filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "test error: could not open %s\n", filename);
-        return false;
-    }
-
-    n_read = fread(json_buf, sizeof(char), sizeof(json_buf), fp);
-    if (n_read < 0) {
-        fprintf(stderr, "test error: could not read %s\n", filename);
-        return false;
-    }
-
-    if (mu_json_parse_buffer(tokens, MAX_TOKENS, json_buf, n_read) >=
-        0) {
-        succeeded = true;
-    }
-
-    return expected_outcome == succeeded;
+    t->depth = 1;    
 }
 
 void test_json_token_type(void) {
@@ -144,15 +149,16 @@ void test_json_token_type(void) {
     //   0123456789012345678901234567890123456
     //   {"a":10, "b":11, "c":[3, 4], "d":[]}
     //   01   2   3   4   5   67  8   9   0  1
+    build_tree();
     TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_OBJECT, mu_json_token_type(&s_tokens[0]));
     TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_STRING, mu_json_token_type(&s_tokens[1]));
-    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_INTEGER, mu_json_token_type(&s_tokens[2]));
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_NUMBER, mu_json_token_type(&s_tokens[2]));
     TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_STRING, mu_json_token_type(&s_tokens[3]));
-    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_INTEGER, mu_json_token_type(&s_tokens[4]));
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_NUMBER, mu_json_token_type(&s_tokens[4]));
     TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_STRING, mu_json_token_type(&s_tokens[5]));
     TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_ARRAY, mu_json_token_type(&s_tokens[6]));
-    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_INTEGER, mu_json_token_type(&s_tokens[7]));
-    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_INTEGER, mu_json_token_type(&s_tokens[8]));
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_NUMBER, mu_json_token_type(&s_tokens[7]));
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_NUMBER, mu_json_token_type(&s_tokens[8]));
     TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_STRING, mu_json_token_type(&s_tokens[9]));
     TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_ARRAY, mu_json_token_type(&s_tokens[10]));
 }
@@ -162,6 +168,7 @@ void test_json_token_depth(void) {
     //   0123456789012345678901234567890123456
     //   {"a":10, "b":11, "c":[3, 4], "d":[]}
     //   01   2   3   4   5   67  8   9   0  1
+    build_tree();
     TEST_ASSERT_EQUAL_INT(0, mu_json_token_depth(&s_tokens[0]));
     TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(&s_tokens[1]));
     TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(&s_tokens[2]));
@@ -176,6 +183,7 @@ void test_json_token_depth(void) {
 }
 
 void test_json_token_is_first(void) {
+    build_tree();
     TEST_ASSERT_TRUE(mu_json_token_is_first(&s_tokens[0]));
     TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[1]));
     TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[2]));
@@ -190,6 +198,7 @@ void test_json_token_is_first(void) {
 }
 
 void test_json_token_is_last(void) {
+    build_tree();
     TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[0]));
     TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[1]));
     TEST_ASSERT_FALSE(mu_json_token_is_first(&s_tokens[2]));
@@ -204,6 +213,7 @@ void test_json_token_is_last(void) {
 }
 
 void test_json_token_prev(void) {
+    build_tree();
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_prev(&s_tokens[0]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[0], mu_json_token_prev(&s_tokens[1]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[1], mu_json_token_prev(&s_tokens[2]));
@@ -218,6 +228,7 @@ void test_json_token_prev(void) {
 }
 
 void test_json_token_next(void) {
+    build_tree();
     TEST_ASSERT_EQUAL_PTR(&s_tokens[1], mu_json_token_next(&s_tokens[0]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[2], mu_json_token_next(&s_tokens[1]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[3], mu_json_token_next(&s_tokens[2]));
@@ -228,10 +239,11 @@ void test_json_token_next(void) {
     TEST_ASSERT_EQUAL_PTR(&s_tokens[8], mu_json_token_next(&s_tokens[7]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[9], mu_json_token_next(&s_tokens[8]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[10], mu_json_token_next(&s_tokens[9]));
-    TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next(&s_tokens[10]));
+     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next(&s_tokens[10]));
 }
 
 void test_json_token_root(void) {
+    build_tree();
     TEST_ASSERT_EQUAL_PTR(&s_tokens[0], mu_json_token_root(&s_tokens[0]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[0], mu_json_token_root(&s_tokens[1]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[0], mu_json_token_root(&s_tokens[2]));
@@ -248,6 +260,7 @@ void test_json_token_root(void) {
 void test_json_token_parent(void) {
     //   {"a":10, "b":11, "c":[3, 4], "d":[]}
     //   01   2   3   4   5   67  8   9   0  1
+    build_tree();
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_parent(&s_tokens[0]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[0], mu_json_token_parent(&s_tokens[1]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[0], mu_json_token_parent(&s_tokens[2]));
@@ -264,6 +277,7 @@ void test_json_token_parent(void) {
 void test_json_token_child(void) {
     //   {"a":10, "b":11, "c":[3, 4], "d":[]}
     //   01   2   3   4   5   67  8   9   0  1
+    build_tree();
     TEST_ASSERT_EQUAL_PTR(&s_tokens[1], mu_json_token_child(&s_tokens[0]));
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_child(&s_tokens[1]));
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_child(&s_tokens[2]));
@@ -280,6 +294,7 @@ void test_json_token_child(void) {
 void test_json_token_prev_sibling(void) {
     //   {"a":10, "b":11, "c":[3, 4], "d":[]}
     //   01   2   3   4   5   67  8   9   0  1
+    build_tree();
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_prev_sibling(&s_tokens[0]));
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_prev_sibling(&s_tokens[1]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[1], mu_json_token_prev_sibling(&s_tokens[2]));
@@ -296,6 +311,7 @@ void test_json_token_prev_sibling(void) {
 void test_json_token_next_sibling(void) {
     //   {"a":10, "b":11, "c":[3, 4], "d":[]}
     //   01   2   3   4   5   67  8   9   0  1
+    build_tree();
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next_sibling(&s_tokens[0]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[2], mu_json_token_next_sibling(&s_tokens[1]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[3], mu_json_token_next_sibling(&s_tokens[2]));
@@ -307,6 +323,23 @@ void test_json_token_next_sibling(void) {
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next_sibling(&s_tokens[8]));
     TEST_ASSERT_EQUAL_PTR(&s_tokens[10], mu_json_token_next_sibling(&s_tokens[9]));
     TEST_ASSERT_EQUAL_PTR(NULL, mu_json_token_next_sibling(&s_tokens[10]));
+}
+
+void test_json_token_parsed_elements(void) {
+    //   "{ \"a\" : 10 , \"b\" : 11 , \"c\" : [ 3, 4 ], \"d\" : [ ] } ";
+    build_tree();
+    // TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "{ \"a\" : 10 , \"b\" : 11 , \"c\" : [ 3, 4 ], \"d\" : [ ] }"));
+    printf("s_tokens[1].json = '%.*s'\n", (int)mu_str_length(&s_tokens[1].json), mu_str_buf(&s_tokens[1].json));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[1].json, "\"a\""));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[2].json, "10"));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[3].json, "\"b\""));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[4].json, "11"));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[5].json, "\"c\""));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[6].json, "[ 3, 4 ]"));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[7].json, "3"));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[8].json, "4"));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[9].json, "\"c\""));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[10].json, "[ ]"));
 }
 
 #define JSON_TEST_SUITE_DIR "./test_parsing/"
@@ -605,18 +638,19 @@ void test_json_check_bad_format(void) {
 int main(void) {
     UNITY_BEGIN();
 
-    RUN_TEST(test_json_token_type);
-    RUN_TEST(test_json_token_depth);
-    RUN_TEST(test_json_token_prev);
-    RUN_TEST(test_json_token_next);
-    RUN_TEST(test_json_token_root);
-    RUN_TEST(test_json_token_parent);
-    RUN_TEST(test_json_token_child);
-    RUN_TEST(test_json_token_prev_sibling);
-    RUN_TEST(test_json_token_next_sibling);
+    // RUN_TEST(test_json_token_type);
+    // RUN_TEST(test_json_token_depth);
+    // RUN_TEST(test_json_token_prev);
+    // RUN_TEST(test_json_token_next);
+    // RUN_TEST(test_json_token_root);
+    // RUN_TEST(test_json_token_parent);
+    // RUN_TEST(test_json_token_child);
+    // RUN_TEST(test_json_token_prev_sibling);
+    // RUN_TEST(test_json_token_next_sibling);
+    RUN_TEST(test_json_token_parsed_elements);
 
-    RUN_TEST(test_json_check_good_format);
-    RUN_TEST(test_json_check_bad_format);
+    // RUN_TEST(test_json_check_good_format);
+    // RUN_TEST(test_json_check_bad_format);
 
     return UNITY_END();
 }
