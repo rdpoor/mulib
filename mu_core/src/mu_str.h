@@ -90,6 +90,11 @@ mu_str_t *mu_str_init(mu_str_t *str, const uint8_t *buf, size_t length);
 mu_str_t *mu_str_init_cstr(mu_str_t *str, const char *cstr);
 
 /**
+ * @brief Return reference to internal string.  Use thoughfully.
+ */
+const uint8_t *mu_str_buf(mu_str_t *str);
+
+/**
  * @brief Return the length of the mu_str.
  */
 size_t mu_str_length(mu_str_t *str);
@@ -131,6 +136,14 @@ int mu_str_compare(mu_str_t *s1, mu_str_t *s2);
  * strlen(cstr).
  */
 int mu_str_compare_cstr(mu_str_t *s1, const char *cstr);
+
+/**
+ * @brief Return true if a mu_str equals a null-terminated C-style string.
+ * 
+ * By popular demand.
+ *
+ */
+bool mu_str_equals_cstr(mu_str_t *s1, const char *cstr);
 
 /**
  * @brief Take a slice of a mu_str.

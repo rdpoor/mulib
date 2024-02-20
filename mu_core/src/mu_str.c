@@ -110,6 +110,8 @@ mu_str_t *mu_str_init_cstr(mu_str_t *str, const char *cstr) {
     return mu_str_init(str, (const uint8_t *)cstr, strlen(cstr));
 }
 
+const uint8_t *mu_str_buf(mu_str_t *str) { return str->buf; }
+
 size_t mu_str_length(mu_str_t *str) { return str->length; }
 
 bool mu_str_is_empty(mu_str_t *str) { return str->length == 0; }
@@ -133,6 +135,10 @@ int mu_str_compare(mu_str_t *s1, mu_str_t *s2) {
 
 int mu_str_compare_cstr(mu_str_t *s1, const char *cstr) {
     return str_compare_aux(s1, (const uint8_t *)cstr, strlen(cstr));
+}
+
+bool mu_str_equals_cstr(mu_str_t *s1, const char *cstr) {
+    return str_compare_aux(s1, (const uint8_t *)cstr, strlen(cstr)) == 0;
 }
 
 mu_str_t *mu_str_slice(mu_str_t *dst, mu_str_t *src, int start, int end) {
