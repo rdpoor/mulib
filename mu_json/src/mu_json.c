@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-// ****************************************************************************=
+// *****************************************************************************
 // Includes
 
 #include "mu_json.h"
@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// ****************************************************************************=
+// *****************************************************************************
 // Private types and definitions
 
 // #define DEBUG_TRACE
@@ -44,7 +44,7 @@
 #define TRACE_PRINTF(...)
 #endif
 
-#define __ (uint8_t)-1 /* the universal error code */
+#define __ (uint8_t) - 1 /* the universal error code */
 
 // The 128 ASCII chars map into one of the following character classes.
 // See s_c_class_map[]
@@ -153,7 +153,7 @@ typedef struct {
     mu_json_err_t error;     // error status
 } parser_t;
 
-// ****************************************************************************=
+// *****************************************************************************
 // Private (static) storage
 
 /**
@@ -232,9 +232,11 @@ static int state_transition_table[NR_STATES * NR_CLASSES] = {
 #define EXPAND_TOKEN_TYPE_NAMES(_name) #_name,
 __attribute__((unused)) static const char *s_token_type_names[] = {
     DEFINE_MU_JSON_TOKEN_TYPES(EXPAND_TOKEN_TYPE_NAMES)};
-#define N_TOKEN_TYPES (sizeof(s_token_type_names) / sizeof(s_token_type_names[0]))
+#define N_TOKEN_TYPES                                                          \
+    (sizeof(s_token_type_names) / sizeof(s_token_type_names[0]))
 
-__attribute__((unused)) static const char *token_type_name(mu_json_token_type_t token_type) {
+__attribute__((unused)) static const char *
+token_type_name(mu_json_token_type_t token_type) {
     if (token_type >= 0 && token_type < N_TOKEN_TYPES) {
         return s_token_type_names[token_type];
     } else {
@@ -302,7 +304,7 @@ __attribute__((unused)) static const char *error_name(mu_json_err_t error) {
 // end DEBUG_TRACE support
 // *****************************************************************************
 
-// ****************************************************************************=
+// *****************************************************************************
 // Private (forward) declarations
 
 static int parse(mu_json_token_t *tokens, size_t max_tokens,
@@ -316,7 +318,7 @@ static int classify_char(uint8_t ch);
 /**
  * @brief Convenience interface to begin_token(): Allocates a token, sets its
  * type, and set the parser state to s.
- * 
+ *
  * Rife with side effects, but makes for a condensed dispatch table.
  */
 static void std_alloc(parser_t *parser, mu_json_token_type_t type, int s);
@@ -332,12 +334,13 @@ static bool begin_token(parser_t *parser, mu_json_token_type_t type);
 
 /**
  * @brief Complete a token.
- * 
+ *
  * Trim the token's JSON slice end at the current char_pos and seal it.  If
  * incl_delim is true, slice one char past the current char pos (e.g. for
- * close quote, close ] and close }).  
+ * close quote, close ] and close }).
  */
-static void finish_token(parser_t *parser, mu_json_token_t *token, bool incl_delim);
+static void finish_token(parser_t *parser, mu_json_token_t *token,
+                         bool incl_delim);
 
 /**
  * @brief Map a (state, char_class) pair to a new state.
@@ -399,14 +402,14 @@ static inline void set_is_last(mu_json_token_t *token) {
 }
 
 /**
- * @brief "Top of Stack": Return the most recently allocated token or NULL if 
+ * @brief "Top of Stack": Return the most recently allocated token or NULL if
  * none have been allocated.
  */
 static mu_json_token_t *tos(parser_t *parser);
 
 /**
  * @brief return a new state depending on several factors.
- * 
+ *
  * @param token Most recently allocated token
  * @param not_in_container State to be returned if token is not in a container
  * @param in_array State to be returned if token is inside an array
@@ -435,13 +438,13 @@ static inline void set_state(parser_t *parser, int state) {
 
 /**
  * @brief Return a string describing the token.
- * 
+ *
  * WARNING 1: prints into a static buf that gets re-written on the next call.
  * WARNING 2: limits results to 100 bytes.
  */
 __attribute__((unused)) static char *token_string(mu_json_token_t *token);
 
-// ****************************************************************************=
+// *****************************************************************************
 // Public code
 
 int mu_json_parse_c_str(mu_json_token_t *token_store, size_t max_tokens,
@@ -459,6 +462,14 @@ int mu_json_parse_buffer(mu_json_token_t *token_store, size_t max_tokens,
                          const uint8_t *buf, size_t buflen) {
     mu_str_t mu_str;
     return parse(token_store, max_tokens, mu_str_init(&mu_str, buf, buflen));
+}
+
+mu_str_t *mu_json_token_mu_str(mu_json_token_t *token) {
+    if (token == NULL) {
+        return NULL;
+    } else {
+        return &token->json;
+    }
 }
 
 mu_json_token_type_t mu_json_token_type(mu_json_token_t *token) {
@@ -589,13 +600,7 @@ mu_json_token_t *mu_json_token_next_sibling(mu_json_token_t *token) {
     }
 }
 
-void *mu_json_token_traverse(mu_json_token_t *root, mu_json_visit_fn fn,
-                             void *arg, int max_depth) {
-    // STUB
-    return NULL;
-}
-
-// ****************************************************************************=
+// *****************************************************************************
 // Private (static) code
 
 static int parse(mu_json_token_t *token_store, size_t max_tokens,
@@ -709,15 +714,20 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
             // These actions cause tokens to be finished and/or state change.
             case Fa: {
                 // ] (finish array)
-                mu_json_token_t *token = tos(&parser); 
-                if (mu_json_token_type(token) == MU_JSON_TOKEN_TYPE_ARRAY) {
-                    // empty [], TOS == ARRAY.  Close ARRAY.
-                    finish_token(&parser, token, true);
-                } else {
-                    // for [X], TOS == X, parent(X) == ARRAY.  close X and ARRAY
-                    mu_json_token_t *container = mu_json_token_parent(token);
+                mu_json_token_t *token = tos(&parser);
+                if (mu_json_token_type(token) != MU_JSON_TOKEN_TYPE_ARRAY) {
+                    // TOS is not an object.  Close TOS and container.
                     finish_token(&parser, token, false);
-                    finish_token(&parser, container, true);
+                    mu_json_token_t *container = mu_json_token_parent(token);
+                    finish_token(&parser, container, true);                    
+                } else if (token_is_sealed(token)) {
+                    // TOS is an object that's already been sealed.  Finish
+                    // container.
+                    mu_json_token_t *container = mu_json_token_parent(token);
+                    finish_token(&parser, container, true);                    
+                } else {
+                    // TOS is an empty object.  Finish it.
+                    finish_token(&parser, token, true);
                 }
                 parser.depth -= 1;
                 set_state(&parser, OK);
@@ -726,15 +736,20 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
 
             case Fo: {
                 // } (finish object)
-                mu_json_token_t *token = tos(&parser); 
-                if (mu_json_token_type(token) == MU_JSON_TOKEN_TYPE_OBJECT) {
-                    // empty {}: TOS == ARRAY.  Close OBJECT.
-                    finish_token(&parser, token, true);
-                } else {
-                    // {X}: TOS == X, parent(X) == OBJECT.  close X and OBJECT
-                    mu_json_token_t *container = mu_json_token_parent(token);
+                mu_json_token_t *token = tos(&parser);
+                if (mu_json_token_type(token) != MU_JSON_TOKEN_TYPE_OBJECT) {
+                    // TOS is not an object.  Close TOS and container.
                     finish_token(&parser, token, false);
-                    finish_token(&parser, container, true);
+                    mu_json_token_t *container = mu_json_token_parent(token);
+                    finish_token(&parser, container, true);                    
+                } else if (token_is_sealed(token)) {
+                    // TOS is an object that's already been sealed.  Finish
+                    // container.
+                    mu_json_token_t *container = mu_json_token_parent(token);
+                    finish_token(&parser, container, true);                    
+                } else {
+                    // TOS is an empty object.  Finish it.
+                    finish_token(&parser, token, true);
                 }
                 parser.depth -= 1;
                 set_state(&parser, OK);
@@ -763,7 +778,8 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
                 if (!is_container(token)) {
                     finish_token(&parser, token, false);
                 }
-                set_state(&parser, select_state(token, OK, OK, OK, parser.state));
+                set_state(&parser,
+                          select_state(token, OK, OK, OK, parser.state));
                 break;
             }
 
@@ -788,8 +804,8 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
         parser.char_pos += 1;
     } // while(true)
 
-    TRACE_PRINTF("\n=== endgame: depth=%d, state=%s, err=%d\n",
-        parser.depth, state_name(parser.state), parser.error);
+    TRACE_PRINTF("\n=== endgame: depth=%d, state=%s, err=%d\n", parser.depth,
+                 state_name(parser.state), parser.error);
 
     int retval;
 
@@ -805,7 +821,7 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
     } else {
         mu_json_token_t *token = tos(&parser);
         if (token) {
-            set_is_last(tos(&parser));      // mark last token as such 
+            set_is_last(tos(&parser)); // mark last token as such
             finish_token(&parser, mu_json_token_root(tos(&parser)), false);
         }
         TRACE_PRINTF("\nendgame: success");
@@ -852,7 +868,8 @@ static bool begin_token(parser_t *parser, mu_json_token_type_t type) {
     return true;
 }
 
-static void finish_token(parser_t *parser, mu_json_token_t *token, bool incl_delim) {
+static void finish_token(parser_t *parser, mu_json_token_t *token,
+                         bool incl_delim) {
     // TODO: Add mu_json_token_type_t arg to confim we're closing the right one
     if (token == NULL) {
         TRACE_PRINTF("\nAttempt to finish null token?");
@@ -862,7 +879,7 @@ static void finish_token(parser_t *parser, mu_json_token_t *token, bool incl_del
         return;
     }
     // On entry, token->json extends from the token start to the end of
-    // the input string.  If incl_delim is true, slice it to end at 
+    // the input string.  If incl_delim is true, slice it to end at
     // parser->char_pos + 1, else at parser->char_pos.
     //
     // How it works:
@@ -916,7 +933,8 @@ static int child_count(mu_json_token_t *container, mu_json_token_t *token) {
         child = mu_json_token_next_sibling(child);
         if (child == NULL) {
             // shouldn't happen
-            TRACE_PRINTF("\n%s is not a child of container?", token_string(token));
+            TRACE_PRINTF("\n%s is not a child of container?",
+                         token_string(token));
             return 0;
         }
     }
@@ -933,6 +951,6 @@ static char *token_string(mu_json_token_t *token) {
                  token_type_name(token->type), token->depth,
                  (int)mu_str_length(&token->json), mu_str_buf(&token->json));
     }
-    buf[sizeof(buf)-1] = '\0';   // just in case.
+    buf[sizeof(buf) - 1] = '\0'; // just in case.
     return buf;
 }

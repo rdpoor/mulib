@@ -69,84 +69,52 @@ static void build_tree(void) {
     TEST_ASSERT_EQUAL_INT(11, mu_json_parse_c_str(s_tokens, MAX_TOKENS, s_json));
 }
 
-__attribute__((unused)) static void hand_build_tree(void) {
-    // hand-build a set of parsed tokens.  In the future, use mu_json_parse_xxx
-    // to create this.
-    //   0000000000111111111122222222223333333
-    //   0123456789012345678901234567890123456
-    //   {"a":10, "b":11, "c":[3, 4], "d":[]}
-    //   01   2   3   4   5   67  8   9   0  1
+#define N_DEMO_TOKENS 10
+
+void test_demo_example(void) {
+    mu_json_token_t tokens[N_DEMO_TOKENS];
     mu_json_token_t *t;
-    mu_str_t str;
-
-    mu_str_init_cstr(&str, s_json);
-
-    t = &s_tokens[0];
-    mu_str_slice(&t->json, &str, 0, 36); // {"a":10, "b":11, "c":[3, 4], "d":[]}
-    t->type = MU_JSON_TOKEN_TYPE_OBJECT;
-    t->flags = MU_JSON_TOKEN_FLAG_IS_FIRST;
-    t->depth = 0;
-
-    t = &s_tokens[1];
-    mu_str_slice(&t->json, &str, 1, 4); // "a"
-    t->type = MU_JSON_TOKEN_TYPE_STRING;
-    t->flags = 0;
-    t->depth = 1;
-
-    t = &s_tokens[2];
-    mu_str_slice(&t->json, &str, 5, 7); // 10
-    t->type = MU_JSON_TOKEN_TYPE_INTEGER;
-    t->flags = 0;
-    t->depth = 1;
-
-    t = &s_tokens[3];
-    mu_str_slice(&t->json, &str, 9, 12); // "b"
-    t->type = MU_JSON_TOKEN_TYPE_STRING;
-    t->flags = 0;
-    t->depth = 1;
-
-    t = &s_tokens[4];
-    mu_str_slice(&t->json, &str, 13, 15); // 11
-    t->type = MU_JSON_TOKEN_TYPE_INTEGER;
-    t->flags = 0;
-    t->depth = 1;
-
-    t = &s_tokens[5];
-    mu_str_slice(&t->json, &str, 17, 20); // "c"
-    t->type = MU_JSON_TOKEN_TYPE_STRING;
-    t->flags = 0;
-    t->depth = 1;
-
-    t = &s_tokens[6];
-    mu_str_slice(&t->json, &str, 21, 27); // [3, 4]
-    t->type = MU_JSON_TOKEN_TYPE_ARRAY;
-    t->flags = 0;
-    t->depth = 1;
-
-    t = &s_tokens[7];
-    mu_str_slice(&t->json, &str, 22, 23); // 3
-    t->type = MU_JSON_TOKEN_TYPE_INTEGER;
-    t->flags = 0;
-    t->depth = 2;
-
-    t = &s_tokens[8];
-    mu_str_slice(&t->json, &str, 25, 26); // 4
-    t->type = MU_JSON_TOKEN_TYPE_INTEGER;
-    t->flags = 0;
-    t->depth = 2;
-
-    t = &s_tokens[9];
-    mu_str_slice(&t->json, &str, 29, 32); // "d"
-    t->type = MU_JSON_TOKEN_TYPE_STRING;
-    t->flags = 0;
-    t->depth = 1;
-
-    t = &s_tokens[10];
-    mu_str_slice(&t->json, &str, 33, 35); // []
-    t->type = MU_JSON_TOKEN_TYPE_ARRAY;
-    t->flags = MU_JSON_TOKEN_FLAG_IS_LAST;
-    t->depth = 1;    
+    const char *json = " {\"a\":111, \"b\":[222, 333], \"c\":{}}  ";
+    TEST_ASSERT_EQUAL_INT(9, mu_json_parse_c_str(tokens, N_DEMO_TOKENS, json));
+    t = &tokens[0];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_OBJECT, mu_json_token_type(t));
+    // fprintf(stderr, "\n'%.*s'", (int)mu_str_length(mu_json_token_mu_str(t)), mu_str_buf(mu_json_token_mu_str(t)));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "{\"a\":111, \"b\":[222, 333], \"c\":{}}"));
+    TEST_ASSERT_EQUAL_INT(0, mu_json_token_depth(t));
+    t = &tokens[1];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_STRING, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "\"a\""));
+    TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(t));
+    t = &tokens[2];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_NUMBER, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "111"));
+    TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(t));
+    t = &tokens[3];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_STRING, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "\"b\""));
+    TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(t));
+    t = &tokens[4];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_ARRAY, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "[222, 333]"));
+    TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(t));
+    t = &tokens[5];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_NUMBER, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "222"));
+    TEST_ASSERT_EQUAL_INT(2, mu_json_token_depth(t));
+    t = &tokens[6];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_NUMBER, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "333"));
+    TEST_ASSERT_EQUAL_INT(2, mu_json_token_depth(t));
+    t = &tokens[7];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_STRING, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "\"c\""));
+    TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(t));
+    t = &tokens[8];
+    TEST_ASSERT_EQUAL_INT(MU_JSON_TOKEN_TYPE_OBJECT, mu_json_token_type(t));
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(mu_json_token_mu_str(t), "{}"));
+    TEST_ASSERT_EQUAL_INT(1, mu_json_token_depth(t));
 }
+
 
 void test_json_token_type(void) {
     //   0000000000111111111122222222223333333
@@ -678,8 +646,9 @@ void test_regression(void) {
 int main(void) {
     UNITY_BEGIN();
 
-    RUN_TEST(test_regression);
+    RUN_TEST(test_demo_example);
 
+    RUN_TEST(test_regression);
     RUN_TEST(test_json_token_type);
     RUN_TEST(test_json_token_depth);
     RUN_TEST(test_json_token_prev);
