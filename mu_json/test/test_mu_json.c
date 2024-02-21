@@ -331,6 +331,7 @@ void test_json_token_next_sibling(void) {
 
 void test_json_token_parsed_elements(void) {
     //   "{ \"a\" : 10 , \"b\" : 11 , \"c\" : [ 3, 4 ], \"d\" : [ ] } ";
+    build_tree();
     TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "{ \"a\" : 10 , \"b\" : 11 , \"c\" : [ 3, 4 ], \"d\" : [ ] }"));
     TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[1].json, "\"a\""));
     TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[2].json, "10"));

@@ -36,7 +36,7 @@
 // ****************************************************************************=
 // Private types and definitions
 
-#define DEBUG_TRACE
+// #define DEBUG_TRACE
 #ifdef DEBUG_TRACE
 #include <stdio.h>
 #define TRACE_PRINTF(...) fprintf(stderr, __VA_ARGS__)
@@ -610,6 +610,7 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
     parser.state = GO;
     parser.error = MU_JSON_ERR_NONE;
 
+    bool eos = false;
     uint8_t ch;
     int char_class;
     int next_state;
@@ -617,17 +618,17 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
     TRACE_PRINTF("\n==== parsing '%.*s'", (int)mu_str_length(json_input),
                  mu_str_buf(json_input));
 
-    while (true) {
+    while (!eos) {
         if (parser.error != MU_JSON_ERR_NONE) {
             // allocation or format error
             break;
         }
-        if (!mu_str_get_byte(parser.json, parser.char_pos, &ch)) {
-            // end of string reached
-            TRACE_PRINTF("\n...eos");
-            break;
-        }
-        if ((char_class = classify_char(ch)) < 0) {
+        eos = !mu_str_get_byte(parser.json, parser.char_pos, &ch);
+        if (eos) {
+            // treat end of string like a space delimiter: it simplififes the
+            // endgame logic.
+            char_class = C_SPACE;
+        } else if ((char_class = classify_char(ch)) < 0) {
             // illegal character in json_input
             parser.error = MU_JSON_ERR_BAD_FORMAT;
             TRACE_PRINTF("\n'%c': illegal character", ch);
@@ -705,19 +706,18 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
                 break;
             }
 
-            // These actions cause tokens to be finished and/or change state.
+            // These actions cause tokens to be finished and/or state change.
             case Fa: {
                 // ] (finish array)
                 mu_json_token_t *token = tos(&parser); 
-                if (mu_json_token_type(token) != MU_JSON_TOKEN_TYPE_ARRAY) {
-                    // top of stack is not an array, finish it. 
-                    finish_token(&parser, token, false);
-                    // find parent of token and close it too...
-                    // TODO: verify that parent == MU_JSON_TOKEN_TYPE_ARRAY?
-                    // finish_token(&parser, mu_json_token_parent(token), true);
-                } else {
-                    // top of stack is an empty array, finish it.
+                if (mu_json_token_type(token) == MU_JSON_TOKEN_TYPE_ARRAY) {
+                    // empty [], TOS == ARRAY.  Close ARRAY.
                     finish_token(&parser, token, true);
+                } else {
+                    // for [X], TOS == X, parent(X) == ARRAY.  close X and ARRAY
+                    mu_json_token_t *container = mu_json_token_parent(token);
+                    finish_token(&parser, token, false);
+                    finish_token(&parser, container, true);
                 }
                 parser.depth -= 1;
                 set_state(&parser, OK);
@@ -726,16 +726,15 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
 
             case Fo: {
                 // } (finish object)
-                mu_json_token_t *token = tos(&parser);
-                if (mu_json_token_type(token) != MU_JSON_TOKEN_TYPE_OBJECT) {
-                    // top of stack is not an object, finish it
-                    finish_token(&parser, token, false);
-                    // find parent of token and close it too...
-                    mu_json_token_t *container = mu_json_token_parent(token);
-                    finish_token(&parser, container, true);
-                } else {
-                    // Top of stack is an empty coject, finish it
+                mu_json_token_t *token = tos(&parser); 
+                if (mu_json_token_type(token) == MU_JSON_TOKEN_TYPE_OBJECT) {
+                    // empty {}: TOS == ARRAY.  Close OBJECT.
                     finish_token(&parser, token, true);
+                } else {
+                    // {X}: TOS == X, parent(X) == OBJECT.  close X and OBJECT
+                    mu_json_token_t *container = mu_json_token_parent(token);
+                    finish_token(&parser, token, false);
+                    finish_token(&parser, container, true);
                 }
                 parser.depth -= 1;
                 set_state(&parser, OK);
@@ -745,112 +744,34 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
             case Pl: {
                 // Process colon
                 mu_json_token_t *token = tos(&parser);
-                mu_json_token_t *container = mu_json_token_parent(token);
-                finish_token(&parser, tos(&parser), false);
-
-                // set next state depending on container type
-                if (container == NULL) {
-                    // Not inside a container.
-                    parser.error = MU_JSON_ERR_BAD_FORMAT;
-
-                } else if (container->type != MU_JSON_TOKEN_TYPE_OBJECT) {
-                    // Not inside an object - colon doesn't belong here
-                    parser.error = MU_JSON_ERR_BAD_FORMAT;
-
-                } else {
-                    // Adding items inside an OBJECT.  How many children so far?
-                    int n_children = child_count(container, token);
-                    if ((n_children & 1) == 0) {
-                        // even number of children: colon is unexpected
-                        parser.error = MU_JSON_ERR_BAD_FORMAT;
-                    } else {
-                        // odd number oc children: expect value
-                        set_state(&parser, VA);
-                    }
-                }
+                finish_token(&parser, token, false);
+                set_state(&parser, select_state(token, __, __, __, VA));
                 break;
             }
 
             case Pm: {
                 // Process comma
                 mu_json_token_t *token = tos(&parser);
-                mu_json_token_t *container = mu_json_token_parent(token);
                 finish_token(&parser, token, false);
-
-                // set next state depending on container type
-                if (container == NULL) {
-                    // Not inside a container.
-                    parser.error = MU_JSON_ERR_BAD_FORMAT;
-
-                } else if (container->type == MU_JSON_TOKEN_TYPE_ARRAY) {
-                    // Adding items inside an ARRAY
-                    set_state(&parser, VA);
-
-                } else /* if (container->type != MU_JSON_TOKEN_TYPE_OBJECT) */ {
-                    // Adding items inside an OBJECT.  How many children so far?
-                    int n_children = child_count(container, token);
-                    if ((n_children & 1) == 0) {
-                        // With even number of children, expect key
-                        set_state(&parser, KE);
-                    } else {
-                        // odd number of children comma is unexpected
-                        parser.error = MU_JSON_ERR_BAD_FORMAT;
-                    }
-                }
+                set_state(&parser, select_state(token, __, VA, KE, __));
                 break;
             }
 
             case Ps: {
                 // process trailing space
                 mu_json_token_t *token = tos(&parser);
-                mu_json_token_t *container = mu_json_token_parent(token);
-                finish_token(&parser, tos(&parser), false);
-
-                // set next state depending on container type
-                if (container == NULL) {
-                    // Not inside a container.
-                    set_state(&parser, OK);
-
-                } else if (container->type == MU_JSON_TOKEN_TYPE_ARRAY) {
-                    // Adding items inside an ARRAY
-                    TRACE_PRINTF(" [=== in array]");
-                    set_state(&parser, parser.state);
-
-                } else {
-                    // Adding items inside an OBJECT.  
-                    TRACE_PRINTF(" [=== in object]");
-                    set_state(&parser, parser.state);
+                if (!is_container(token)) {
+                    finish_token(&parser, token, false);
                 }
+                set_state(&parser, select_state(token, OK, OK, OK, parser.state));
                 break;
             }
 
             case Pq: {
                 // Process closing quote:
                 mu_json_token_t *token = tos(&parser);
-                mu_json_token_t *container = mu_json_token_parent(token);
                 finish_token(&parser, token, true);
-
-                if (container == NULL) {
-                    // not inside a container.  
-                    // TODO: this is one step towards allowing "naked" items
-                    // (allow singleton item at toplevel w/o container)
-                    set_state(&parser, OK);
-
-                } else if (container->type == MU_JSON_TOKEN_TYPE_ARRAY) {
-                    // Adding items inside an ARRAY
-                    set_state(&parser, OK);
-
-                } else /* if (container->type != MU_JSON_TOKEN_TYPE_OBJECT) */ {
-                    // Adding items inside an OBJECT.  How many children so far?
-                    int n_children = child_count(container, token);
-                    if ((n_children & 1) == 0) {
-                        // With even number of children, expect key
-                        set_state(&parser, OK);
-                    } else {
-                        // odd number of children, expect colon
-                        set_state(&parser, CO);
-                    }
-                }
+                set_state(&parser, select_state(token, OK, OK, OK, CO));
                 break;
             }
 
@@ -865,27 +786,33 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
 
         // advance to next char
         parser.char_pos += 1;
-
     } // while(true)
 
     TRACE_PRINTF("\n=== endgame: depth=%d, state=%s, err=%d\n",
         parser.depth, state_name(parser.state), parser.error);
 
+    int retval;
+
     if (parser.error != MU_JSON_ERR_NONE) {
-        return parser.error;
+        TRACE_PRINTF("\nendgame: parse error");
+        retval = parser.error;
     } else if (parser.depth != 0) {
-        return MU_JSON_ERR_INCOMPLETE;
+        TRACE_PRINTF("\nendgame: non-zero depth");
+        retval = MU_JSON_ERR_INCOMPLETE;
     } else if (parser.state != OK) {
-        return MU_JSON_ERR_BAD_FORMAT;
+        TRACE_PRINTF("\nendgame: final state != OK");
+        retval = MU_JSON_ERR_BAD_FORMAT;
     } else {
         mu_json_token_t *token = tos(&parser);
         if (token) {
             set_is_last(tos(&parser));      // mark last token as such 
             finish_token(&parser, mu_json_token_root(tos(&parser)), false);
         }
-        TRACE_PRINTF("Returning %d\n", parser.token_count);
-        return parser.token_count;
+        TRACE_PRINTF("\nendgame: success");
+        retval = parser.token_count;
     }
+    TRACE_PRINTF("...returning %d\n", retval);
+    return retval;
 }
 
 static int classify_char(uint8_t ch) {
@@ -927,7 +854,10 @@ static bool begin_token(parser_t *parser, mu_json_token_type_t type) {
 
 static void finish_token(parser_t *parser, mu_json_token_t *token, bool incl_delim) {
     // TODO: Add mu_json_token_type_t arg to confim we're closing the right one
-    if (token_is_sealed(token)) {
+    if (token == NULL) {
+        TRACE_PRINTF("\nAttempt to finish null token?");
+        return;
+    } else if (token_is_sealed(token)) {
         // already finished...
         return;
     }
