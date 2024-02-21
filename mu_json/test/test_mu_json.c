@@ -677,6 +677,8 @@ void test_regression(void) {
 int main(void) {
     UNITY_BEGIN();
 
+    RUN_TEST(test_regression);
+
     RUN_TEST(test_json_token_type);
     RUN_TEST(test_json_token_depth);
     RUN_TEST(test_json_token_prev);
@@ -687,12 +689,9 @@ int main(void) {
     RUN_TEST(test_json_token_prev_sibling);
     RUN_TEST(test_json_token_next_sibling);
     RUN_TEST(test_json_token_parsed_elements);
-
     RUN_TEST(test_json_check_good_format);
     RUN_TEST(test_json_check_bad_format);
-
     RUN_TEST(test_rfc_7159);
-    RUN_TEST(test_regression);
 
     return UNITY_END();
 }

@@ -36,7 +36,7 @@
 // ****************************************************************************=
 // Private types and definitions
 
-// #define DEBUG_TRACE
+#define DEBUG_TRACE
 #ifdef DEBUG_TRACE
 #include <stdio.h>
 #define TRACE_PRINTF(...) fprintf(stderr, __VA_ARGS__)
@@ -136,8 +136,8 @@ typedef enum { DEFINE_CHAR_CLASSES(EXPAND_CH_CLASS_ENUMS) } ch_class_t;
     M(Fo, "finish object")                                                     \
     M(Pl, "process colon")                                                     \
     M(Pm, "process comma")                                                     \
-    M(Pq, "process close quote")                                               \
-    M(Pt, "process trailing space")
+    M(Ps, "process trailing space")                                            \
+    M(Pq, "process close quote")
 
 #define EXPAND_STATE_ENUMS(_name, _description) _name,
 enum { DEFINE_STATES(EXPAND_STATE_ENUMS) };
@@ -196,10 +196,10 @@ static int state_transition_table[NR_STATES * NR_CLASSES] = {
 /*             white                                      1-9                                   ABCDF  etc
            space |  {  }  [  ]  :  ,  "  \  /  +  -  .  0  |  a  b  c  d  e  f  l  n  r  s  t  u  |  E  |*/
 /*start  GO*/ GO,GO,Bo,__,Ba,__,__,__,Bs,__,__,__,Bm,__,Bz,Bd,__,__,__,__,__,Bf,__,Bn,__,__,Bt,__,__,__,__,
-/*ok     OK*/ Pt,Pt,__,Fo,__,Fa,__,Pm,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*ok     OK*/ Ps,Ps,__,Fo,__,Fa,__,Pm,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*object OB*/ OB,OB,__,Fo,__,__,__,__,Bs,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*key    KE*/ KE,KE,__,__,__,__,__,__,Bs,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
-/*colon  CO*/ Pt,Pt,__,__,__,__,Pl,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*colon  CO*/ Ps,Ps,__,__,__,__,Pl,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*value  VA*/ VA,VA,Bo,__,Ba,__,__,__,Bs,__,__,__,Bm,__,Bz,Bd,__,__,__,__,__,Bf,__,Bn,__,__,Bt,__,__,__,__,
 /*array  AR*/ AR,AR,Bo,__,Ba,Fa,__,__,Bs,__,__,__,Bm,__,Bz,Bd,__,__,__,__,__,Bf,__,Bn,__,__,Bt,__,__,__,__,
 /*string ST*/ ST,__,ST,ST,ST,ST,ST,ST,Pq,ES,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,ST,
@@ -210,7 +210,7 @@ static int state_transition_table[NR_STATES * NR_CLASSES] = {
 /*u4     U4*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,ST,ST,ST,ST,ST,ST,ST,ST,__,__,__,__,__,__,ST,ST,__,
 /*minus  MI*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,ZE,IN,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*zero   ZE*/ OK,OK,__,Fo,__,Fa,__,Pm,__,__,__,__,__,FR,__,__,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
-/*int    IN*/ Pt,Pt,__,Fo,__,Fa,__,Pm,__,__,__,__,__,FR,IN,IN,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
+/*int    IN*/ Ps,Ps,__,Fo,__,Fa,__,Pm,__,__,__,__,__,FR,IN,IN,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
 /*frac   FR*/ __,__,__,__,__,__,__,__,__,__,__,__,__,__,FS,FS,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*fracs  FS*/ OK,OK,__,Fo,__,Fa,__,Pm,__,__,__,__,__,__,FS,FS,__,__,__,__,E1,__,__,__,__,__,__,__,__,E1,__,
 /*e      E1*/ __,__,__,__,__,__,__,__,__,__,__,E2,E2,__,E3,E3,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
@@ -405,10 +405,25 @@ static inline void set_is_last(mu_json_token_t *token) {
 static mu_json_token_t *tos(parser_t *parser);
 
 /**
+ * @brief return a new state depending on several factors.
+ * 
+ * @param token Most recently allocated token
+ * @param not_in_container State to be returned if token is not in a container
+ * @param in_array State to be returned if token is inside an array
+ * @param in_object_key State to be returned if token is an object key.
+ * @param in_object_value State to be returned if token is an object value.
+ * @return One of the above four values.
+ */
+static int select_state(mu_json_token_t *token, int not_in_container,
+                        int in_array, int in_object_key, int in_object_value);
+
+/**
  * @brief Return the number of top-level children inside container, stopping
  * when token is encountered.
+ *
+ * IMPORTANT: container must be a parent of token.
  */
-int child_count(mu_json_token_t *container, mu_json_token_t *token);
+static int child_count(mu_json_token_t *container, mu_json_token_t *token);
 
 /**
  * @brief Set the parser state.  If DEBUG_TRACE in effect, print transition.
@@ -699,7 +714,7 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
                     finish_token(&parser, token, false);
                     // find parent of token and close it too...
                     // TODO: verify that parent == MU_JSON_TOKEN_TYPE_ARRAY?
-                    finish_token(&parser, mu_json_token_parent(token), true);
+                    // finish_token(&parser, mu_json_token_parent(token), true);
                 } else {
                     // top of stack is an empty array, finish it.
                     finish_token(&parser, token, true);
@@ -785,6 +800,30 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
                 break;
             }
 
+            case Ps: {
+                // process trailing space
+                mu_json_token_t *token = tos(&parser);
+                mu_json_token_t *container = mu_json_token_parent(token);
+                finish_token(&parser, tos(&parser), false);
+
+                // set next state depending on container type
+                if (container == NULL) {
+                    // Not inside a container.
+                    set_state(&parser, OK);
+
+                } else if (container->type == MU_JSON_TOKEN_TYPE_ARRAY) {
+                    // Adding items inside an ARRAY
+                    TRACE_PRINTF(" [=== in array]");
+                    set_state(&parser, parser.state);
+
+                } else {
+                    // Adding items inside an OBJECT.  
+                    TRACE_PRINTF(" [=== in object]");
+                    set_state(&parser, parser.state);
+                }
+                break;
+            }
+
             case Pq: {
                 // Process closing quote:
                 mu_json_token_t *token = tos(&parser);
@@ -815,16 +854,6 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
                 break;
             }
 
-            case Pt: {
-                // process trailing space
-                if (!is_container(tos(&parser))) {
-                    finish_token(&parser, tos(&parser), false);
-                }
-                // NOTE: don't change state.  This will cause extra calls to
-                // finish_token(), but that's a no-op after the frist one.
-                set_state(&parser, parser.state);  // for debug output only
-                break;
-            }
             default: {
                 // Bad action.
                 parser.error = MU_JSON_ERR_BAD_FORMAT;
@@ -846,6 +875,8 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
         return parser.error;
     } else if (parser.depth != 0) {
         return MU_JSON_ERR_INCOMPLETE;
+    } else if (parser.state != OK) {
+        return MU_JSON_ERR_BAD_FORMAT;
     } else {
         mu_json_token_t *token = tos(&parser);
         if (token) {
@@ -923,7 +954,25 @@ static mu_json_token_t *tos(parser_t *parser) {
     }
 }
 
-int child_count(mu_json_token_t *container, mu_json_token_t *token) {
+static int select_state(mu_json_token_t *token, int not_in_container,
+                        int in_array, int in_object_key, int in_object_value) {
+    mu_json_token_t *container = mu_json_token_parent(token);
+
+    if (token == NULL) {
+        return __;
+    } else if (container == NULL) {
+        return not_in_container;
+    } else if (container->type == MU_JSON_TOKEN_TYPE_ARRAY) {
+        return in_array;
+    } else if ((child_count(container, token) & 1) == 0) {
+        // even number of children (or 0): expect key
+        return in_object_key;
+    } else {
+        return in_object_value;
+    }
+}
+
+static int child_count(mu_json_token_t *container, mu_json_token_t *token) {
     // Assumes that token is a direct child of an active container.  Count
     // children of the container until token is seen
     if (container == token) {
