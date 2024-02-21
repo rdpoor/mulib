@@ -53,8 +53,12 @@ static bool check_format(const char *filename, bool expected_outcome) {
         return false;
     }
 
-    if (mu_json_parse_buffer(s_tokens, MAX_TOKENS, json_buf, n_read) >=
-        0) {
+    // NOTE: mu_json_parse_buffer() will return 0 if no tokens were parsed, e.g. 
+    // if passed an empty string.  However, test_json_check_bad_format assumes 
+    // that 0 tokens signifies an error.  Therefore, we set success true only if
+    // one ore more tokens are parsed;
+    // 
+    if (mu_json_parse_buffer(s_tokens, MAX_TOKENS, json_buf, n_read) > 0) {
         succeeded = true;
     }
 
@@ -409,7 +413,7 @@ void test_json_check_good_format(void) {
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_pi.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_reservedCharacterInUTF-8_U+1BFFF.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_simple_ascii.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_space.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_space.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_three-byte-utf-8.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_two-byte-utf-8.json");
@@ -430,13 +434,13 @@ void test_json_check_good_format(void) {
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_unicodeEscapedBackslash.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_utf8.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_with_del_character.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_false.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_int.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_negative_real.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_null.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_string.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_true.json");
-    // TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_string_empty.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_false.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_int.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_negative_real.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_null.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_string.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_true.json");
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_string_empty.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_trailing_newline.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_true_in_array.json");
     TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_whitespace_array.json");
@@ -446,7 +450,7 @@ void test_json_check_bad_format(void) {
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_1_true_without_comma.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_a_invalid_utf8.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_colon_instead_of_comma.json");
-    TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_comma_after_close.json");
+    // TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_comma_after_close.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_comma_and_number.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_double_comma.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_double_extra_comma.json");
@@ -573,7 +577,7 @@ void test_json_check_bad_format(void) {
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_invalid-utf-8-in-escape.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_leading_uescaped_thinspace.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_no_quotes_with_bad_escape.json");
-    TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_single_doublequote.json");
+    // TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_single_doublequote.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_single_quote.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_single_string_no_double_quotes.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_start_escape_unclosed.json");
@@ -590,7 +594,7 @@ void test_json_check_bad_format(void) {
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_array_with_unclosed_string.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_ascii-unicode-identifier.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_capitalized_True.json");
-    TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_close_unopened_array.json");
+    // TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_close_unopened_array.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_comma_instead_of_closing_brace.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_double_array.json");
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_end_array.json");
@@ -633,6 +637,43 @@ void test_json_check_bad_format(void) {
     TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_whitespace_U+2060_word_joiner.json");
 }
 
+void test_rfc_7159(void) {
+    // Test RFC-7159 syntax, relaxing requirement that the top level must be
+    // an array or object.
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_string_space.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "\" \""));
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_false.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "false"));
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_int.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "42"));
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_negative_real.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "-0.1"));
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_null.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "null"));
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_string.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "\"asd\""));
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_lonely_true.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "true"));
+
+    TEST_JSON_GOOD_FMT(JSON_TEST_SUITE_DIR "y_structure_string_empty.json");
+    TEST_ASSERT_TRUE(mu_str_equals_cstr(&s_tokens[0].json, "\"\""));
+}
+
+void test_regression(void) {
+    // add any regression tests here.
+    TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_array_comma_after_close.json");
+    TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_number_1_000.json");
+    TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_string_single_doublequote.json");
+    TEST_JSON_BAD_FMT(JSON_TEST_SUITE_DIR "n_structure_close_unopened_array.json");
+}
+
 int main(void) {
     UNITY_BEGIN();
 
@@ -649,6 +690,9 @@ int main(void) {
 
     RUN_TEST(test_json_check_good_format);
     RUN_TEST(test_json_check_bad_format);
+
+    RUN_TEST(test_rfc_7159);
+    RUN_TEST(test_regression);
 
     return UNITY_END();
 }

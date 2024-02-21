@@ -195,7 +195,7 @@ static int ascii_classes[128] = {
 static int state_transition_table[NR_STATES * NR_CLASSES] = {
 /*             white                                      1-9                                   ABCDF  etc
            space |  {  }  [  ]  :  ,  "  \  /  +  -  .  0  |  a  b  c  d  e  f  l  n  r  s  t  u  |  E  |*/
-/*start  GO*/ GO,GO,Bo,__,Ba,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
+/*start  GO*/ GO,GO,Bo,__,Ba,__,__,__,Bs,__,__,__,Bm,__,Bz,Bd,__,__,__,__,__,Bf,__,Bn,__,__,Bt,__,__,__,__,
 /*ok     OK*/ Pt,Pt,__,Fo,__,Fa,__,Pm,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*object OB*/ OB,OB,__,Fo,__,__,__,__,Bs,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
 /*key    KE*/ KE,KE,__,__,__,__,__,__,Bs,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,__,
@@ -403,13 +403,6 @@ static inline void set_is_last(mu_json_token_t *token) {
  * none have been allocated.
  */
 static mu_json_token_t *tos(parser_t *parser);
-
-/**
- * @brief Return the currently open container (i.e. available for adding to)
- * or NULL if there is none.
- */
-static mu_json_token_t *active_container(parser_t *parser,
-                                         mu_json_token_type_t type);
 
 /**
  * @brief Return the number of top-level children inside container, stopping
@@ -853,11 +846,13 @@ static int parse(mu_json_token_t *token_store, size_t max_tokens,
         return parser.error;
     } else if (parser.depth != 0) {
         return MU_JSON_ERR_INCOMPLETE;
-    } else if (parser.state != OK) {
-        return MU_JSON_ERR_INCOMPLETE;  // is there a better name for this?
     } else {
-        set_is_last(tos(&parser));      // mark last token as such 
-        finish_token(&parser, mu_json_token_root(tos(&parser)), false);
+        mu_json_token_t *token = tos(&parser);
+        if (token) {
+            set_is_last(tos(&parser));      // mark last token as such 
+            finish_token(&parser, mu_json_token_root(tos(&parser)), false);
+        }
+        TRACE_PRINTF("Returning %d\n", parser.token_count);
         return parser.token_count;
     }
 }
@@ -926,35 +921,6 @@ static mu_json_token_t *tos(parser_t *parser) {
     } else {
         return &parser->tokens[parser->token_count - 1];
     }
-}
-
-static mu_json_token_t *active_container(parser_t *parser,
-                                         mu_json_token_type_t type) {
-    mu_json_token_t *token = tos(parser);
-    if (token == NULL) {
-        // token stack is empty.
-        TRACE_PRINTF("\nactive_container(): token stack is empty");
-        return NULL;
-    }
-    if ((token->type == type) && !token_is_sealed(token)) {
-        // top of stack is an unsealed container.
-        return token;
-    }
-    // top of stack is not an unsealed container: check parent
-    mu_json_token_t *container = mu_json_token_parent(token);
-    TRACE_PRINTF("\nactive_container: seeking = %s", token_type_name(type));    
-    TRACE_PRINTF("\nactive_container: token = %s", token_string(token));
-    TRACE_PRINTF("\nactive_container: parent = %s", token_string(container));
-    if ((container != NULL) && (container->type == type)) {
-        if (token_is_sealed(container)) {
-            TRACE_PRINTF(
-                " error: unexpected sealed container"); // should not happen
-            return NULL;
-        }
-        return container;
-    }
-    // does not have an active parent
-    return NULL;
 }
 
 int child_count(mu_json_token_t *container, mu_json_token_t *token) {
