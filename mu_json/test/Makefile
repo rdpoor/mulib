@@ -1,16 +1,33 @@
+# Note the following way to test different compiler flags.  Use for mu_log test:
+# coverage:
+# 	# Clean and rebuild everything with coverage flags
+# 	$(MAKE) clean
+# 	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"
+# 	# Run tests to generate coverage data
+# 	@for test in $(EXECUTABLES) ; do \
+# 		./$$test; \
+# 	done
+#
+# Or from command line:
+# make CFLAGS="-Wall -g -DUSE_STRING_LIB" tests
+
 # Compile and run unit tests
 SRC_DIR := ../src
 TEST_DIR := ../test
 TEST_SUPPORT_DIR := ../../test_support
+CORE_DIR := ../../mu_core/src
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
-	$(SRC_DIR)/mu_bisync.c
+	$(SRC_DIR)/mu_json.c
 
 TEST_FILES := \
-	$(TEST_DIR)/test_mu_bisync.c
+	$(TEST_DIR)/test_mu_json.c
+
+CORE_FILES := \
+	$(CORE_DIR)/mu_str.c
 
 # Note: everything below this line is common to all modules.  Consider
 # splitting into shared makefile.
@@ -25,7 +42,7 @@ LFLAGS := $(GCOVFLAGS)
 TEST_SUPPORT_FILES := \
 	$(TEST_SUPPORT_DIR)/unity.c
 
-SRC_OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
+SRC_OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_FILES) $(CORE_FILES))
 TEST_OBJS := $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_FILES))
 TEST_SUPPORT_OBJS := $(patsubst $(TEST_SUPPORT_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_SUPPORT_FILES))
 EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
@@ -71,17 +88,17 @@ coverage:
 	# rm -f coverage.info coverage.info.cleaned
 
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR) coverage.info
+	rm -rf $(OBJ_DIR) $(BIN_DIR) $(COVERAGE_DIR) coverage.info *.gcda *.gcno
 
 # Compile and generate dependencies for source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(SRC_DIR) $(DEPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(CORE_DIR) $(DEPFLAGS) -c $< -o $@
 
 # Compile and generate dependencies for test files
 $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(TEST_SUPPORT_DIR) $(DEPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(CORE_DIR) -I$(TEST_SUPPORT_DIR) $(DEPFLAGS) -c $< -o $@
 
 # Compile and generate dependencies for test support files
 $(OBJ_DIR)/%.o: $(TEST_SUPPORT_DIR)/%.c

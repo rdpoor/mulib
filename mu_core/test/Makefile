@@ -1,3 +1,16 @@
+# Note the following way to test different compiler flags.  Use for mu_log test:
+# coverage:
+# 	# Clean and rebuild everything with coverage flags
+# 	$(MAKE) clean
+# 	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"
+# 	# Run tests to generate coverage data
+# 	@for test in $(EXECUTABLES) ; do \
+# 		./$$test; \
+# 	done
+#
+# Or from command line:
+# make CFLAGS="-Wall -g -DUSE_STRING_LIB" tests
+
 # Compile and run unit tests
 SRC_DIR := ../src
 TEST_DIR := ../test
@@ -7,10 +20,18 @@ BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
-	$(SRC_DIR)/mu_bisync.c
+	$(SRC_DIR)/mu_array.c \
+	$(SRC_DIR)/mu_log.c \
+	$(SRC_DIR)/mu_queue.c \
+	$(SRC_DIR)/mu_spsc.c \
+	$(SRC_DIR)/mu_str.c
 
 TEST_FILES := \
-	$(TEST_DIR)/test_mu_bisync.c
+	$(TEST_DIR)/test_mu_array.c \
+	$(TEST_DIR)/test_mu_log.c \
+	$(TEST_DIR)/test_mu_queue.c \
+	$(TEST_DIR)/test_mu_spsc.c \
+	$(TEST_DIR)/test_mu_str.c
 
 # Note: everything below this line is common to all modules.  Consider
 # splitting into shared makefile.
