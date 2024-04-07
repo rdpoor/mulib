@@ -7,7 +7,9 @@ CONFIG_FILES := \
 	make-mu-buf.mk \
 	make-mu-jems.mk \
 	make-mu-log.mk \
+	make-mu-mqueue.mk \
 	make-mu-queue.mk \
+	make-mu-sched.mk \
 	make-mu-spsc.mk \
 	make-mu-str.mk \
 	make-mu-task.mk

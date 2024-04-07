@@ -31,7 +31,7 @@
 #include "mu_sched.h"
 
 #include "mu_platform.h"
-#include "mu_mqueue.h"
+#include "mu_queue.h"
 #include "mu_spsc.h"
 #include "mu_task.h"
 #include "mu_time.h"
@@ -52,7 +52,7 @@ typedef struct {
 
 typedef struct {
     mu_spsc_t irq_tasks;        // tasks queued from interrupt level.
-    mu_mqueue_t immed_tasks;    // tasks to be run "as soon as possible"
+    mu_queue_t immed_tasks;     // tasks to be run "as soon as possible"
     size_t deferred_task_count; // number of deferred tasks in queue
     mu_task_t *curr_task;       // task currently being processed.
     mu_task_t *idle_task;       // task to run when nothing else is runnable.
@@ -88,10 +88,9 @@ static mu_sched_t s_sched;
 // Public code
 
 void mu_sched_init(void) {
-    mu_spsc_init(&s_sched.irq_tasks, s_irq_store,
-                 MU_SCHED_MAX_IRQ_TASKS);
-    mu_mqueue_init(&s_sched.immed_tasks, s_immed_store,
-                   MU_SCHED_MAX_IMMED_TASKS, NULL, NULL);
+    mu_spsc_init(&s_sched.irq_tasks, s_irq_store, MU_SCHED_MAX_IRQ_TASKS);
+    mu_queue_init(&s_sched.immed_tasks, s_immed_store,
+                  MU_SCHED_MAX_IMMED_TASKS);
     s_sched.deferred_task_count = 0;
     s_sched.curr_task = NULL;
     s_sched.idle_task = NULL;
@@ -99,7 +98,7 @@ void mu_sched_init(void) {
 
 void mu_sched_reset(void) {
     mu_spsc_reset(&s_sched.irq_tasks);
-    mu_mqueue_reset(&s_sched.immed_tasks);
+    mu_queue_reset(&s_sched.immed_tasks);
     s_sched.deferred_task_count = 0;
     s_sched.curr_task = NULL;
 }
@@ -115,8 +114,8 @@ void mu_sched_step(void) {
         // pulled one runnable task from the deferred task queue
         asm("nop");
 
-    } else if (mu_mqueue_get(&s_sched.immed_tasks,
-                             (void **)&s_sched.curr_task) == true) {
+    } else if (mu_queue_get(&s_sched.immed_tasks,
+                            (void **)&s_sched.curr_task) == true) {
         // pulled one task from the "now" task queue
         asm("nop");
 
@@ -144,13 +143,11 @@ mu_task_t *mu_sched_next_task(void) {
     return deferred_task->task;
 }
 
-mu_task_err_t mu_sched_wait(mu_task_t *task) {
-    return MU_TASK_ERR_NONE;
-}
+mu_task_err_t mu_sched_wait(mu_task_t *task) { return MU_TASK_ERR_NONE; }
 
 mu_task_err_t mu_sched_immed(mu_task_t *task) {
     // push task onto the "now" queue
-    if (mu_mqueue_put(&s_sched.immed_tasks, task) == false) {
+    if (mu_queue_put(&s_sched.immed_tasks, task) == false) {
         return MU_TASK_ERR_SCHED_FULL;
     } else {
         return MU_TASK_ERR_NONE;
