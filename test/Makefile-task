@@ -1,22 +1,22 @@
 # Compile and run unit tests
 SRC_DIR := ../src
-TEST_DIR := ../test
-TEST_SUPPORT_DIR := ../../test_support
+TEST_DIR := .
+TEST_SUPPORT_DIR := ./test_support
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
-	$(SRC_DIR)/mu_bisync.c
+	$(SRC_DIR)/mu_task.c
 
 TEST_FILES := \
-	$(TEST_DIR)/test_mu_bisync.c
+	$(TEST_DIR)/test_mu_task.c
 
 # Note: everything below this line is common to all modules.  Consider
 # splitting into shared makefile.
 
 CC := gcc
-CFLAGS := -Wall -g
+CFLAGS := -Wall -g -I.
 DEPFLAGS := -MMD -MP
 GCOVFLAGS := -fprofile-arcs -ftest-coverage
 # Add coverage flags also to the linker flags

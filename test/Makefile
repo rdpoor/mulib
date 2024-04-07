@@ -13,14 +13,17 @@
 
 # Compile and run unit tests
 SRC_DIR := ../src
-TEST_DIR := ../test
-TEST_SUPPORT_DIR := ../../test_support
+TEST_DIR := .
+TEST_SUPPORT_DIR := ./test_support
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
 SRC_FILES := \
 	$(SRC_DIR)/mu_array.c \
+	$(SRC_DIR)/mu_bisync.c \
+	$(SRC_DIR)/mu_buf.c \
+	$(SRC_DIR)/mu_jems.c \
 	$(SRC_DIR)/mu_log.c \
 	$(SRC_DIR)/mu_queue.c \
 	$(SRC_DIR)/mu_spsc.c \
@@ -28,6 +31,9 @@ SRC_FILES := \
 
 TEST_FILES := \
 	$(TEST_DIR)/test_mu_array.c \
+	$(TEST_DIR)/test_mu_bisync.c \
+	$(TEST_DIR)/test_mu_buf.c \
+	$(TEST_DIR)/test_mu_jems.c \
 	$(TEST_DIR)/test_mu_log.c \
 	$(TEST_DIR)/test_mu_queue.c \
 	$(TEST_DIR)/test_mu_spsc.c \

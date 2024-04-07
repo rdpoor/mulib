@@ -7,10 +7,17 @@ OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 
 MULIB_SOURCES := \
-	$(MULIB_DIR)/mu_str.c
+	$(MULIB_DIR)/mu_mqueue.c \
+	$(MULIB_DIR)/mu_sched.c \
+	$(MULIB_DIR)/mu_spsc.c \
+	$(MULIB_DIR)/mu_task.c
+MULIB_HEADERS :=
 
 UNIT_TESTS := \
-	$(BIN_DIR)/test_mu_str
+	$(BIN_DIR)/test_mu_mqueue \
+	$(BIN_DIR)/test_mu_sched \
+	$(BIN_DIR)/test_mu_spsc \
+	$(BIN_DIR)/test_mu_task
 
 MULIB_OBJECTS := $(patsubst $(MULIB_DIR)/%.c,$(OBJ_DIR)/%.o,$(MULIB_SOURCES))
 TEST_OBJECTS := $(patsubst $(BIN_DIR)/%,$(OBJ_DIR)/%.o,$(UNIT_TESTS))
@@ -44,7 +51,28 @@ $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 # the rule for buildiung each unit test executable is listed explicitly in order
 # to guarantee separation of interests: test_mu_foo depends only on mu_foo.o
 
-$(BIN_DIR)/test_mu_str: $(OBJ_DIR)/test_mu_str.o $(OBJ_DIR)/mu_str.o $(OBJ_DIR)/unity.o
+$(BIN_DIR)/test_mu_mqueue: $(OBJ_DIR)/test_mu_mqueue.o $(OBJ_DIR)/mu_mqueue.o $(OBJ_DIR)/unity.o
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+# test_mu_sched is more integration testing than unit testing since it
+# doesn't stub or mock the dependent modules.
+$(BIN_DIR)/test_mu_sched: \
+	$(OBJ_DIR)/test_mu_sched.o \
+	$(OBJ_DIR)/mu_sched.o \
+	$(OBJ_DIR)/unity.o \
+	$(OBJ_DIR)/mu_mqueue.o \
+	$(OBJ_DIR)/mu_spsc.o \
+	$(OBJ_DIR)/mu_task.o
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+$(BIN_DIR)/test_mu_spsc: $(OBJ_DIR)/test_mu_spsc.o $(OBJ_DIR)/mu_spsc.o $(OBJ_DIR)/unity.o
+	@mkdir -p $(BIN_DIR)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+$(BIN_DIR)/test_mu_task: $(OBJ_DIR)/test_mu_task.o $(OBJ_DIR)/mu_task.o $(OBJ_DIR)/unity.o
+	@mkdir -p $(BIN_DIR)
 	$(CC) $(LDFLAGS) $^ -o $@
 
 # coverage tests
