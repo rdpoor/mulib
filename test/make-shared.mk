@@ -50,6 +50,7 @@ coverage:
 	# TEST_SUPPORT_DIR_ABS=$$(realpath $(TEST_SUPPORT_DIR))
 
 	# Clean and rebuild everything with coverage flags
+	$(info OTHER_FLAGS = $(OTHER_FLAGS))
 	$(MAKE) clean
 	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS) $(OTHER_FLAGS)"
 	# Run tests to generate coverage data
@@ -75,9 +76,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -I$(SRC_DIR) $(DEPFLAGS) $(OTHER_FLAGS) -c $< -o $@
 
 # Compile and generate dependencies for test files
+# -I. is a hack since 
 $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(TEST_SUPPORT_DIR) $(DEPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(TEST_SUPPORT_DIR) $(OTHER_FLAGS) $(DEPFLAGS) -c $< -o $@
 
 # Compile and generate dependencies for test support files
 $(OBJ_DIR)/%.o: $(TEST_SUPPORT_DIR)/%.c

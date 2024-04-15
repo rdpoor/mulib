@@ -5,6 +5,7 @@ CONFIG_FILES := \
 	make-mu-array.mk \
 	make-mu-bisync.mk \
 	make-mu-buf.mk \
+	make-mu-bvec.mk \
 	make-mu-jems.mk \
 	make-mu-log.mk \
 	make-mu-mqueue.mk \

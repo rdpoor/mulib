@@ -25,7 +25,7 @@
 // *****************************************************************************
 // Includes
 
-#include "template.h"
+#include "mu_bvec.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -42,6 +42,62 @@
 
 // *****************************************************************************
 // Public code
+
+mu_bvec_t *mu_bvec_init_ro(mu_bvec_t *bvec, const uint8_t *bytes, size_t capacity) {
+    mu_buf_init_ro(&bvec->buf, bytes, capacity);
+    return mu_bvec_reset(bvec);
+}
+
+mu_bvec_t *mu_bvec_init_rw(mu_bvec_t *bvec, uint8_t *bytes, size_t capacity) {
+    mu_buf_init_rw(&bvec->buf, bytes, capacity);
+    return mu_bvec_reset(bvec);
+}
+
+mu_bvec_t *mu_bvec_reset(mu_bvec_t *bvec) {
+    bvec->count = 0;
+    return bvec;
+}
+
+mu_buf_t *mu_bvec_get_buf(mu_bvec_t *bvec) {
+    return &bvec->buf;
+}
+
+size_t mu_bvec_get_count(mu_bvec_t *bvec) {
+    return bvec->count;
+}
+
+void mu_bvec_set_count(mu_bvec_t *bvec, size_t count) {
+    bvec->count = count;
+}
+
+size_t mu_bvec_get_available(mu_bvec_t *bvec) {
+    size_t capacity = mu_buf_capacity(&bvec->buf);
+    if (bvec->count > capacity) {
+        return 0;
+    } else {
+        return capacity - bvec->count;
+    }
+}
+
+bool mu_bvec_read_byte(mu_bvec_t *bvec, uint8_t *byte) {
+    const uint8_t *p = mu_buf_ref_ro(&bvec->buf, bvec->count++);
+    if (p == NULL) {
+        return false;
+    } else {
+        *byte = *p;
+        return true;
+    }
+}
+
+bool mu_bvec_write_byte(mu_bvec_t *bvec, uint8_t byte) {
+    uint8_t *p = mu_buf_ref_rw(&bvec->buf, bvec->count++);
+    if (p == NULL) {
+        return false;
+    } else {
+        *p = byte;
+        return true;
+    }
+}
 
 // *****************************************************************************
 // Private (static) code
