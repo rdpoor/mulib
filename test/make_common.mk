@@ -1,24 +1,16 @@
-# Compile and run unit tests
-SRC_DIR := ../src
+
 TEST_DIR := .
-TEST_SUPPORT_DIR := ./test_support
+TEST_SUPPORT_DIR := ../test_support
+TEST_FILE := $(TEST_DIR)/$(MODULE_NAME).c
 OBJ_DIR := $(TEST_DIR)/obj
 BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
-SRC_FILES := \
-	$(SRC_DIR)/mu_task.c
-
-TEST_FILES := \
-	$(TEST_DIR)/test_mu_task.c
-
-# Note: everything below this line is common to all modules.  Consider
-# splitting into shared makefile.
-
 CC := gcc
-CFLAGS := -Wall -g -I.
+CFLAGS := -Wall -g $(OTHER_FLAGS)
 DEPFLAGS := -MMD -MP
 GCOVFLAGS := -fprofile-arcs -ftest-coverage
+INCLUDES := -I$(SRC_DIR) -I$(TEST_SUPPORT_DIR) -I..
 # Add coverage flags also to the linker flags
 LFLAGS := $(GCOVFLAGS)
 
@@ -26,9 +18,11 @@ TEST_SUPPORT_FILES := \
 	$(TEST_SUPPORT_DIR)/unity.c
 
 SRC_OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
-TEST_OBJS := $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_FILES))
+TEST_OBJS := $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_FILE))
 TEST_SUPPORT_OBJS := $(patsubst $(TEST_SUPPORT_DIR)/%.c, $(OBJ_DIR)/%.o, $(TEST_SUPPORT_FILES))
-EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
+EXECUTABLE := $(BIN_DIR)/$(MODULE_NAME)
+
+.PHONY: all tests coverage clean
 
 # Prevent makefile from automatically deleting object files
 .SECONDARY: $(SRC_OBJS) $(TEST_OBJS) $(TEST_SUPPORT_OBJS)
@@ -38,15 +32,12 @@ EXECUTABLES := $(patsubst $(TEST_DIR)/%.c, $(BIN_DIR)/%, $(TEST_FILES))
 # $(info TEST_SUPPORT_OBJS = $(TEST_SUPPORT_OBJS))
 # $(info EXECUTABLES = $(EXECUTABLES))
 
-.PHONY: all tests coverage clean
 
-all: $(EXECUTABLES)
+all: $(EXECUTABLE)
 
 tests: all
-	@for test in $(EXECUTABLES) ; do \
-		echo "Running $$test..."; \
-		./$$test; \
-	done
+	echo "Running $(EXECUTABLE)..."
+	$(EXECUTABLE)
 
 coverage:
 	# Determine absolute paths
@@ -54,12 +45,11 @@ coverage:
 	# TEST_SUPPORT_DIR_ABS=$$(realpath $(TEST_SUPPORT_DIR))
 
 	# Clean and rebuild everything with coverage flags
+	$(info OTHER_FLAGS = $(OTHER_FLAGS))
 	$(MAKE) clean
-	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS)"
+	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS) $(OTHER_FLAGS)"
 	# Run tests to generate coverage data
-	@for test in $(EXECUTABLES) ; do \
-		./$$test; \
-	done
+	$(EXECUTABLE)
 	# Capture initial coverage data
 	lcov --capture --directory $(OBJ_DIR) --output-file coverage.info
 	# Remove coverage data for test and test_support directories using absolute paths
@@ -76,17 +66,17 @@ clean:
 # Compile and generate dependencies for source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(SRC_DIR) $(DEPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(DEPFLAGS) $(OTHER_FLAGS) -c $< -o $@
 
 # Compile and generate dependencies for test files
 $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(SRC_DIR) -I$(TEST_SUPPORT_DIR) $(DEPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(OTHER_FLAGS) $(DEPFLAGS) -c $< -o $@
 
 # Compile and generate dependencies for test support files
 $(OBJ_DIR)/%.o: $(TEST_SUPPORT_DIR)/%.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -I$(SRC_DIR) $(DEPFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(DEPFLAGS) -c $< -o $@
 
 -include $(OBJ_DIR)/*.d
 

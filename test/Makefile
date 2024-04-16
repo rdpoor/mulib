@@ -1,33 +1,27 @@
-# Main Makefile
+# Define a list of directories
+TEST_DIRS = \
+	test_mu_array \
+	test_mu_bisync \
+	test_mu_buf \
+	test_mu_bvec \
+	test_mu_jems \
+	test_mu_log \
+	test_mu_mqueue \
+	test_mu_queue \
+	test_mu_sched \
+	test_mu_spsc \
+	test_mu_str \
+	test_mu_task
 
-# List of your configuration files
-CONFIG_FILES := \
-	make-mu-array.mk \
-	make-mu-bisync.mk \
-	make-mu-buf.mk \
-	make-mu-bvec.mk \
-	make-mu-jems.mk \
-	make-mu-log.mk \
-	make-mu-mqueue.mk \
-	make-mu-queue.mk \
-	make-mu-sched.mk \
-	make-mu-spsc.mk \
-	make-mu-str.mk \
-	make-mu-task.mk
+# Define a function to iterate over directories and run a command
+run-command:
+	@for dir in $(TEST_DIRS); do \
+		echo Entering $$dir...; \
+		$(MAKE) -C $$dir $(CMD); \
+	done
 
-# Targets that should be forwarded to makefile_common.mk
-COMMON_TARGETS := tests coverage clean
+# Targets that utilize the function
+.PHONY: tests coverage clean
 
-# Default target
-all: $(CONFIG_FILES)
-
-# Rule to process each configuration with make-shared.mk for the default build
-$(CONFIG_FILES):
-	@$(MAKE) -f make-shared.mk CONFIG_FILE=$@ $(MAKECMDGOALS)
-
-# Special rule to handle common targets for all configurations
-$(COMMON_TARGETS): $(CONFIG_FILES)
-
-# Prevent Make from confusing common targets with actual files
-.PHONY: all $(COMMON_TARGETS) $(CONFIG_FILES)
-
+tests coverage clean:
+	$(MAKE) run-command CMD=$@
