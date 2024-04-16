@@ -1,4 +1,4 @@
-#include "../src/mu_spsc.h"
+#include "../mulib/mu_spsc.h"
 #include "fff.h"
 #include "unity.h"
 

@@ -146,7 +146,7 @@ int mu_str_compare_cstr(mu_str_t *s1, const char *cstr);
  *        If end is negative, indexes from the end of src.
  * @return dst
  *
- * Note that MU_STR_END may be used as an argument for start or end, signifying
+ * Note that MU_STR_END may be usde as an argument for start or end, signifying
  * the end (exclusive) of src.
  */
 mu_str_t *mu_str_slice(mu_str_t *dst, mu_str_t *src, int start, int end);

@@ -1,7 +1,7 @@
 # make-common.mk
 # Compile and run unit tests and coverage tests
 
-SRC_DIR := ../src
+SRC_DIR := ../mulib
 TEST_DIR := .
 TEST_SUPPORT_DIR := ./test_support
 OBJ_DIR := $(TEST_DIR)/obj
@@ -9,6 +9,7 @@ BIN_DIR := $(TEST_DIR)/bin
 COVERAGE_DIR := $(TEST_DIR)/coverage
 
 # $(CONFIG_FILE) must define SRC_FILES, TEST_FILES and optionally OTHER_FLAGS
+$(info SRC_DIR = $(SRC_DIR))
 include $(CONFIG_FILE)
 
 CC := gcc

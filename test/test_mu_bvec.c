@@ -1,4 +1,4 @@
-#include "../src/mu_bvec.h"
+#include "../mulib/mu_bvec.h"
 #include "unity.h"
 #include <stdbool.h>
 

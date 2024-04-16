@@ -1,4 +1,4 @@
-#include "../src/mu_buf.h"
+#include "../mulib/mu_buf.h"
 #include "unity.h"
 #include <stdbool.h>
 

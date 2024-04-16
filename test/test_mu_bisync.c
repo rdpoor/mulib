@@ -1,4 +1,4 @@
-#include "../src/mu_bisync.h"
+#include "../mulib/mu_bisync.h"
 #include "unity.h"
 #include <stdarg.h>
 #include <stdbool.h>

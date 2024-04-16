@@ -1,5 +1,5 @@
 #include "fff.h"
-#include "../src/mu_jparse.h"
+#include "../mulib/mu_jparse.h"
 #include "../../mu_string/src/mu_str.h"
 #include "unity.h"
 #include <stdio.h>

@@ -34,7 +34,6 @@
 #include "mu_queue.h"
 #include "mu_spsc.h"
 #include "mu_task.h"
-#include "mu_time.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -46,7 +45,7 @@
 
 // A deferred_task associates a task and a time.
 typedef struct {
-    MU_SCHED_ABS_TIME at;
+    MU_TIME_ABS at;
     mu_task_t *task;
 } deferred_task_t;
 
@@ -74,7 +73,7 @@ static mu_task_t *fetch_runnable_deferred_task(void);
 /**
  * @brief Schedule the given task at the given time.
  */
-static mu_task_err_t defer_aux(mu_task_t *task, MU_SCHED_ABS_TIME at);
+static mu_task_err_t defer_aux(mu_task_t *task, MU_TIME_ABS at);
 
 // *****************************************************************************
 // Local (private, static) storage
@@ -162,12 +161,12 @@ mu_task_err_t mu_sched_from_isr(mu_task_t *task) {
     }
 }
 
-mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_SCHED_ABS_TIME at) {
+mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at) {
     return defer_aux(task, at);
 }
 
-mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_SCHED_REL_TIME in) {
-    MU_SCHED_ABS_TIME at = mu_time_offset(mu_time_now(), in);
+mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in) {
+    MU_TIME_ABS at = mu_time_offset(mu_time_now(), in);
     return defer_aux(task, at);
 }
 
@@ -205,7 +204,7 @@ static deferred_task_t *next_deferred_task(void) {
 
 static mu_task_t *fetch_runnable_deferred_task(void) {
     deferred_task_t *deferred_task;
-    MU_SCHED_ABS_TIME now = mu_time_now();
+    MU_TIME_ABS now = mu_time_now();
 
     deferred_task = next_deferred_task();
     if (deferred_task && !mu_time_precedes(now, deferred_task->at)) {
@@ -220,7 +219,7 @@ static mu_task_t *fetch_runnable_deferred_task(void) {
     }
 }
 
-static mu_task_err_t defer_aux(mu_task_t *task, MU_SCHED_ABS_TIME at) {
+static mu_task_err_t defer_aux(mu_task_t *task, MU_TIME_ABS at) {
     deferred_task_t *deferred_task;
 
     if (s_sched.deferred_task_count == MU_SCHED_MAX_DEFERRED_TASKS) {
@@ -233,7 +232,7 @@ static mu_task_err_t defer_aux(mu_task_t *task, MU_SCHED_ABS_TIME at) {
         deferred_task = &s_deferred_tasks[i - 1];
         // Strict ordering: if a task already is scheduled for 'at', schedule
         // this new deferred_task to follow it.
-        if (mu_time_follows(deferred_task->at, at)) {
+        if (mu_time_precedes(at, deferred_task->at)) {
             break;
         }
         i -= 1;

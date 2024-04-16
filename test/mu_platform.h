@@ -25,7 +25,7 @@
 /**
  * @file mu_platform.h
  *
- * @brief Platform-specific configuration parameters for mulib
+ * @brief Platform-specific definitions and declarations for mulib
  *
  * This is where you define certain compile-time parameters to tailor mulib for
  * your environment.
@@ -40,6 +40,9 @@
 // *****************************************************************************
 // Includes
 
+#include <stdbool.h>
+#include <stdint.h>
+
 // *****************************************************************************
 // C++ Compatibility
 
@@ -53,14 +56,15 @@ extern "C" {
 // #define MU_SCHED_MAX_DEFERRED_TASKS 20
 // #define MU_SCHED_MAX_IRQ_TASKS 8 // must be a power of two!
 // #define MU_SCHED_MAX_IMMED_TASKS 20
+// #define MU_HAS_FLOAT
 
-// A default definition of MU_SCHED_ABS_TIME.  Override as required by your
+// A default definition of MU_TIME_ABS.  Override as required by your
 // platform.
-#define MU_SCHED_ABS_TIME uint32_t
+#define MU_TIME_ABS uint32_t
 
-// A default definition of MU_SCHED_REL_TIME.  Override as required by your
+// A default definition of MU_TIME_REL.  Override as required by your
 // platform.
-#define MU_SCHED_REL_TIME int32_t
+#define MU_TIME_REL int32_t
 
 // ============= do not edit below here ================
 // This sets defaults for any configuration parameters not set by the user.
@@ -77,16 +81,118 @@ extern "C" {
 #define MU_SCHED_MAX_IMMED_TASKS 20
 #endif
 
-#ifndef MU_SCHED_ABS_TIME
-#error Must define MU_SCHED_ABS_TIME in mu_platform.h
+#ifndef MU_TIME_ABS
+#error Must define MU_TIME_ABS in mu_platform.h
 #endif
 
-#ifndef MU_SCHED_REL_TIME
-#error Must define MU_SCHED_REL_TIME in mu_platform.h
+#ifndef MU_TIME_REL
+#error Must define MU_TIME_REL in mu_platform.h
 #endif
 
 // *****************************************************************************
 // Public declarations
+
+/**
+ * @brief Initialize the mu_time module as needed.  Called once at startup.
+ */
+void mu_time_init(void);
+
+/**
+ * @brief Get the current time.
+ *
+ * @return The current absolute time.
+ */
+MU_TIME_ABS mu_time_now(void);
+
+/**
+ * @brief Add a time and a duration.
+ *
+ * `mu_time_offset` adds an absolute time and a relative time to produce a new
+ * absolute time.
+ *
+ * @param t1 a time object
+ * @param dt a duration object
+ * @return t1 offset by dt
+ */
+MU_TIME_ABS mu_time_offset(MU_TIME_ABS t, MU_TIME_REL dt);
+
+/**
+ * @brief Take the difference between two time objects
+ *
+ * `mu_time_difference` subtracts absolute time t2 from absolute time t1 to
+ * produce a relative time.
+ *
+ * @param t1 A time object
+ * @param t2 A time object
+ * @return (t1-t2) as a relative time
+ */
+MU_TIME_REL mu_time_difference(MU_TIME_ABS t1, MU_TIME_ABS t2);
+
+/**
+ * @brief Return true if t1 precedes t2
+ *
+ * Note that if you want to know if t1 precedes or is equal to t2, you can use
+ * the construct `!mu_time_follows(t2, t1)``
+ *
+ * @param t1 A time object
+ * @param t2 A time object
+ * @return true if t1 is strictly before t2, false otherwise.
+ */
+bool mu_time_precedes(MU_TIME_ABS t1, MU_TIME_ABS t2);
+
+/**
+ * @brief Return true if t1 is equal to t2
+ *
+ * @param t1 A time object
+ * @param t2 A time object
+ * @return true if t1 equals t2, false otherwise.
+ */
+bool mu_time_equals(MU_TIME_ABS t1, MU_TIME_ABS t2);
+
+/**
+ * @brief Convert a MU_TIME_REL to milliseconds;
+ *
+ * Note: the result is undefined if dt cannot be converted to milliseconds.
+ *
+ * @param dt A relative time object
+ * @return dt converted to milliseconds
+ */
+int mu_time_rel_to_ms(MU_TIME_REL dt);
+
+/**
+ * @brief Convert milliseconds to a MU_TIME_REL
+ *
+ * Note: the result is undefined if ms cannot be converted to MU_TIME_REL.
+ *
+ * @param ms A relative time in milliseconds
+ * @return milliseconds converted to MU_TIME_REL
+ */
+MU_TIME_REL mu_time_ms_to_rel(int ms);
+
+#ifdef MU_HAS_FLOAT
+// Define these functions if the float data type is available on your platform.
+
+/**
+ * @brief Convert a MU_TIME_REL to seconds;
+ *
+ * Note: the result is undefined if dt cannot be converted to seconds.
+ *
+ * @param dt A relative time object
+ * @return dt converted to seconds
+ */
+float mu_time_rel_to_s(MU_TIME_REL dt);
+
+/**
+ * @brief Convert seconds to a MU_TIME_REL
+ *
+ * Note: the result is undefined if s cannot be converted to MU_TIME_REL.
+ *
+ * @param seconds A relative time in seconds
+ * @return seconds converted to MU_TIME_REL
+ */
+MU_TIME_REL mu_time_s_to_rel(float seconds);
+
+#endif
 
 // *****************************************************************************
 // End of file

@@ -1,6 +1,6 @@
 #include "fff.h"
-#include "../src/mu_mqueue.h"
-#include "../src/mu_task.h"
+#include "../mulib/mu_mqueue.h"
+#include "../mulib/mu_task.h"
 #include "unity.h"
 
 DEFINE_FFF_GLOBALS;

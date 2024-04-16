@@ -1,4 +1,4 @@
-#include "../src/mu_array.h"
+#include "../mulib/mu_array.h"
 #include "fff.h"
 #include "unity.h"
 

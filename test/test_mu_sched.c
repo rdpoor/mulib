@@ -25,11 +25,11 @@
  *
  */
 
-#include "../src/mu_sched.h"
-#include "../src/mu_mqueue.h"
-#include "../src/mu_spsc.h"
-#include "../src/mu_task.h"
-#include "../src/mu_time.h"
+#include "mu_platform.h"
+#include "../mulib/mu_sched.h"
+#include "../mulib/mu_mqueue.h"
+#include "../mulib/mu_spsc.h"
+#include "../mulib/mu_task.h"
 #include "fff.h"
 #include "unity.h"
 
@@ -54,12 +54,12 @@ static mu_task_t s_task1;
 static mu_task_t s_task2;
 static mu_task_t s_task3;
 static mu_task_t s_basic_task;
-static MU_SCHED_ABS_TIME s_time;
+static MU_TIME_ABS s_time;
 
 // *****************************************************************************
 // Local (private, static) forward declarations
 
-static void set_test_time(MU_SCHED_ABS_TIME time);
+static void set_test_time(MU_TIME_ABS time);
 static void basic_task_fn(mu_task_t *task);
 
 // *****************************************************************************
@@ -309,7 +309,7 @@ void setUp(void) {
 void tearDown(void) {
 }
 
-static void set_test_time(MU_SCHED_ABS_TIME time) {
+static void set_test_time(MU_TIME_ABS time) {
     s_time = time;
 }
 
@@ -321,23 +321,18 @@ static void basic_task_fn(mu_task_t *task) {
 // We could fake all the time functions used by mu_sched, but it's
 // just as easy to provide basic implementations here.
 
-MU_SCHED_ABS_TIME mu_time_now(void) {
+MU_TIME_ABS mu_time_now(void) {
     return s_time;
 }
 
-MU_SCHED_ABS_TIME mu_time_offset(MU_SCHED_ABS_TIME t, MU_SCHED_REL_TIME dt) {
+MU_TIME_ABS mu_time_offset(MU_TIME_ABS t, MU_TIME_REL dt) {
   return t + dt;
 }
 
-MU_SCHED_REL_TIME mu_time_difference(MU_SCHED_ABS_TIME t1, MU_SCHED_ABS_TIME t2) {
+MU_TIME_REL mu_time_difference(MU_TIME_ABS t1, MU_TIME_ABS t2) {
   return t1 - t2;
 }
 
-bool mu_time_precedes(MU_SCHED_ABS_TIME t1, MU_SCHED_ABS_TIME t2) {
+bool mu_time_precedes(MU_TIME_ABS t1, MU_TIME_ABS t2) {
   return mu_time_difference(t1, t2) < 0;
 }
-
-bool mu_time_follows(MU_SCHED_ABS_TIME t1, MU_SCHED_ABS_TIME t2) {
-  return mu_time_difference(t1, t2) > 0;
-}
-

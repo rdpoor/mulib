@@ -35,8 +35,8 @@ the foreground.  The task is added to an interrupt-safe, non-blocking ISR queue.
 The next time mu_sched_step() is called, the first task in the ISR queue will be
 processed before any other tasks.
 
-- mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_SCHED_ABS_TIME at);
-- mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_SCHED_REL_TIME in);
+- mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at);
+- mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in);
 
 Each of these functions add a task to the scheduler's deferred queue.  The next
 time mu_sched_step() is called, if there are no tasks in the ISR queue and if
@@ -85,7 +85,6 @@ extern "C" {
 
 #include "mu_platform.h"
 #include "mu_task.h"
-#include "mu_time.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -174,12 +173,12 @@ mu_task_err_t mu_sched_from_isr(mu_task_t *task);
 /**
  * @brief Schedule a task to run at the specified time in the future.
  */
-mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_SCHED_ABS_TIME at);
+mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at);
 
 /**
  * @brief Schedule a task to run after the specified delay.
  */
-mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_SCHED_REL_TIME in);
+mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in);
 
 /**
  * @brief Remove a deferred task from the schedule.

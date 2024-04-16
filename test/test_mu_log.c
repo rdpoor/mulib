@@ -1,4 +1,4 @@
-#include "../src/mu_log.h"
+#include "../mulib/mu_log.h"
 #include <string.h>
 #include "fff.h"
 #include "unity.h"
