@@ -42,12 +42,6 @@ extern "C" {
 
 typedef unsigned int mu_task_state_t;
 
-typedef enum {
-  MU_TASK_ERR_NONE,
-  MU_TASK_ERR_SCHED_FULL,
-  MU_TASK_ERR_NOT_FOUND,
-} mu_task_err_t;
-
 /**
  * A `mu_task` is a function that can be deferred.  It comprises a function
  * pointer (`mu_task_fn`) embedded within a context (`void *ctx`).  When called,
@@ -149,12 +143,9 @@ void *mu_task_get_user_info(mu_task_t *task);
 void mu_task_set_user_info(mu_task_t *task, void *user_info);
 
 /**
- * @brief Transfer control to another task.
- *
- * Note: this invokes the user-supplied transfer_hook() before calling
- * mu_sched_immed()
+ * @brief invoke the transfer hook if set.
  */
-mu_task_err_t mu_task_transfer(mu_task_t *to_task);
+void mu_task_call_transfer_hook(mu_task_t *task);
 
 #ifdef __cplusplus
 }

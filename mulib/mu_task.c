@@ -106,12 +106,11 @@ void mu_task_set_user_info(mu_task_t *task, void *user_info) {
     task->user_info = user_info;
 }
 
-mu_task_err_t mu_task_transfer(mu_task_t *to_task) {
+void mu_task_call_transfer_hook(mu_task_t *to_task) {
     if (s_transfer_hook != NULL) {
         // Call user hook if set
         s_transfer_hook(to_task);
     }
-    return mu_sched_immed(to_task);
 }
 
 // *****************************************************************************

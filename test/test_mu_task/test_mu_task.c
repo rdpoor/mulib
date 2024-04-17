@@ -4,9 +4,6 @@
 
 DEFINE_FFF_GLOBALS;
 
-// Fake mu_sched's functions (only those that mu_task calls)
-FAKE_VALUE_FUNC(mu_task_err_t, mu_sched_immed, mu_task_t *);
-
 // Fake task's function and user-defined hooks
 FAKE_VOID_FUNC(test_task_fn, mu_task_t *);
 FAKE_VOID_FUNC(test_task_set_state_hook, mu_task_t *, mu_task_state_t);
@@ -14,9 +11,6 @@ FAKE_VOID_FUNC(test_task_call_hook, mu_task_t *);
 FAKE_VOID_FUNC(test_task_transfer_hook, mu_task_t *);
 
 void setUp(void) {
-    // Reset all faked functions
-    RESET_FAKE(mu_sched_immed);
-
     RESET_FAKE(test_task_fn);
     RESET_FAKE(test_task_set_state_hook);
     RESET_FAKE(test_task_call_hook);
@@ -112,27 +106,21 @@ void test_task_user_info(void) {
     TEST_ASSERT_EQUAL_PTR(&user_info, mu_task_get_user_info(&task));
 }
 
-void test_scheduler_functions(void) {
+void test_transfer_hook(void) {
     // lump all of the functions delegated to the scheduler in one test...
     mu_task_t task;
-    mu_task_err_t ret = MU_TASK_ERR_NONE;
     mu_task_init(&task, test_task_fn, 0, NULL);
 
-    // mu_task_transfer() with NULL transfer_hook is like mu_task_enqueue
+    // mu_sched_transfer() with NULL transfer_hook does not call mu_sched_immed
     mu_task_install_transfer_hook(NULL);
-    TEST_ASSERT_EQUAL_INT(ret, mu_task_transfer(&task));
-    TEST_ASSERT_EQUAL_INT(1, mu_sched_immed_fake.call_count);
-    TEST_ASSERT_EQUAL_PTR(&task, mu_sched_immed_fake.arg0_val);
+    mu_task_call_transfer_hook(&task);
     TEST_ASSERT_EQUAL_INT(0, test_task_transfer_hook_fake.call_count);
 
-    // mu_task_transfer() with transfer_hook calls hook function
+    // mu_sched_transfer() transfer_hook does call mu_sched_immed
     mu_task_install_transfer_hook(test_task_transfer_hook);
-    TEST_ASSERT_EQUAL_INT(ret, mu_task_transfer(&task));
-    TEST_ASSERT_EQUAL_INT(2, mu_sched_immed_fake.call_count);
-    TEST_ASSERT_EQUAL_PTR(&task, mu_sched_immed_fake.arg0_val);
+    mu_task_call_transfer_hook(&task);
     TEST_ASSERT_EQUAL_INT(1, test_task_transfer_hook_fake.call_count);
     TEST_ASSERT_EQUAL_PTR(&task, test_task_transfer_hook_fake.arg0_val);
-
 }
 
 int main(void) {
@@ -142,7 +130,7 @@ int main(void) {
     RUN_TEST(test_task_call);
     RUN_TEST(user_info_can_be_updated);
     RUN_TEST(test_task_set_state);
-    RUN_TEST(test_scheduler_functions);
+    RUN_TEST(test_transfer_hook);
 
     return UNITY_END();
 }

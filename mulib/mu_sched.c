@@ -73,7 +73,7 @@ static mu_task_t *fetch_runnable_deferred_task(void);
 /**
  * @brief Schedule the given task at the given time.
  */
-static mu_task_err_t defer_aux(mu_task_t *task, MU_TIME_ABS at);
+static mu_sched_err_t defer_aux(mu_task_t *task, MU_TIME_ABS at);
 
 // *****************************************************************************
 // Local (private, static) storage
@@ -142,36 +142,41 @@ mu_task_t *mu_sched_next_task(void) {
     return deferred_task->task;
 }
 
-mu_task_err_t mu_sched_wait(mu_task_t *task) { return MU_TASK_ERR_NONE; }
+mu_sched_err_t mu_sched_wait(mu_task_t *task) { return MU_SCHED_ERR_NONE; }
 
-mu_task_err_t mu_sched_immed(mu_task_t *task) {
+mu_sched_err_t mu_sched_transfer(mu_task_t *to_task) {
+    mu_task_call_transfer_hook(to_task);
+    return mu_sched_immed(to_task);
+}
+
+mu_sched_err_t mu_sched_immed(mu_task_t *task) {
     // push task onto the "now" queue
     if (mu_queue_put(&s_sched.immed_tasks, task) == false) {
-        return MU_TASK_ERR_SCHED_FULL;
+        return MU_SCHED_ERR_FULL;
     } else {
-        return MU_TASK_ERR_NONE;
+        return MU_SCHED_ERR_NONE;
     }
 }
 
-mu_task_err_t mu_sched_from_isr(mu_task_t *task) {
+mu_sched_err_t mu_sched_from_isr(mu_task_t *task) {
     if (mu_spsc_put(&s_sched.irq_tasks, task) == MU_SPSC_ERR_FULL) {
-        return MU_TASK_ERR_SCHED_FULL;
+        return MU_SCHED_ERR_FULL;
     } else {
-        return MU_TASK_ERR_NONE;
+        return MU_SCHED_ERR_NONE;
     }
 }
 
-mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at) {
+mu_sched_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at) {
     return defer_aux(task, at);
 }
 
-mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in) {
+mu_sched_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in) {
     MU_TIME_ABS at = mu_time_offset(mu_time_now(), in);
     return defer_aux(task, at);
 }
 
-mu_task_err_t mu_sched_remove_deferred_task(mu_task_t *task) {
-    mu_task_err_t err = MU_TASK_ERR_NOT_FOUND;
+mu_sched_err_t mu_sched_remove_deferred_task(mu_task_t *task) {
+    mu_sched_err_t err = MU_SCHED_ERR_NOT_FOUND;
 
     size_t i = s_sched.deferred_task_count;
     while (i > 0) {
@@ -184,7 +189,7 @@ mu_task_err_t mu_sched_remove_deferred_task(mu_task_t *task) {
                 memmove(deferred_task, src, to_move * sizeof(deferred_task_t));
             }
             s_sched.deferred_task_count -= 1;
-            err = MU_TASK_ERR_NONE;
+            err = MU_SCHED_ERR_NONE;
         }
         i -= 1;
     }
@@ -219,11 +224,11 @@ static mu_task_t *fetch_runnable_deferred_task(void) {
     }
 }
 
-static mu_task_err_t defer_aux(mu_task_t *task, MU_TIME_ABS at) {
+static mu_sched_err_t defer_aux(mu_task_t *task, MU_TIME_ABS at) {
     deferred_task_t *deferred_task;
 
     if (s_sched.deferred_task_count == MU_SCHED_MAX_DEFERRED_TASKS) {
-        return MU_TASK_ERR_SCHED_FULL;
+        return MU_SCHED_ERR_FULL;
     }
 
     // perform a linear search to find the insertion point
@@ -253,5 +258,5 @@ static mu_task_err_t defer_aux(mu_task_t *task, MU_TIME_ABS at) {
     deferred_task->at = at;
     deferred_task->task = task;
     s_sched.deferred_task_count += 1;
-    return MU_TASK_ERR_NONE;
+    return MU_SCHED_ERR_NONE;
 }

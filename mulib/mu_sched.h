@@ -28,21 +28,21 @@ Implmentation notes:
 mu_sched implements a discrete time, run-to-completion scheduler.  A mu_task can
 be scheduled to run at some point in the future through the following calls:
 
-- mu_task_err_t mu_sched_from_isr(mu_task_t *task);
+- mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
 
 This safely schedules a task from interrupt level to be run upon returning to
 the foreground.  The task is added to an interrupt-safe, non-blocking ISR queue.
 The next time mu_sched_step() is called, the first task in the ISR queue will be
 processed before any other tasks.
 
-- mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at);
-- mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in);
+- mu_sched_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at);
+- mu_sched_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in);
 
 Each of these functions add a task to the scheduler's deferred queue.  The next
 time mu_sched_step() is called, if there are no tasks in the ISR queue and if
 the task's scheduled time has arrived, it will be processed.
 
-- mu_task_err_t mu_sched_immed(mu_task_t *task);
+- mu_sched_err_t mu_sched_immed(mu_task_t *task);
 
 Insert the task in the "immediate" queue.  THe next time mu_sched_step() is
 called, if there are no ISR tasks nor runnable deferred tasks, one task from
@@ -50,7 +50,7 @@ the immediate queue will be run.
 
 The function
 
-- mu_task_err_t mu_sched_step(void);
+- mu_sched_err_t mu_sched_step(void);
 
 is where all the magic happens:
 
@@ -111,6 +111,12 @@ extern "C" {
 #define MU_SCHED_MAX_IMMED_TASKS 20
 #endif
 
+typedef enum {
+  MU_SCHED_ERR_NONE,
+  MU_SCHED_ERR_FULL,
+  MU_SCHED_ERR_NOT_FOUND
+} mu_sched_err_t;
+
 // *****************************************************************************
 // Public declarations
 
@@ -158,32 +164,37 @@ mu_task_t *mu_sched_next_task(void);
  * @brief Do nothing.  This is syntactic sugar to show that a task will wait
  * for another task to invoke it.
  */
-mu_task_err_t mu_sched_wait(mu_task_t *task);
+mu_sched_err_t mu_sched_wait(mu_task_t *task);
+
+/**
+ * @brief Call task hook and schedule to_task timmediately.
+ */
+mu_sched_err_t mu_sched_transfer(mu_task_t *to_task);
 
 /**
  * @brief Schedule a task to run as soon as possible.
  */
-mu_task_err_t mu_sched_immed(mu_task_t *task);
+mu_sched_err_t mu_sched_immed(mu_task_t *task);
 
 /**
  * @brief Schedule a task to run as soon as possible from interrupt level.
  */
-mu_task_err_t mu_sched_from_isr(mu_task_t *task);
+mu_sched_err_t mu_sched_from_isr(mu_task_t *task);
 
 /**
  * @brief Schedule a task to run at the specified time in the future.
  */
-mu_task_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at);
+mu_sched_err_t mu_sched_defer_until(mu_task_t *task, MU_TIME_ABS at);
 
 /**
  * @brief Schedule a task to run after the specified delay.
  */
-mu_task_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in);
+mu_sched_err_t mu_sched_defer_for(mu_task_t *task, MU_TIME_REL in);
 
 /**
  * @brief Remove a deferred task from the schedule.
  */
-mu_task_err_t mu_sched_remove_deferred_task(mu_task_t *task);
+mu_sched_err_t mu_sched_remove_deferred_task(mu_task_t *task);
 
 // *****************************************************************************
 // End of file
