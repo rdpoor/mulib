@@ -45,7 +45,6 @@ coverage:
 	# TEST_SUPPORT_DIR_ABS=$$(realpath $(TEST_SUPPORT_DIR))
 
 	# Clean and rebuild everything with coverage flags
-	$(info OTHER_FLAGS = $(OTHER_FLAGS))
 	$(MAKE) clean
 	$(MAKE) all CFLAGS="$(CFLAGS) $(GCOVFLAGS) $(OTHER_FLAGS)"
 	# Run tests to generate coverage data
