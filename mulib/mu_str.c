@@ -136,6 +136,14 @@ mu_str_t *mu_str_bisect(mu_str_t *left, mu_str_t *right, mu_str_t *src,
     return src;
 }
 
+bool mu_str_matches(mu_str_t *s1, mu_str_t *s2) {
+    return str_compare_aux(s1, mu_str_bytes(s2), mu_str_length(s2)) == 0;
+}
+
+bool mu_str_matches_cstr(mu_str_t *s1, const char *cstr) {
+    return str_compare_aux(s1, (const uint8_t *)cstr, strlen(cstr)) == 0;
+}
+
 bool mu_str_has_prefix(mu_str_t *s1, mu_str_t *s2) {
     return has_prefix(s1, mu_str_bytes(s2), mu_str_length(s2));
 }

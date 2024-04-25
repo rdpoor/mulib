@@ -68,7 +68,7 @@ typedef enum { MU_LOG_LEVELS(EXPAND_LOG_LEVEL_ENUM) } mu_log_level_t;
  *
  * @return the number of chars printed (excluding the terminating null byte).
  */
-typedef int (*mu_log_logging_fn)(mu_log_level_t level, const char *format, va_list ap);
+typedef int (*mu_log_logging_fn)(const char *format, va_list ap);
 
 // *****************************************************************************
 // Public declarations
@@ -77,17 +77,17 @@ typedef int (*mu_log_logging_fn)(mu_log_level_t level, const char *format, va_li
  * @brief Initialize the logging system with initial reporting level and logging
  * function.
  */
-void mu_log_init(mu_log_level_t reporting_level, mu_log_logging_fn logging_fn);
+void mu_log_init(mu_log_level_t reporting_threshold, mu_log_logging_fn logging_fn);
 
 /**
  * @brief Set or update the current reporting level.
  */
-void mu_log_set_reporting_level(mu_log_level_t reporting_level);
+void mu_log_set_reporting_threshold(mu_log_level_t reporting_threshold);
 
 /**
- * @brief Return the current reporting level.
+ * @brief Return the current reporting threshold.
  */
-mu_log_level_t mu_log_get_reporting_level(void);
+mu_log_level_t mu_log_get_reporting_threshold(void);
 
 /**
  * @brief Set or update the user-supplied logging function
@@ -100,6 +100,12 @@ void mu_log_set_logging_function(mu_log_logging_fn logging_fn);
  * @brief Get the user-supplied logging function
  */
 mu_log_logging_fn mu_log_get_logging_function(void);
+
+/**
+ * @brief Return the current reporting level.  Valid only withn a call to the
+ * logging function.
+ */
+mu_log_level_t mu_log_get_reporting_level(void);
 
 /**
  * @brief Return the given logging level as a string.

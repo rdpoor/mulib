@@ -255,6 +255,25 @@ void test_mu_str_bisect(void) {
     TEST_ASSERT(cstr_eq(&src, "BCDEFGHIJ"));
 }
 
+void test_mu_str_matches(void) {
+    mu_str_t s1, s2;
+    mu_str_init_cstr(&s1, "abcd");
+
+    TEST_ASSERT_FALSE(mu_str_matches(&s1, mu_str_init_cstr(&s2, "")));
+    TEST_ASSERT_FALSE(mu_str_matches(&s1, mu_str_init_cstr(&s2, "a")));
+    TEST_ASSERT_FALSE(mu_str_matches(&s1, mu_str_init_cstr(&s2, "ab")));
+    TEST_ASSERT_FALSE(mu_str_matches(&s1, mu_str_init_cstr(&s2, "abc")));
+    TEST_ASSERT_TRUE(mu_str_matches(&s1, mu_str_init_cstr(&s2, "abcd")));
+    TEST_ASSERT_FALSE(mu_str_matches(&s1, mu_str_init_cstr(&s2, "abcde")));
+
+    TEST_ASSERT_FALSE(mu_str_matches_cstr(&s1, ""));
+    TEST_ASSERT_FALSE(mu_str_matches_cstr(&s1, "a"));
+    TEST_ASSERT_FALSE(mu_str_matches_cstr(&s1, "ab"));
+    TEST_ASSERT_FALSE(mu_str_matches_cstr(&s1, "abc"));
+    TEST_ASSERT_TRUE(mu_str_matches_cstr(&s1, "abcd"));
+    TEST_ASSERT_FALSE(mu_str_matches_cstr(&s1, "abcde"));
+}
+
 void test_mu_str_has_suffix_prefix(void) {
     mu_str_t s1, s2;
     mu_str_init_cstr(&s1, "abcd");
@@ -695,6 +714,7 @@ int main(void) {
     RUN_TEST(test_mu_str_compare_cstr);
     RUN_TEST(test_mu_str_slice);
     RUN_TEST(test_mu_str_bisect);
+    RUN_TEST(test_mu_str_matches);
     RUN_TEST(test_mu_str_has_suffix_prefix);
     RUN_TEST(test_mu_str_find_substr);
     RUN_TEST(test_mu_str_index);

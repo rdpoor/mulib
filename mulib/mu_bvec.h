@@ -70,17 +70,26 @@ mu_bvec_t *mu_bvec_reset(mu_bvec_t *bvec);
 
 mu_buf_t *mu_bvec_get_buf(mu_bvec_t *bvec);
 
+size_t mu_bvec_get_capacity(mu_bvec_t *bvec);
+
 size_t mu_bvec_get_count(mu_bvec_t *bvec);
 
 void mu_bvec_set_count(mu_bvec_t *bvec, size_t count);
 
 size_t mu_bvec_get_available(mu_bvec_t *bvec);
 
-bool mu_bvec_read_byte(mu_bvec_t *bvec, uint8_t *byte);
+/**
+ * @brief Initialize reader with count = 0 and capacity = count(src)
+ */
+mu_bvec_t *mu_bvec_make_reader(mu_bvec_t *reader, mu_bvec_t *src);
+
+bool mu_bvec_read_byte(mu_bvec_t *reader, uint8_t *byte);
 
 bool mu_bvec_write_byte(mu_bvec_t *bvec, uint8_t byte);
 
-uint8_t *mu_bvec_ref(mu_bvec_t *bvec, size_t index);
+const uint8_t *mu_bvec_ref_ro(mu_bvec_t *bvec, size_t index);
+
+uint8_t *mu_bvec_ref_rw(mu_bvec_t *bvec, size_t index);
 
 // *****************************************************************************
 // End of file

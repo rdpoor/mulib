@@ -169,6 +169,16 @@ mu_str_t *mu_str_bisect(mu_str_t *left, mu_str_t *right, mu_str_t *src,
                         int index);
 
 /**
+ * @brief Return true if s2 is an exact match of s1.
+ */
+bool mu_str_matches(mu_str_t *s1, mu_str_t *s2);
+
+/**
+ * @brief Return true if cstr is an exact match of s1.
+ */
+bool mu_str_matches_cstr(mu_str_t *s1, const char *cstr);
+
+/**
  * @brief Return true if s2 is an exact prefix of s1
  */
 bool mu_str_has_prefix(mu_str_t *s1, mu_str_t *s2);

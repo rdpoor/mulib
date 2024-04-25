@@ -48,11 +48,7 @@ FAKE_VOID_FUNC(idle_task_fn, mu_task_t *);
 FAKE_VOID_FUNC(task1_fn, mu_task_t *);
 FAKE_VOID_FUNC(task2_fn, mu_task_t *);
 FAKE_VOID_FUNC(task3_fn, mu_task_t *);
-// Since we compile and link the original mu_task.c (for mu_task_init() and
-// mu_task_call()), any attempt to fake other mu_task functions result in a
-// duplicate symbol error from the linker.  Not sure the best way to test for
-// calling mu_task_call_transfer_hook(), so that test gets skipped.
-// FAKE_VOID_FUNC(mu_task_call_transfer_hook, mu_task_t *);
+FAKE_VOID_FUNC(transfer_hook_fn, mu_task_t *);
 
 static mu_task_t s_idle_task;
 static mu_task_t s_task1;
@@ -217,17 +213,46 @@ void mu_sched_wait_returns_no_error(void) {
 }
 
 void mu_sched_transfer_calls_transfer_hook(void) {
+    mu_task_install_transfer_hook(transfer_hook_fn);
     TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE, mu_sched_transfer(&s_task1));
-    // See comment with FAKE_VOID_FUNC(mu_task_call_transfer_hook) above.
-    // TEST_ASSERT_EQUAL_INT(1, mu_task_call_transfer_hook_fake.call_count);
+    TEST_ASSERT_EQUAL_PTR(&s_task1, transfer_hook_fn_fake.arg0_val);
+}
+
+void deferred_tasks_with_same_time_maintain_strict_ordering_a(void) {
+    TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE,
+                          mu_sched_defer_until(&s_task1, 10));
+    TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE,
+                          mu_sched_defer_until(&s_task2, 10));
+    // task 1 should run first
+    set_test_time(10);
+    mu_sched_step();
     TEST_ASSERT_EQUAL_INT(1, task1_fn_fake.call_count);
+    TEST_ASSERT_EQUAL_INT(0, task2_fn_fake.call_count);
+    mu_sched_step();
+    TEST_ASSERT_EQUAL_INT(1, task1_fn_fake.call_count);
+    TEST_ASSERT_EQUAL_INT(1, task2_fn_fake.call_count);
+}
+
+void deferred_tasks_with_same_time_maintain_strict_ordering_b(void) {
+    TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE,
+                          mu_sched_defer_until(&s_task2, 10));
+    TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE,
+                          mu_sched_defer_until(&s_task1, 10));
+    // task 2 should run first
+    set_test_time(10);
+    mu_sched_step();
+    TEST_ASSERT_EQUAL_INT(0, task1_fn_fake.call_count);
+    TEST_ASSERT_EQUAL_INT(1, task2_fn_fake.call_count);
+    mu_sched_step();
+    TEST_ASSERT_EQUAL_INT(1, task1_fn_fake.call_count);
+    TEST_ASSERT_EQUAL_INT(1, task2_fn_fake.call_count);
 }
 
 void defer_until_tasks_run_when_their_times_arrive(void) {
     TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE,
-                          mu_sched_defer_until(&s_task1, 10));
-    TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE,
                           mu_sched_defer_until(&s_task2, 12));
+    TEST_ASSERT_EQUAL_INT(MU_SCHED_ERR_NONE,
+                          mu_sched_defer_until(&s_task1, 10));
     set_test_time(8);
     mu_sched_step();
     TEST_ASSERT_EQUAL_INT(1, idle_task_fn_fake.call_count);
@@ -324,6 +349,9 @@ int main(void) {
     RUN_TEST(mu_sched_from_isr_preserves_order);
     RUN_TEST(isr_tasks_run_before_regular_tasks);
     RUN_TEST(mu_sched_wait_returns_no_error);
+    RUN_TEST(mu_sched_transfer_calls_transfer_hook);
+    RUN_TEST(deferred_tasks_with_same_time_maintain_strict_ordering_a);
+    RUN_TEST(deferred_tasks_with_same_time_maintain_strict_ordering_b);
     RUN_TEST(defer_until_tasks_run_when_their_times_arrive);
     RUN_TEST(defer_for_tasks_run_when_their_times_arrive);
     RUN_TEST(deferred_tasks_can_be_removed);

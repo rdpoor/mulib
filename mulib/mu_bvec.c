@@ -62,6 +62,10 @@ mu_buf_t *mu_bvec_get_buf(mu_bvec_t *bvec) {
     return &bvec->buf;
 }
 
+size_t mu_bvec_get_capacity(mu_bvec_t *bvec) {
+    return mu_buf_capacity(&bvec->buf);
+}
+
 size_t mu_bvec_get_count(mu_bvec_t *bvec) {
     return bvec->count;
 }
@@ -79,14 +83,16 @@ size_t mu_bvec_get_available(mu_bvec_t *bvec) {
     }
 }
 
-bool mu_bvec_read_byte(mu_bvec_t *bvec, uint8_t *byte) {
-    const uint8_t *p = mu_buf_ref_ro(&bvec->buf, bvec->count++);
-    if (p == NULL) {
-        return false;
-    } else {
-        *byte = *p;
+mu_bvec_t *mu_bvec_make_reader(mu_bvec_t *reader, mu_bvec_t *src) {
+    return mu_bvec_init_ro(reader, mu_buf_bytes_ro(&src->buf), src->count);
+}
+
+bool mu_bvec_read_byte(mu_bvec_t *reader, uint8_t *byte) {
+    if (reader->count < mu_bvec_get_capacity(reader)) {
+        *byte = *mu_buf_ref_ro(&reader->buf, reader->count++);
         return true;
     }
+    return false;
 }
 
 bool mu_bvec_write_byte(mu_bvec_t *bvec, uint8_t byte) {
@@ -97,6 +103,14 @@ bool mu_bvec_write_byte(mu_bvec_t *bvec, uint8_t byte) {
         *p = byte;
         return true;
     }
+}
+
+const uint8_t *mu_bvec_ref_ro(mu_bvec_t *bvec, size_t index) {
+    return mu_buf_ref_ro(&bvec->buf, index);
+}
+
+uint8_t *mu_bvec_ref_rw(mu_bvec_t *bvec, size_t index) {
+    return mu_buf_ref_rw(&bvec->buf, index);
 }
 
 // *****************************************************************************

@@ -42,7 +42,10 @@
 static const char *s_level_names[] = {MU_LOG_LEVELS(EXPAND_LEVEL_NAMES)};
 #define N_LOG_LEVELS (sizeof(s_level_names)/sizeof(s_level_names[0]))
 
-// the current reporting level.  May be changed dynamically.
+// the current reporting threshold.  May be changed dynamically.
+static mu_log_level_t s_reporting_threshold;
+
+// the current reporting level, valid only within a call to mu_log
 static mu_log_level_t s_reporting_level;
 
 static mu_log_logging_fn s_logging_fn;
@@ -53,17 +56,17 @@ static mu_log_logging_fn s_logging_fn;
 // *****************************************************************************
 // Public code
 
-void mu_log_init(mu_log_level_t reporting_level, mu_log_logging_fn logging_fn) {
-    mu_log_set_reporting_level(reporting_level);
+void mu_log_init(mu_log_level_t reporting_threshold, mu_log_logging_fn logging_fn) {
+    mu_log_set_reporting_threshold(reporting_threshold);
     mu_log_set_logging_function(logging_fn);
 }
 
-void mu_log_set_reporting_level(mu_log_level_t reporting_level) {
-    s_reporting_level = reporting_level;
+void mu_log_set_reporting_threshold(mu_log_level_t reporting_threshold) {
+    s_reporting_threshold = reporting_threshold;
 }
 
-mu_log_level_t mu_log_get_reporting_level(void) {
-    return s_reporting_level;
+mu_log_level_t mu_log_get_reporting_threshold(void) {
+    return s_reporting_threshold;
 }
 
 void mu_log_set_logging_function(mu_log_logging_fn logging_fn) {
@@ -74,8 +77,12 @@ mu_log_logging_fn mu_log_get_logging_function(void) {
     return s_logging_fn;
 }
 
+mu_log_level_t mu_log_get_reporting_level(void) {
+    return s_reporting_level;
+}
+
 bool mu_log_is_reporting(mu_log_level_t reporting_level) {
-    return reporting_level >= s_reporting_level;
+    return reporting_level >= s_reporting_threshold;
 }
 
 const char *mu_log_level_name(mu_log_level_t level) {
@@ -88,9 +95,10 @@ const char *mu_log_level_name(mu_log_level_t level) {
 
 void mu_log(mu_log_level_t level, const char *fmt, ...) {
     if (mu_log_is_reporting(level) && (s_logging_fn != NULL)) {
+        s_reporting_level = level;  // make available to get_logging_level()
         va_list ap;
         va_start(ap, fmt);
-        s_logging_fn(level, fmt, ap);
+        s_logging_fn(fmt, ap);
         va_end(ap);
     }
 }

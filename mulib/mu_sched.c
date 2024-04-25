@@ -142,7 +142,10 @@ mu_task_t *mu_sched_next_task(void) {
     return deferred_task->task;
 }
 
-mu_sched_err_t mu_sched_wait(mu_task_t *task) { return MU_SCHED_ERR_NONE; }
+mu_sched_err_t mu_sched_wait(mu_task_t *task) {
+    (void)task;
+    return MU_SCHED_ERR_NONE;
+}
 
 mu_sched_err_t mu_sched_transfer(mu_task_t *to_task) {
     mu_task_call_transfer_hook(to_task);

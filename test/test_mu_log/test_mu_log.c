@@ -31,20 +31,21 @@ static bool test_tbuf(const char *expected) {
 /**
  * @brief user-supplied logging function.
  */
-static int tprint(mu_log_level_t level, const char *format, va_list ap) {
+static int tprint(const char *format, va_list ap) {
+    mu_log_level_t level = mu_log_get_reporting_level();
     int n = sprintf(tbuf, "[%s]: ", mu_log_level_name(level));
     n += vsprintf(&tbuf[n], format, ap);
     return n;
 }
 
-void test_mu_log_set_reporting_level(void) {
+void test_mu_log_set_reporting_threshold(void) {
     mu_log_init(MU_LOG_LEVEL_FATAL, tprint);
     clear_tbuf();
     TEST_ASSERT_TRUE(test_tbuf(""));
 
     // only report with MU_LOG_FATAL or more severe...
-    mu_log_set_reporting_level(MU_LOG_LEVEL_FATAL);
-    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_level(), MU_LOG_LEVEL_FATAL);
+    mu_log_set_reporting_threshold(MU_LOG_LEVEL_FATAL);
+    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_threshold(), MU_LOG_LEVEL_FATAL);
     clear_tbuf();
     MU_LOG_TRACE("t01");
     TEST_ASSERT_TRUE(test_tbuf(""));
@@ -66,8 +67,8 @@ void test_mu_log_set_reporting_level(void) {
     TEST_ASSERT_TRUE(mu_log_is_reporting(MU_LOG_LEVEL_FATAL));
 
     // only report with MU_LOG_ERROR or more severe...
-    mu_log_set_reporting_level(MU_LOG_LEVEL_ERROR);
-    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_level(), MU_LOG_LEVEL_ERROR);
+    mu_log_set_reporting_threshold(MU_LOG_LEVEL_ERROR);
+    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_threshold(), MU_LOG_LEVEL_ERROR);
     clear_tbuf();
     MU_LOG_TRACE("t07");
     TEST_ASSERT_TRUE(test_tbuf(""));
@@ -89,8 +90,8 @@ void test_mu_log_set_reporting_level(void) {
     TEST_ASSERT_TRUE(mu_log_is_reporting(MU_LOG_LEVEL_FATAL));
 
     // only report with MU_LOG_WARN or more severe...
-    mu_log_set_reporting_level(MU_LOG_LEVEL_WARN);
-    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_level(), MU_LOG_LEVEL_WARN);
+    mu_log_set_reporting_threshold(MU_LOG_LEVEL_WARN);
+    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_threshold(), MU_LOG_LEVEL_WARN);
     clear_tbuf();
     MU_LOG_TRACE("t13");
     TEST_ASSERT_TRUE(test_tbuf(""));
@@ -112,8 +113,8 @@ void test_mu_log_set_reporting_level(void) {
     TEST_ASSERT_TRUE(mu_log_is_reporting(MU_LOG_LEVEL_FATAL));
 
     // only report with MU_LOG_INFO or more severe...
-    mu_log_set_reporting_level(MU_LOG_LEVEL_INFO);
-    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_level(), MU_LOG_LEVEL_INFO);
+    mu_log_set_reporting_threshold(MU_LOG_LEVEL_INFO);
+    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_threshold(), MU_LOG_LEVEL_INFO);
     clear_tbuf();
     MU_LOG_TRACE("t19");
     TEST_ASSERT_TRUE(test_tbuf(""));
@@ -135,8 +136,8 @@ void test_mu_log_set_reporting_level(void) {
     TEST_ASSERT_TRUE(mu_log_is_reporting(MU_LOG_LEVEL_FATAL));
 
     // only report with MU_LOG_DEBUG or more severe...
-    mu_log_set_reporting_level(MU_LOG_LEVEL_DEBUG);
-    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_level(), MU_LOG_LEVEL_DEBUG);
+    mu_log_set_reporting_threshold(MU_LOG_LEVEL_DEBUG);
+    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_threshold(), MU_LOG_LEVEL_DEBUG);
     clear_tbuf();
     MU_LOG_TRACE("t25");
     TEST_ASSERT_TRUE(test_tbuf(""));
@@ -158,8 +159,8 @@ void test_mu_log_set_reporting_level(void) {
     TEST_ASSERT_TRUE(mu_log_is_reporting(MU_LOG_LEVEL_FATAL));
 
     // MU_LOG_TRACE...
-    mu_log_set_reporting_level(MU_LOG_LEVEL_TRACE);
-    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_level(), MU_LOG_LEVEL_TRACE);
+    mu_log_set_reporting_threshold(MU_LOG_LEVEL_TRACE);
+    TEST_ASSERT_EQUAL_INT(mu_log_get_reporting_threshold(), MU_LOG_LEVEL_TRACE);
     clear_tbuf();
     MU_LOG_TRACE("t31");
     TEST_ASSERT_TRUE(test_tbuf("[TRACE]: t31"));
@@ -205,7 +206,7 @@ void test_mu_log_level_name(void) {
 int main(void) {
     UNITY_BEGIN();
 
-    RUN_TEST(test_mu_log_set_reporting_level);
+    RUN_TEST(test_mu_log_set_reporting_threshold);
     RUN_TEST(test_mu_log_get_logging_function);
     RUN_TEST(test_mu_log_level_name);
 
