@@ -1,6 +1,7 @@
 # Define a list of directories
 TEST_DIRS = \
 	test_mu_array \
+	test_mu_bbuf \
 	test_mu_bisync \
 	test_mu_buf \
 	test_mu_bvec \
