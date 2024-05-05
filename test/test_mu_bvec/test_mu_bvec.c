@@ -18,18 +18,18 @@ static uint8_t s_rw_bytes[CAPACITY];
 static mu_bvec_t s_bvec;
 
 // mu_bvec_t *mu_bvec_init_ro(mu_bvec_t *bvec, const uint8_t *bytes, size_t capacity);
-// mu_buf_t *mu_bvec_get_buf(mu_bvec_t *bvec);
+// mu_bbuf_t *mu_bvec_get_bbuf(mu_bvec_t *bvec);
 void test_mu_bvec_init_ro(void) {
     TEST_ASSERT_EQUAL_PTR(&s_bvec, mu_bvec_init_ro(&s_bvec, s_ro_bytes, CAPACITY));
-    TEST_ASSERT_EQUAL_PTR(&s_bvec.buf, mu_bvec_get_buf(&s_bvec));
+    TEST_ASSERT_EQUAL_PTR(&s_bvec.bbuf, mu_bvec_get_bbuf(&s_bvec));
     TEST_ASSERT_EQUAL_INT(0, mu_bvec_get_count(&s_bvec));
 }
 
 // mu_bvec_t *mu_bvec_init_rw(mu_bvec_t *bvec, uint8_t *bytes, size_t capacity);
-// mu_buf_t *mu_bvec_get_buf(mu_bvec_t *bvec);
+// mu_bbuf_t *mu_bvec_get_bbuf(mu_bvec_t *bvec);
 void test_mu_bvec_init_rw(void) {
     TEST_ASSERT_EQUAL_PTR(&s_bvec, mu_bvec_init_rw(&s_bvec, s_rw_bytes, CAPACITY));
-    TEST_ASSERT_EQUAL_PTR(&s_bvec.buf, mu_bvec_get_buf(&s_bvec));
+    TEST_ASSERT_EQUAL_PTR(&s_bvec.bbuf, mu_bvec_get_bbuf(&s_bvec));
     TEST_ASSERT_EQUAL_INT(0, mu_bvec_get_count(&s_bvec));
 }
 
@@ -68,14 +68,16 @@ void test_mu_bvec_get_available(void) {
     TEST_ASSERT_EQUAL_INT(0, mu_bvec_get_available(&s_bvec));
 }
 
-// mu_bvec_t *mu_bvec_make_reader(mu_bvec_t *reader, mu_bvec_t *src);
-void test_mu_bvec_make_reader(void) {
-    mu_bvec_t reader;
+void test_mu_bvec_ref_ro(void) {
+    mu_bvec_init_ro(&s_bvec, s_ro_bytes, CAPACITY);
+    TEST_ASSERT_EQUAL_PTR(&s_ro_bytes[2], mu_bvec_ref_ro(&s_bvec, 2));
+    TEST_ASSERT_EQUAL_PTR(NULL, mu_bvec_ref_ro(&s_bvec, CAPACITY));
+}
+
+void test_mu_bvec_ref_rw(void) {
     mu_bvec_init_rw(&s_bvec, s_rw_bytes, CAPACITY);
-    mu_bvec_set_count(&s_bvec, CAPACITY/2);
-    TEST_ASSERT_EQUAL_PTR(&reader, mu_bvec_make_reader(&reader, &s_bvec));
-    TEST_ASSERT_EQUAL_INT(0, mu_bvec_get_count(&reader));
-    TEST_ASSERT_EQUAL_INT(CAPACITY/2, mu_bvec_get_capacity(&reader));
+    TEST_ASSERT_EQUAL_PTR(&s_rw_bytes[2], mu_bvec_ref_rw(&s_bvec, 2));
+    TEST_ASSERT_EQUAL_PTR(NULL, mu_bvec_ref_rw(&s_bvec, CAPACITY));
 }
 
 // bool mu_bvec_read_byte(mu_bvec_t *bvec, uint8_t *byte);
@@ -98,30 +100,18 @@ void test_mu_bvec_read_byte(void) {
 // bool mu_bvec_write_byte(mu_bvec_t *bvec, uint8_t byte);
 void test_mu_bvec_write_byte(void) {
     mu_bvec_init_rw(&s_bvec, s_rw_bytes, CAPACITY);
-    mu_buf_t *buf = mu_bvec_get_buf(&s_bvec);
+    mu_bbuf_t *buf = mu_bvec_get_bbuf(&s_bvec);
     TEST_ASSERT_TRUE(mu_bvec_write_byte(&s_bvec, 'f'));
-    TEST_ASSERT_EQUAL_INT('f', *mu_buf_ref_rw(buf, 0));
+    TEST_ASSERT_EQUAL_INT('f', *mu_bbuf_ref_rw(buf, 0));
     TEST_ASSERT_TRUE(mu_bvec_write_byte(&s_bvec, 'g'));
-    TEST_ASSERT_EQUAL_INT('g', *mu_buf_ref_rw(buf, 1));
+    TEST_ASSERT_EQUAL_INT('g', *mu_bbuf_ref_rw(buf, 1));
     TEST_ASSERT_TRUE(mu_bvec_write_byte(&s_bvec, 'h'));
-    TEST_ASSERT_EQUAL_INT('h', *mu_buf_ref_rw(buf, 2));
+    TEST_ASSERT_EQUAL_INT('h', *mu_bbuf_ref_rw(buf, 2));
     TEST_ASSERT_TRUE(mu_bvec_write_byte(&s_bvec, 'i'));
-    TEST_ASSERT_EQUAL_INT('i', *mu_buf_ref_rw(buf, 3));
+    TEST_ASSERT_EQUAL_INT('i', *mu_bbuf_ref_rw(buf, 3));
     TEST_ASSERT_TRUE(mu_bvec_write_byte(&s_bvec, 'j'));
-    TEST_ASSERT_EQUAL_INT('j', *mu_buf_ref_rw(buf, 4));
+    TEST_ASSERT_EQUAL_INT('j', *mu_bbuf_ref_rw(buf, 4));
     TEST_ASSERT_FALSE(mu_bvec_write_byte(&s_bvec, 'k'));
-}
-
-void test_mu_bvec_ref_ro(void) {
-    mu_bvec_init_ro(&s_bvec, s_ro_bytes, CAPACITY);
-    TEST_ASSERT_EQUAL_PTR(&s_ro_bytes[2], mu_bvec_ref_ro(&s_bvec, 2));
-    TEST_ASSERT_EQUAL_PTR(NULL, mu_bvec_ref_ro(&s_bvec, CAPACITY));
-}
-
-void test_mu_bvec_ref_rw(void) {
-    mu_bvec_init_rw(&s_bvec, s_rw_bytes, CAPACITY);
-    TEST_ASSERT_EQUAL_PTR(&s_rw_bytes[2], mu_bvec_ref_rw(&s_bvec, 2));
-    TEST_ASSERT_EQUAL_PTR(NULL, mu_bvec_ref_rw(&s_bvec, CAPACITY));
 }
 
 int main(void) {
@@ -131,10 +121,9 @@ int main(void) {
     RUN_TEST(test_mu_bvec_reset);
     RUN_TEST(test_mu_bvec_set_count);
     RUN_TEST(test_mu_bvec_get_available);
-    RUN_TEST(test_mu_bvec_make_reader);
-    RUN_TEST(test_mu_bvec_read_byte);
-    RUN_TEST(test_mu_bvec_write_byte);
     RUN_TEST(test_mu_bvec_ref_ro);
     RUN_TEST(test_mu_bvec_ref_rw);
+    RUN_TEST(test_mu_bvec_read_byte);
+    RUN_TEST(test_mu_bvec_write_byte);
     return UNITY_END();
 }

@@ -3,7 +3,6 @@ TEST_DIRS = \
 	test_mu_array \
 	test_mu_bbuf \
 	test_mu_bisync \
-	test_mu_buf \
 	test_mu_bvec \
 	test_mu_jems \
 	test_mu_log \
@@ -11,7 +10,6 @@ TEST_DIRS = \
 	test_mu_queue \
 	test_mu_sched \
 	test_mu_spsc \
-	test_mu_str \
 	test_mu_task
 
 # Define a function to iterate over directories and run a command

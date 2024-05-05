@@ -26,6 +26,7 @@
 // Includes
 
 #include "mu_bvec.h"
+#include "mu_bbuf.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -43,13 +44,18 @@
 // *****************************************************************************
 // Public code
 
+mu_bvec_t *mu_bvec_init(mu_bvec_t *bvec, mu_bbuf_t *bbuf) {
+    mu_bbuf_copy(&bvec->bbuf, bbuf);
+    return mu_bvec_reset(bvec);
+}
+
 mu_bvec_t *mu_bvec_init_ro(mu_bvec_t *bvec, const uint8_t *bytes, size_t capacity) {
-    mu_buf_init_ro(&bvec->buf, bytes, capacity);
+    mu_bbuf_init_ro(&bvec->bbuf, bytes, capacity);
     return mu_bvec_reset(bvec);
 }
 
 mu_bvec_t *mu_bvec_init_rw(mu_bvec_t *bvec, uint8_t *bytes, size_t capacity) {
-    mu_buf_init_rw(&bvec->buf, bytes, capacity);
+    mu_bbuf_init_rw(&bvec->bbuf, bytes, capacity);
     return mu_bvec_reset(bvec);
 }
 
@@ -58,12 +64,12 @@ mu_bvec_t *mu_bvec_reset(mu_bvec_t *bvec) {
     return bvec;
 }
 
-mu_buf_t *mu_bvec_get_buf(mu_bvec_t *bvec) {
-    return &bvec->buf;
+mu_bbuf_t *mu_bvec_get_bbuf(mu_bvec_t *bvec) {
+    return &bvec->bbuf;
 }
 
 size_t mu_bvec_get_capacity(mu_bvec_t *bvec) {
-    return mu_buf_capacity(&bvec->buf);
+    return mu_bbuf_capacity(&bvec->bbuf);
 }
 
 size_t mu_bvec_get_count(mu_bvec_t *bvec) {
@@ -75,7 +81,7 @@ void mu_bvec_set_count(mu_bvec_t *bvec, size_t count) {
 }
 
 size_t mu_bvec_get_available(mu_bvec_t *bvec) {
-    size_t capacity = mu_buf_capacity(&bvec->buf);
+    size_t capacity = mu_bbuf_capacity(&bvec->bbuf);
     if (bvec->count > capacity) {
         return 0;
     } else {
@@ -83,34 +89,32 @@ size_t mu_bvec_get_available(mu_bvec_t *bvec) {
     }
 }
 
-mu_bvec_t *mu_bvec_make_reader(mu_bvec_t *reader, mu_bvec_t *src) {
-    return mu_bvec_init_ro(reader, mu_buf_bytes_ro(&src->buf), src->count);
+const uint8_t *mu_bvec_ref_ro(mu_bvec_t *bvec, size_t index) {
+    return mu_bbuf_ref_ro(&bvec->bbuf, index);
 }
 
-bool mu_bvec_read_byte(mu_bvec_t *reader, uint8_t *byte) {
-    if (reader->count < mu_bvec_get_capacity(reader)) {
-        *byte = *mu_buf_ref_ro(&reader->buf, reader->count++);
+uint8_t *mu_bvec_ref_rw(mu_bvec_t *bvec, size_t index) {
+    return mu_bbuf_ref_rw(&bvec->bbuf, index);
+}
+
+bool mu_bvec_read_byte(mu_bvec_t *bvec, uint8_t *byte) {
+    const uint8_t *p = mu_bvec_ref_ro(bvec, bvec->count++);
+    if (p == NULL) {
+        return false;
+    } else {
+        *byte = *p;
         return true;
     }
-    return false;
 }
 
 bool mu_bvec_write_byte(mu_bvec_t *bvec, uint8_t byte) {
-    uint8_t *p = mu_buf_ref_rw(&bvec->buf, bvec->count++);
+    uint8_t *p = mu_bvec_ref_rw(bvec, bvec->count++);
     if (p == NULL) {
         return false;
     } else {
         *p = byte;
         return true;
     }
-}
-
-const uint8_t *mu_bvec_ref_ro(mu_bvec_t *bvec, size_t index) {
-    return mu_buf_ref_ro(&bvec->buf, index);
-}
-
-uint8_t *mu_bvec_ref_rw(mu_bvec_t *bvec, size_t index) {
-    return mu_buf_ref_rw(&bvec->buf, index);
 }
 
 // *****************************************************************************

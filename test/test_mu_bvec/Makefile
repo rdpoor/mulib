@@ -3,7 +3,7 @@ SRC_DIR ?= ../../mulib
 
 MODULE_NAME := test_mu_bvec
 SRC_FILES := \
-    $(SRC_DIR)/mu_buf.c \
+    $(SRC_DIR)/mu_bbuf.c \
     $(SRC_DIR)/mu_bvec.c
 
 include ../make_common.mk
