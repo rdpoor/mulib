@@ -367,10 +367,9 @@ mu_bbuf_t *mu_bbuf_clear(mu_bbuf_t *bbuf_rw) {
     return bbuf_rw;
 }
 
-size_t mu_bbuf_copy_into(mu_bbuf_t *bbuf_rw, mu_bbuf_t *src, size_t offset) {
-    size_t to_copy;
+int mu_bbuf_copy_into(mu_bbuf_t *bbuf_rw, mu_bbuf_t *src, int offset) {
+    int to_copy;
 
-    // calculate # of bytes to copy using unsigned arithmentic.
     if (offset >= bbuf_rw->capacity) {
         to_copy = 0;
     } else {
@@ -388,15 +387,47 @@ size_t mu_bbuf_copy_into(mu_bbuf_t *bbuf_rw, mu_bbuf_t *src, size_t offset) {
     return to_copy;
 }
 
-mu_bbuf_t *mu_bbuf_lshift(mu_bbuf_t *bbuf_rw, size_t count) {
-    // stub
+mu_bbuf_t *mu_bbuf_reverse(mu_bbuf_t *bbuf_rw) {
+    uint8_t *front = &bbuf_rw->bytes_rw[0];
+    uint8_t *back = &bbuf_rw->bytes_rw[bbuf_rw->capacity - 1];
+
+    while (front < back) {
+        uint8_t temp = *front;
+        *front++ = *back;
+        *back-- = temp;
+    }
     return bbuf_rw;
 }
 
-mu_bbuf_t *mu_bbuf_rshift(mu_bbuf_t *bbuf_rw, size_t count) {
-    // stub
+mu_bbuf_t *mu_bbuf_rrotate(mu_bbuf_t *bbuf_rw, int shift) {
+    int capacity = bbuf_rw->capacity;
+
+    // compute shift MOD capacity (iteratively)
+    while (shift >= capacity) {
+        shift -= capacity;
+    }
+    while (shift < 0) {
+        shift += capacity;
+    }
+    // Now 0 <= shift < capacity
+
+    // This implements in-place array rotation by reversing parts of the array:
+    if (shift > 0) {
+        mu_bbuf_t left;
+        mu_bbuf_t right;
+        // Assume bbuf_rw = [1, 2, 3, 4, 5, 6] with shift = 4
+        mu_bbuf_reverse(bbuf_rw);                      // step 1
+        // Now: bbuf_rw = [6, 5, 4, 3, 2, 1]
+        mu_bbuf_bisect(&left, &right, bbuf_rw, shift); // step 2
+        // Now: left = [6, 5], right = [4, 3, 2, 1]
+        mu_bbuf_reverse(&left);                        // step 3
+        // Now: bbuf_rw = [3, 4, 5, 6, 2, 1]
+        mu_bbuf_reverse(&right);                       // step 4
+        // Now: bbuf_rw = [5, 6, 1, 2, 3, 4]
+    }
     return bbuf_rw;
 }
+
 
 // *****************************************************************************
 // Private (static) code

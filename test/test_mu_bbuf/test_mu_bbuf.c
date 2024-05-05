@@ -34,6 +34,14 @@ __attribute__((unused)) static bool cstr_eq(mu_bbuf_t *bbuf, const char *cstr) {
                          mu_bbuf_capacity(bbuf)) == 0;
 }
 
+__attribute__((unused)) static bool buf_eq(mu_bbuf_t *bbuf, const uint8_t *expect, size_t expect_len) {
+    if (mu_bbuf_capacity(bbuf) != expect_len) {
+        return false;
+    } else {
+        return memcmp(bbuf->bytes_ro, expect, expect_len) == 0;
+    }
+}
+
 __attribute__((unused)) static bool is_member(uint8_t byte, const char *bytes) {
     while (*bytes != '\0') {
         if (byte == *bytes++) {
@@ -794,49 +802,67 @@ void test_mu_bbuf_copy_into(void) {
 
 }
 
-void test_mu_bbuf_shift(void) {
-    mu_bbuf_t b;
-    uint8_t buf1[] = {'w', 'x', 'y', 'z'};
+void test_mu_bbuf_reverse(void) {
+    uint8_t buf1[] = {'r', 'a', 't', 's'};
+    mu_bbuf_t b1;
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
 
-    mu_bbuf_init_rw(&b, buf1, sizeof(buf1));
-    TEST_ASSERT_TRUE(cstr_eq(&b, "wxyz"));
-    TEST_ASSERT_EQUAL_PTR(&b, mu_bbuf_lshift(&b, 1));
-    // abstraction violation in the name of unit testing...
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[0], 'x');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[1], 'y');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[2], 'z');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[3], '\0');
-    TEST_ASSERT_EQUAL_PTR(&b, mu_bbuf_lshift(&b, 2));
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[0], 'z');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[1], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[2], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[3], '\0');
-    TEST_ASSERT_EQUAL_PTR(&b, mu_bbuf_lshift(&b, 1000));
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[0], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[1], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[2], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[3], '\0');
-
-    uint8_t buf2[] = {'a', 'b', 'c', 'd'};
-    mu_bbuf_init_rw(&b, buf2, sizeof(buf2));
-    TEST_ASSERT_TRUE(cstr_eq(&b, "abcd"));
-    TEST_ASSERT_EQUAL_PTR(&b, mu_bbuf_rshift(&b, 1));
-    // abstraction violation in the name of unit testing...
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[0], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[1], 'a');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[2], 'b');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[3], 'c');
-    TEST_ASSERT_EQUAL_PTR(&b, mu_bbuf_rshift(&b, 2));
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[0], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[1], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[2], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[3], '\a');
-    TEST_ASSERT_EQUAL_PTR(&b, mu_bbuf_rshift(&b, 1000));
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[0], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[1], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[2], '\0');
-    TEST_ASSERT_EQUAL_INT(&b.bytes_rw[3], '\0');
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "rats"));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_reverse(&b1));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "star"));
 }
+
+void test_mu_bbuf_rrotate(void) {
+    const uint8_t buf[] = {'1', '2', '3', '4'};
+    uint8_t buf1[4];
+    mu_bbuf_t b1;
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 0));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "1234"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 1));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "4123"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 2));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "3412"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 3));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "2341"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 4));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "1234"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -1));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "2341"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -2));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "3412"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -3));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "4123"));
+
+    memcpy(buf1, buf, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -4));
+    TEST_ASSERT_TRUE(cstr_eq(&b1, "1234"));
+}
+
 
 int main(void) {
     UNITY_BEGIN();
@@ -859,7 +885,8 @@ int main(void) {
     RUN_TEST(test_mu_bbuf_get_put_byte);
     RUN_TEST(test_mu_bbuf_clear);
     RUN_TEST(test_mu_bbuf_copy_into);
-    // RUN_TEST(test_mu_bbuf_shift);
+    RUN_TEST(test_mu_bbuf_reverse);
+    RUN_TEST(test_mu_bbuf_rrotate);
 
     return UNITY_END();
 }

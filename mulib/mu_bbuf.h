@@ -599,40 +599,32 @@ mu_bbuf_t *mu_bbuf_clear(mu_bbuf_t *bbuf_rw);
  * be copied.
  * @param src Pointer to the source buffer from which bytes are copied.
  * @param offset The zero-based index in the destination buffer at which to
- * start copying.
+ * start copying.  It may be negative.
  * @return The number of bytes successfully copied.
  */
-size_t mu_bbuf_copy_into(mu_bbuf_t *bbuf_rw, mu_bbuf_t *src, size_t offset);
+int mu_bbuf_copy_into(mu_bbuf_t *bbuf_rw, mu_bbuf_t *src, int offset);
 
 /**
- * @brief Shift all bytes in a mutable buffer to the left by a specified count,
- * padding with zeros.
- *
- * This function shifts the bytes in the buffer to the left by the specified
- * count, effectively discarding the leftmost bytes and adding zero bytes at the
- * right end of the buffer.
- *
- * @param bbuf_rw Pointer to the mutable buffer to be shifted.
- * @param count Number of positions each byte in the buffer is to be shifted
- * left.
- * @return Pointer to the shifted buffer.
+ * @brief Reverse the bytes in bbuf_rw.
  */
-mu_bbuf_t *mu_bbuf_lshift(mu_bbuf_t *bbuf_rw, size_t count);
+mu_bbuf_t *mu_bbuf_reverse(mu_bbuf_t *bbuf_rw);
 
 /**
- * @brief Shift all bytes in a mutable buffer to the right by a specified count,
- * padding with zeros.
- *
- * This function shifts the bytes in the buffer to the right by the specified
- * count, effectively discarding the rightmost bytes and adding zero bytes at
- * the left end of the buffer.
+ * @brief Rotate the bytes in bbuf_rw to the right by shift, or
+ * to the left if shift is negative.
+ */
+mu_bbuf_t *mu_bbuf_rrotate(mu_bbuf_t *bbuf_rw, int shift);
+
+/**
+ * @brief Shift all bytes bbuf_rw to the right by shift, or to the left if
+ * shift is negative, padding the left or right end with zeroes.
  *
  * @param bbuf_rw Pointer to the mutable buffer to be shifted.
- * @param count Number of positions each byte in the buffer is to be shifted
- * right.
+ * @param shift Number of positions each byte in the buffer is to be
+ * shifted right (or left if negative).
  * @return Pointer to the shifted buffer.
  */
-mu_bbuf_t *mu_bbuf_rshift(mu_bbuf_t *bbuf_rw, size_t count);
+mu_bbuf_t *mu_bbuf_rshift(mu_bbuf_t *bbuf_rw, int left_shift);
 
 // *****************************************************************************
 // End of file
