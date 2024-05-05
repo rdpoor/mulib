@@ -15,7 +15,14 @@ void tearDown(void) {
 
 static const uint8_t s_ro_bytes[CAPACITY] = {'a', 'b', 'c', 'd', 'e'};
 static uint8_t s_rw_bytes[CAPACITY];
+static mu_bbuf_t s_bbuf;
 static mu_bvec_t s_bvec;
+
+// mu_bvec_t *mu_bvec_init(mu_bvec_t *bvec, mu_bbuf_t *bbuf)
+void test_mu_bvec_init(void) {
+    mu_bbuf_init_ro(&s_bbuf, s_ro_bytes, CAPACITY);
+    TEST_ASSERT_EQUAL_PTR(&s_bvec, mu_bvec_init(&s_bvec, &s_bbuf));
+}
 
 // mu_bvec_t *mu_bvec_init_ro(mu_bvec_t *bvec, const uint8_t *bytes, size_t capacity);
 // mu_bbuf_t *mu_bvec_get_bbuf(mu_bvec_t *bvec);
@@ -42,6 +49,22 @@ void test_mu_bvec_reset(void) {
     TEST_ASSERT_EQUAL_INT(CAPACITY/2, mu_bvec_get_count(&s_bvec));
     mu_bvec_reset(&s_bvec);
     TEST_ASSERT_EQUAL_INT(0, mu_bvec_get_count(&s_bvec));
+}
+
+// mu_bbuf_t *mu_bvec_get_bbuf(mu_bvec_t *bvec);
+void test_mu_bvec_get_bbuf(void) {
+    mu_bbuf_init_ro(&s_bbuf, s_ro_bytes, CAPACITY);
+    mu_bvec_init(&s_bvec, &s_bbuf);
+    TEST_ASSERT_EQUAL_PTR(&s_bvec.bbuf, mu_bvec_get_bbuf(&s_bvec));
+    // Make sure they reference the same data
+    TEST_ASSERT_EQUAL_PTR(mu_bbuf_bytes_ro(mu_bvec_get_bbuf(&s_bvec)),
+                          mu_bbuf_bytes_ro(&s_bbuf));
+}
+
+// size_t mu_bvec_get_capacity(mu_bvec_t *bvec)
+void test_mu_bvec_get_capacity(void) {
+    mu_bvec_init_ro(&s_bvec, s_ro_bytes, CAPACITY);
+    TEST_ASSERT_EQUAL_INT(CAPACITY, mu_bvec_get_capacity(&s_bvec));
 }
 
 // void mu_bvec_set_count(mu_bvec_t *bvec, size_t count);
@@ -116,9 +139,12 @@ void test_mu_bvec_write_byte(void) {
 
 int main(void) {
     UNITY_BEGIN();
+    RUN_TEST(test_mu_bvec_init);
     RUN_TEST(test_mu_bvec_init_ro);
     RUN_TEST(test_mu_bvec_init_rw);
     RUN_TEST(test_mu_bvec_reset);
+    RUN_TEST(test_mu_bvec_get_bbuf);
+    RUN_TEST(test_mu_bvec_get_capacity);
     RUN_TEST(test_mu_bvec_set_count);
     RUN_TEST(test_mu_bvec_get_available);
     RUN_TEST(test_mu_bvec_ref_ro);
