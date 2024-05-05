@@ -42,7 +42,19 @@ extern "C" {
 // *****************************************************************************
 // Public types and definitions
 
-#define MU_VERSION "v1.0.0"
+#define MU_VERSION_MAJOR 1
+#define MU_VERSION_MINOR 0
+#define MU_VERSION_PATCH 0
+
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x)
+
+#define MAKE_VERSION_STRING(major, minor, patch) \
+    "v" STRINGIFY(major) "." STRINGIFY(minor) "." STRINGIFY(patch)
+
+#define MU_VERSION_STRING \
+    MAKE_VERSION_STRING(MU_VERSION_MAJOR, MU_VERSION_MINOR, MU_VERSION_PATCH)
+
 // *****************************************************************************
 // Public declarations
 
@@ -50,4 +62,4 @@ extern "C" {
 }
 #endif
 
-#endif /* #ifndef _MU_LOG_H_ */
+#endif /* #ifndef _MU_VERSION_H_ */
