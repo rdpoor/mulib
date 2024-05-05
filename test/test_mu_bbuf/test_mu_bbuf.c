@@ -782,24 +782,49 @@ void test_mu_bbuf_clear(void) {
 
 void test_mu_bbuf_copy_into(void) {
     mu_bbuf_t b1;
-    uint8_t buf1[] = {'a', 'b', 'c', 'd'};
     mu_bbuf_t b2;
-    const char *cstr = "AB";
+    const uint8_t buf2[] = {11, 12, 13, 14};
 
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
-    mu_bbuf_init_cstr(&b2, cstr);
+    mu_bbuf_init_ro(&b2, buf2, sizeof(buf2));
 
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "abcd"));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(4, mu_bbuf_copy_into(&b1, &b2, 0));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){11, 12, 13, 14}, 4));
 
-    TEST_ASSERT_EQUAL_INT(0, mu_bbuf_copy_into(&b1, &b2, b1.capacity));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "abcd"));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(3, mu_bbuf_copy_into(&b1, &b2, 1));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 11, 12, 13}, 4));
 
-    TEST_ASSERT_EQUAL_INT(2, mu_bbuf_copy_into(&b1, &b2, 0));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "ABcd"));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(2, mu_bbuf_copy_into(&b1, &b2, 2));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 11, 12}, 4));
 
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_INT(1, mu_bbuf_copy_into(&b1, &b2, 3));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "ABcA"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 3, 11}, 4));
 
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(0, mu_bbuf_copy_into(&b1, &b2, 4));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 3, 4}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(3, mu_bbuf_copy_into(&b1, &b2, -1));
+    // for (int i=0; i<4; i++) {
+    //     printf("\n[%d] =%d", i, b1.bytes_rw[i]);
+    // }
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){12, 13, 14, 4}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(2, mu_bbuf_copy_into(&b1, &b2, -2));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){13, 14, 3, 4}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(1, mu_bbuf_copy_into(&b1, &b2, -3));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){14, 2, 3, 4}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_INT(0, mu_bbuf_copy_into(&b1, &b2, -4));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 3, 4}, 4));
 }
 
 void test_mu_bbuf_reverse(void) {
@@ -813,56 +838,84 @@ void test_mu_bbuf_reverse(void) {
 }
 
 void test_mu_bbuf_rrotate(void) {
-    const uint8_t buf[] = {'1', '2', '3', '4'};
-    uint8_t buf1[4];
     mu_bbuf_t b1;
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 0));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "1234"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 3, 4}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 1));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "4123"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){4, 1, 2, 3}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 2));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "3412"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){3, 4, 1, 2}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 3));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "2341"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){2, 3, 4, 1}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, 4));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "1234"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 3, 4}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -1));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "2341"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){2, 3, 4, 1}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -2));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "3412"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){3, 4, 1, 2}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -3));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "4123"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){4, 1, 2, 3}, 4));
 
-    memcpy(buf1, buf, sizeof(buf1));
-    mu_bbuf_init_rw(&b1, buf1, sizeof(buf1));
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
     TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rrotate(&b1, -4));
-    TEST_ASSERT_TRUE(cstr_eq(&b1, "1234"));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 3, 4}, 4));
 }
 
+void test_mu_bbuf_rshift(void) {
+    mu_bbuf_t b1;
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, 0));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){1, 2, 3, 4}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, 1));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){0, 1, 2, 3}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, 2));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){0, 0, 1, 2}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, 3));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){0, 0, 0, 1}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, 4));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){0, 0, 0, 0}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, -1));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){2, 3, 4, 0}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, -2));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){3, 4, 0, 0}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, -3));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){4, 0, 0, 0}, 4));
+
+    mu_bbuf_init_rw(&b1, (uint8_t[]){1, 2, 3, 4}, 4);
+    TEST_ASSERT_EQUAL_PTR(&b1, mu_bbuf_rshift(&b1, -4));
+    TEST_ASSERT_TRUE(buf_eq(&b1, (uint8_t[]){0, 0, 0, 0}, 4));
+}
 
 int main(void) {
     UNITY_BEGIN();
@@ -887,6 +940,7 @@ int main(void) {
     RUN_TEST(test_mu_bbuf_copy_into);
     RUN_TEST(test_mu_bbuf_reverse);
     RUN_TEST(test_mu_bbuf_rrotate);
+    RUN_TEST(test_mu_bbuf_rshift);
 
     return UNITY_END();
 }
