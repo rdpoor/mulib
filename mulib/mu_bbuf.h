@@ -616,15 +616,17 @@ mu_bbuf_t *mu_bbuf_reverse(mu_bbuf_t *bbuf_rw);
 mu_bbuf_t *mu_bbuf_rrotate(mu_bbuf_t *bbuf_rw, int shift);
 
 /**
- * @brief Shift all bytes bbuf_rw to the right by shift, or to the left if
- * shift is negative, padding the left or right end with zeroes.
+ * @brief Perform right and left shifts on bbuf.
+ *
+ * A positive shift shifts bytes to the right, a negative shift shifts
+ * bytes to the left.  The vacated positions are filled with zeros.
  *
  * @param bbuf_rw Pointer to the mutable buffer to be shifted.
  * @param shift Number of positions each byte in the buffer is to be
  * shifted right (or left if negative).
  * @return Pointer to the shifted buffer.
  */
-mu_bbuf_t *mu_bbuf_rshift(mu_bbuf_t *bbuf_rw, int left_shift);
+mu_bbuf_t *mu_bbuf_rshift(mu_bbuf_t *bbuf_rw, int shift);
 
 // *****************************************************************************
 // End of file

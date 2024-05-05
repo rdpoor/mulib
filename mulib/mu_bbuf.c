@@ -367,24 +367,42 @@ mu_bbuf_t *mu_bbuf_clear(mu_bbuf_t *bbuf_rw) {
     return bbuf_rw;
 }
 
-int mu_bbuf_copy_into(mu_bbuf_t *bbuf_rw, mu_bbuf_t *src, int offset) {
-    int to_copy;
+int mu_bbuf_copy_into(mu_bbuf_t *dst_rw, mu_bbuf_t *src_ro, int offset) {
+    int count = 0;  // Number of bytes copied
 
-    if (offset >= bbuf_rw->capacity) {
-        to_copy = 0;
-    } else {
-        to_copy = bbuf_rw->capacity - offset;
+    size_t src_idx = 0;
+    size_t dst_idx = 0;
+    size_t src_len = mu_bbuf_capacity(src_ro);
+    size_t dst_len = mu_bbuf_capacity(dst_rw);
+    size_t src_avail;
+    size_t dst_avail;
+
+    if (offset > 0) {
+        // Positive offset: src starts from 0, dst starts from offset
+        dst_idx = offset;
+        if (dst_idx >= dst_len) {
+            return 0; // Offset is outside the destination buffer
+        } else {
+            dst_avail = dst_len - dst_idx;
+        }
+    } else if (offset < 0) {
+        // Negative offset: src starts from -offset, dst starts from 0
+        src_idx = -offset;
+        if (src_idx >= src_len) {
+            return 0; // Offset is outside the source buffer
+        } else {
+            src_avail = src_len - src_idx;
+        }
     }
-    if (to_copy > src->capacity) {
-        to_copy = src->capacity;
+    // Calculate the maximum number of bytes we can copy
+    if (src_avail && dst_avail) {
+        count = (int)(src_avail < dst_avail ? src_avail : dst_avail);
+        for (int i = 0; i < count; i++) {
+            dst_rw->bytes_rw[dst_idx + i] = src_ro->bytes_ro[src_idx + i];
+        }
     }
 
-    if (to_copy > 0) {
-        uint8_t *dst_bytes = &bbuf_rw->bytes_rw[offset];
-        const uint8_t *src_bytes = &src->bytes_ro[0];
-        memmove(dst_bytes, src_bytes, to_copy);
-    }
-    return to_copy;
+    return count; // Return the number of bytes actually copied
 }
 
 mu_bbuf_t *mu_bbuf_reverse(mu_bbuf_t *bbuf_rw) {
@@ -428,6 +446,35 @@ mu_bbuf_t *mu_bbuf_rrotate(mu_bbuf_t *bbuf_rw, int shift) {
     return bbuf_rw;
 }
 
+mu_bbuf_t *mu_bbuf_rshift(mu_bbuf_t *bbuf_rw, int shift) {
+    size_t capacity = bbuf_rw->capacity;
+    bool shift_left;
+
+    if (shift < 0) {
+        shift_left = true;
+        shift = -shift;
+    } else {
+        shift_left = false;
+    }
+
+    if (shift == 0) {
+        // no shifting required
+        return bbuf_rw;
+    } else if (shift >= capacity) {
+        return mu_bbuf_clear(bbuf_rw);
+    }
+
+    if (shift_left) {
+        // shifting left
+        memmove(bbuf_rw->bytes_rw, &bbuf_rw->bytes_ro[shift], capacity-shift);
+        memset(&bbuf_rw->bytes_rw[capacity-shift], 0, shift); // zero pad right
+    } else {
+        // shifting right
+        memmove(&bbuf_rw->bytes_rw[shift], bbuf_rw->bytes_ro, capacity-shift);
+        memset(bbuf_rw->bytes_rw, 0, shift); // zero pad left
+    }
+    return bbuf_rw;
+}
 
 // *****************************************************************************
 // Private (static) code
