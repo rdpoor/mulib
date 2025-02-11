@@ -1,0 +1,9 @@
+[submodule "mu_json"]
+	path = mu_json
+	url = git@github.com:rdpoor/mu_json.git
+[submodule "mu_log"]
+	path = mu_log
+	url = git@github.com:rdpoor/mu_log.git
+[submodule "mu_str"]
+	path = mu_str
+	url = git@github.com:rdpoor/mu_str.git
