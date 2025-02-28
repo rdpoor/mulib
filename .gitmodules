@@ -7,3 +7,6 @@
 [submodule "mu_str"]
 	path = mu_str
 	url = git@github.com:rdpoor/mu_str.git
+[submodule "mu_serdes"]
+	path = mu_serdes
+	url = git@github.com:rdpoor/mu_serdes.git
